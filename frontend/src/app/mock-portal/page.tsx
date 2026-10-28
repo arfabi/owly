@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   Shield,
   ArrowLeft,
@@ -17,6 +19,9 @@ import {
 } from "lucide-react";
 
 export default function MockPortalPage() {
+  const { t, language } = useLanguage();
+  const m = t.mockPortal;
+
   const [nik, setNik] = useState("");
   const [nama, setNama] = useState("");
   const [tglLahir, setTglLahir] = useState("");
@@ -31,27 +36,27 @@ export default function MockPortalPage() {
     if (!nik || !nama || !tglLahir || !essay) {
       setAuditResult({
         status: "red",
-        message: "Audit Gagal (Lampu Merah): Masih ada kolom wajib yang belum diisi lengkap.",
+        message: m.auditEmptyMsg,
       });
       return;
     }
     if (nik.length !== 16 || !/^\d+$/.test(nik)) {
       setAuditResult({
         status: "red",
-        message: "Audit Gagal (Lampu Merah): NIK wajib berjumlah tepat 16 digit angka.",
+        message: m.auditNikInvalidMsg,
       });
       return;
     }
     if (essay.split(/\s+/).filter(Boolean).length < 20) {
       setAuditResult({
         status: "yellow",
-        message: "Peringatan (Lampu Kuning): Esai kontribusi terlalu singkat (disarankan minimal 50 kata).",
+        message: m.auditEssayShortMsg,
       });
       return;
     }
     setAuditResult({
       status: "green",
-      message: "Audit Berhasil (Lampu Hijau): Semua field valid, sesuai format Juknis LPDP 2026. Siap dikirim!",
+      message: m.auditSuccessMsg,
     });
   };
 
@@ -60,7 +65,9 @@ export default function MockPortalPage() {
     setNama("Budi Santoso");
     setTglLahir("1998-08-19");
     setEssay(
-      "Pasca menyelesaikan studi Magister Kebijakan Publik, rencana strategis saya adalah kembali mengabdi di Badan Perencanaan Pembangunan Nasional (Bappenas). Saya akan memimpin perancangan program hilirisasi ekonomi hijau berbasis riset kebijakan tepat guna guna memperkuat ketahanan ekonomi nasional."
+      language === "en"
+        ? "Upon completing my Master of Public Policy, my strategic plan is to serve at the National Development Planning Agency (Bappenas). I will spearhead green economy downstreaming initiatives powered by applied policy research to fortify national economic resilience."
+        : "Pasca menyelesaikan studi Magister Kebijakan Publik, rencana strategis saya adalah kembali mengabdi di Badan Perencanaan Pembangunan Nasional (Bappenas). Saya akan memimpin perancangan program hilirisasi ekonomi hijau berbasis riset kebijakan tepat guna guna memperkuat ketahanan ekonomi nasional."
     );
   };
 
@@ -70,19 +77,22 @@ export default function MockPortalPage() {
       <div className="bg-[#1e3a8a] text-white px-4 py-2.5 text-xs flex items-center justify-between shadow-md">
         <div className="flex items-center gap-2 max-w-6xl mx-auto w-full">
           <span className="font-bold tracking-wider uppercase text-[11px] bg-blue-900 px-2 py-0.5 rounded">
-            Simulasi Resmi
+            {m.topBannerTag}
           </span>
           <span className="truncate">
-            Portal Pendaftaran Beasiswa Lembaga Pengelola Dana Pendidikan (LPDP) Republik Indonesia
+            {m.topBannerTitle}
           </span>
         </div>
-        <Link
-          href="/"
-          className="text-xs text-blue-200 hover:text-white flex items-center gap-1 shrink-0"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Landing Page</span>
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          <LanguageSwitcher />
+          <Link
+            href="/"
+            className="text-xs text-blue-200 hover:text-white flex items-center gap-1"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>{m.btnBackLanding}</span>
+          </Link>
+        </div>
       </div>
 
       <main className="max-w-5xl mx-auto px-4 mt-8">
@@ -90,10 +100,10 @@ export default function MockPortalPage() {
           <div className="border-b pb-4 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Formulir Beasiswa Reguler Magister / Doktor 2026
+                {m.formTitle}
               </h1>
               <p className="text-xs text-gray-500 mt-1">
-                Tahap 1: Data Identitas Pribadi, Dokumen Biometrik, &amp; Rencana Pasca-Studi
+                {m.formSubtitle}
               </p>
             </div>
             <button
@@ -102,7 +112,7 @@ export default function MockPortalPage() {
               className="px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-semibold flex items-center gap-2 transition-all self-start sm:self-center"
             >
               <Lock className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Simulasi 1-Click Vault Autofill</span>
+              <span>{m.btnAutofillDemo}</span>
             </button>
           </div>
 
@@ -119,13 +129,13 @@ export default function MockPortalPage() {
             >
               <div className="flex justify-between items-center mb-1.5">
                 <label className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                  <span>Nomor Induk Kependudukan (NIK)</span>
+                  <span>{m.nikLabel}</span>
                   <span className="text-red-500">*</span>
                 </label>
                 {activeField === "nik" && (
                   <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />
-                    Spotlight Aktif (Savvy)
+                    {m.spotlightActive}
                   </span>
                 )}
               </div>
@@ -134,11 +144,11 @@ export default function MockPortalPage() {
                 maxLength={16}
                 value={nik}
                 onChange={(e) => setNik(e.target.value)}
-                placeholder="16 digit angka sesuai e-KTP fisik"
+                placeholder={m.nikPlaceholder}
                 className="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm font-mono text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <p className="text-[11px] text-gray-500 mt-1.5">
-                Pastikan NIK masih aktif di Dinas Kependudukan dan Pencatatan Sipil (Dukcapil).
+                {m.nikHint}
               </p>
             </div>
 
@@ -152,13 +162,13 @@ export default function MockPortalPage() {
               onClick={() => setActiveField("nama")}
             >
               <label className="text-xs font-bold text-gray-700 block mb-1.5">
-                Nama Lengkap (Sesuai Ijazah &amp; KTP) <span className="text-red-500">*</span>
+                {m.namaLabel} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={nama}
                 onChange={(e) => setNama(e.target.value)}
-                placeholder="Contoh: Budi Santoso"
+                placeholder={m.namaPlaceholder}
                 className="w-full bg-white border border-gray-300 rounded-lg px-3.5 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -173,7 +183,7 @@ export default function MockPortalPage() {
               onClick={() => setActiveField("tgl")}
             >
               <label className="text-xs font-bold text-gray-700 block mb-1.5">
-                Tanggal Lahir <span className="text-red-500">*</span>
+                {m.tglLabel} <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -186,15 +196,15 @@ export default function MockPortalPage() {
             {/* Field Upload Pasfoto */}
             <div className="border border-gray-200 rounded-xl p-4">
               <label className="text-xs font-bold text-gray-700 block mb-1.5">
-                Unggah Pasfoto Biometrik Resmi (2x2 Inci / 35x45 mm) <span className="text-red-500">*</span>
+                {m.photoLabel} <span className="text-red-500">*</span>
               </label>
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition-colors cursor-pointer">
                 <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-xs font-medium text-gray-700">
-                  Klik untuk unggah foto berlatar polos (putih/merah)
+                  {m.photoPrompt}
                 </p>
                 <p className="text-[11px] text-gray-500 mt-1">
-                  Format JPG/PNG, ukuran maks. 200 KB. Diaudit biometrik ketajaman Laplacian &amp; proporsi kepala ICAO 9303.
+                  {m.photoHint}
                 </p>
               </div>
             </div>
@@ -210,17 +220,17 @@ export default function MockPortalPage() {
             >
               <div className="flex justify-between items-center mb-1.5">
                 <label className="text-xs font-bold text-gray-700">
-                  Esai Komitmen Kembali ke Indonesia &amp; Rencana Pasca-Studi <span className="text-red-500">*</span>
+                  {m.essayLabel} <span className="text-red-500">*</span>
                 </label>
                 <span className="text-[11px] font-mono text-gray-500">
-                  {essay.split(/\s+/).filter(Boolean).length} kata
+                  {essay.split(/\s+/).filter(Boolean).length} {m.wordCountLabel}
                 </span>
               </div>
               <textarea
                 rows={4}
                 value={essay}
                 onChange={(e) => setEssay(e.target.value)}
-                placeholder="Deskripsikan rencana konkret kontribusi Anda bagi bangsa pasca menyelesaikan studi..."
+                placeholder={m.essayPlaceholder}
                 className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
               />
             </div>
@@ -246,7 +256,7 @@ export default function MockPortalPage() {
                   <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <div className="font-bold">Hasil Pre-Submit Auditor (Savvy.AI)</div>
+                  <div className="font-bold">{m.auditHeader}</div>
                   <div className="mt-0.5">{auditResult.message}</div>
                 </div>
               </div>
@@ -260,16 +270,16 @@ export default function MockPortalPage() {
                 className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
               >
                 <Shield className="w-4 h-4" />
-                <span>Jalankan Pre-Submit Audit</span>
+                <span>{m.btnAudit}</span>
               </button>
 
               <button
                 type="button"
                 disabled
                 className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-gray-200 text-gray-400 font-bold text-xs cursor-not-allowed"
-                title="Tombol ini hanya ditekan oleh pengguna sendiri setelah lampu hijau audit menyala"
+                title={m.submitDisabledTip}
               >
-                Kirim Formulir (Submit)
+                {m.btnSubmit}
               </button>
             </div>
           </form>

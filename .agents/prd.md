@@ -79,6 +79,11 @@ Mendukung warga global dan pendaftar internasional dengan asistensi teks, transk
 | 5 | **Bahasa Arab Standar** | Didukung | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
 | 6 | **Bahasa Prancis, Jerman, Jepang, Portugis** | Didukung | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
 
+### 4.1 Arsitektur Modular i18n & Zero Hardcoded Strings
+1. **Aturan Baku Antarmuka:** Seluruh penulisan teks/string pada antarmuka pengguna (baik di `frontend/` web showcase/mock portal maupun `extension/` Chrome Side Panel) **dilarang keras di-hardcode**. Seluruh string tampilan wajib dimuat secara modular melalui modul terjemahan terpusat (`translate.js` / kamus `i18n`).
+2. **Format Kamus Terstruktur:** Kamus disusun modular per namespace fitur (`nav`, `hero`, `pillars`, `accessibility`, `mockPortal`, `common`).
+3. **Reaktif & Tersimpan:** Penggantian bahasa via Language Switcher di UI berlangsung seketika tanpa reload halaman (*reactive state*) dan tersimpan otomatis di `localStorage` (Web) serta `chrome.storage.sync` (Ekstensi).
+
 ---
 
 ## 5. PERSYARATAN FITUR UTAMA

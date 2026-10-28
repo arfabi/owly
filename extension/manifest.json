@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Savvy.AI — Form Coach & Pre-Submit Auditor",
+  "version": "1.0.0",
+  "description": "Asisten browser cerdas berbasis Compound Multi-Agent System (Meta Muse Spark 1.3) untuk pendaftar formulir publik.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "side_panel": {
+    "default_path": "index.html"
+  },
+  "action": {
+    "default_title": "Buka Savvy.AI Side Panel"
+  },
+  "background": {
+    "service_worker": "src/background.ts"
+  }
+}
