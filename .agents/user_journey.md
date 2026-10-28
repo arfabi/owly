@@ -1,36 +1,42 @@
-# User Journey Map: Savvy.AI Companion & Co-Pilot
+# User Journey Map: Savvy.AI
 
-> Dokumen ini memetakan perjalanan pengalaman pengguna (*User Journey*) secara komprehensif, menghubungkan titik masalah emosional dan teknis masyarakat saat berhadapan dengan formulir birokrasi resmi dengan solusi terarah yang disediakan oleh **Savvy.AI** dan **Savvy Studio**.
+> **Versi 2.1 · 28 Oktober 2026**  
+> Menghubungkan titik masalah emosional (*The 3-Y Friction Framework*) dan teknis pendaftar saat berhadapan dengan formulir birokrasi resmi dengan solusi terarah **Savvy.AI** (Pilar: *Understand*, *Fill*, *Audit*).  
+> Dokumen Pendamping:
+> - [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) — Product Requirements Document & Feature Specs
+> - [`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md) — Arsitektur Sistem, Tech Stack, & Meta Model API
 
 ---
 
 ## 1. Persona Pengguna
 
+Savvy.AI beroperasi 100% di sisi klien untuk **warga dan pendaftar formulir** (*citizen-first*, tanpa ketergantungan atau integrasi SDK instansi):
+
 1. **Pemohon Beasiswa (*Scholarship Applicant*):**
-   * *Contoh Target:* Pendaftar beasiswa LPDP, Chevening, Fulbright, MEXT.
+   * *Contoh Target:* Pendaftar beasiswa LPDP, AAS, Chevening, Fulbright, MEXT.
    * *Karakteristik:* Menghadapi ratusan isian formulir, kolom esai panjang, persyaratan dokumen berlapis, dan kecemasan tinggi gagal di tahap seleksi administrasi.
-   * *Kebutuhan Kunci:* Magic Pen (anti-writer's block), Forms Guide, dan Traffic Light Auditor.
+   * *Kebutuhan Kunci:* **Essay Coach** (smart drafting 3-bullet anti-writer's block), **Field Coach** (RAG juknis resmi), dan **Traffic Light Pre-Submit Auditor**.
 
 2. **Pemohon Visa & Paspor (*Traveler / Student / Expat*):**
    * *Contoh Target:* Pemohon US Visa DS-160, Visa Schengen, Paspor Online Imigrasi.
-   * *Karakteristik:* Khawatir ditolak karena salah format foto, ketidaktahuan istilah hukum kedutaan (*Affidavit of Support*, *Apostille*), regulasi ukuran file ketat, dan kekhawatiran salah tulis nama paspor.
-   * *Kebutuhan Kunci:* Explain This, Audit Kepatuhan Foto (ICAO 9303), Form Utility (formmate.in), dan Spesimen Dokumen Sah.
+   * *Karakteristik:* Khawatir ditolak karena salah format foto, ketidaktahuan istilah hukum kedutaan (*Affidavit of Support*, *Apostille*), regulasi ukuran file ketat, dan kekhawatiran salah tulis nama paspor vs identitas.
+   * *Kebutuhan Kunci:* **Explain This** (Vision Multimodal Snip), **Audit Kepatuhan Foto** (deterministik tanpa ubah piksel ICAO 9303), **Consistency Checker Agent**, dan **Official Specimen & Template Previewer**.
 
-3. **Masyarakat Umum & Lansia (*Public Service Seekers*):**
-   * *Contoh Target:* Pengisi portal CPNS, OSS perizinan usaha, layanan adminduk KTP/KK.
-   * *Karakteristik:* Literasi digital terbatas, mudah lelah mengetik, kesulitan membaca teks kecil atau istilah birokrasi berbelit-belit.
-   * *Kebutuhan Kunci:* Walkthrough Spotlight, Handsfree Voicebot (Silero VAD), Accessibility HUB (ADHD focus bar, OpenDyslexic), dan 1-Click Vault Autofill.
+3. **Masyarakat Umum & Pencari Kerja (*Public Service Seekers & Job Applicants*):**
+   * *Contoh Target:* Pengisi portal CPNS, seleksi BUMN, OSS perizinan usaha, layanan kependudukan KTP/KK.
+   * *Karakteristik:* Literasi birokrasi terbatas, lelah mengetik berulang, risiko salah ketik NIK berakibat fatal.
+   * *Kebutuhan Kunci:* **Multiple Vault** (Password-protected), **1-Click Autofill & Undo**, serta **Upload KTP to Vault** (On-Device OCR).
 
-4. **Petugas Instansi / Officer (*Content Publisher — Official*):**
-   * *Contoh Target:* Staf humas/IT kementerian atau pengelola layanan publik resmi.
-   * *Karakteristik:* Ingin menerbitkan panduan pengisian resmi tanpa harus mengubah source code portal pemerintah atau menyewa konsultan IT mahal.
-   * *Kebutuhan Kunci:* Savvy Studio (rekam alur klik, smart blur PII, lampirkan spesimen/template resmi, publikasi tier Official).
+4. **Lansia & Pengguna Neurodivergent (*Accessibility & Handsfree*):**
+   * *Contoh Target:* Warga senior, pengguna dengan disleksia, atau kondisi ADHD yang mudah lelah membaca teks rapat birokrasi.
+   * *Karakteristik:* Mudah terdistraksi baris panjang, kesulitan menavigasi struktur web rumit.
+   * *Kebutuhan Kunci:* **Handsfree Voicebot** (Silero VAD + Muse Voice Transcribe + ElevenLabs / Web Speech fallback), **Beacon Spotlight** (Shadow DOM), dan **Accessibility HUB** (ADHD reading ruler, OpenDyslexic).
 
 ---
 
-## 2. Tiga Pilar Masalah Utama: "The 3-Y Friction Framework"
+## 2. Pemetaan Friksi ke Tiga Pilar Savvy.AI
 
-Pengalaman buruk dan kegagalan masyarakat dalam pendaftaran formulir digital bermuara pada tiga pilar friksi utama: **Ambiguity**, **Complexity**, dan **Anxiety**.
+Pengalaman buruk pendaftar dalam formulir digital berakar pada **The 3-Y Friction Framework** (Ambiguity, Complexity, Anxiety) yang dijawab secara simetris oleh **Tiga Pilar Solusi Savvy.AI**:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -46,152 +52,98 @@ Pengalaman buruk dan kegagalan masyarakat dalam pendaftaran formulir digital ber
 │    & bingung mau nulis apa"    │ │    & saya lelah mengetik"      │ │         didiskualifikasi"      │
 └───────────────┬────────────────┘ └───────────────┬────────────────┘ └───────────────┬────────────────┘
                 │                                  │                                  │
-  • Petunjuk Kolom Form Gelap        • Gagal Upload Berkas (Size Limit) • Takut Salah Alur / Tombol
-    ──► Forms Guide (Walkthrough)      ──► Form Utility (formmate.in)     ──► Beacon Spotlight & Shadow DOM
-        (Meaning, Example, Pitfall)  • Pasfoto Syarat Khusus (ICAO)     • Ragu Format Nilai / Tanggal
-  • Salah Format Berkas / Dokumen      ──► Audit Kepatuhan Foto (Sharp)   ──► Pre-Submit Traffic Light
-    ──► Official Specimen & Template • Ratusan Kolom & Lelah Mengetik   • Takut Data Palsu / Tidak Sah
-  • Istilah Hukum Birokrasi            ──► Multiple Vault & Voicebot      ──► 3-Tier Honest Badge
-    ──► Explain This (Snip Tool)     • Hambatan Fisik / Visual          • Kerusakan UI / Redesign Portal
-  • Formulir Berbahasa Asing           ──► Accessibility HUB              ──► 5-Layer Multi-Layer Locator
-    ──► Scoped Translation (WeakMap)
-  • Writer's Block Kolom Alasan
-    ──► Magic Pen (3 Opsi Draf)
-  • Butuh Tanya Jawab Langsung
-    ──► Chatbot & Handsfree Voicebot
+         DIJAWAB OLEH:                      DIJAWAB OLEH:                      DIJAWAB OLEH:
+         PILAR UNDERSTAND                   PILAR FILL                         PILAR AUDIT
+                │                                  │                                  │
+  • Petunjuk Kolom Form Gelap        • Ratusan Kolom & Lelah Mengetik   • Takut Salah Alur / Tombol
+    ──► Field Coach (4 Elemen Card)    ──► Multiple Vault (Master PW)     ──► Beacon Spotlight & Cursor
+  • Juknis Resmi Tersebar / Hilang   • Butuh Pengisian Cepat            • Ragu Format Nilai / Tanggal
+    ──► Meta Vector Store RAG          ──► 1-Click Autofill & Undo        ──► Pre-Submit Traffic Light
+  • Istilah Hukum Birokrasi          • Dokumen KTP Fisik ke Form        • Foto Rawan Diskualifikasi
+    ──► Explain This (Snip Multimodal) ──► Upload to Vault (OCR KTP)      ──► Audit Kepatuhan Foto (Sharp)
+  • Butuh Tanya Jawab Langsung       • Writer's Block Kolom Esai        • Data Silang Beda Huruf
+    ──► Chatbot & Handsfree Voicebot   ──► Essay Coach (3-Bullet Draft)   ──► Consistency Checker Agent
+  • Hambatan Visual / Fokus
+    ──► Accessibility HUB
 ```
-
-### Pemetaan Rinci 3 Pilar:
-
-#### 1. AMBIGUITY (Ketidakjelasan Makna, Petunjuk Form, Regulasi, dan Rangkaian Kata)
-* **Akar Masalah:** Hambatan kognitif, ketiadaan konteks di halaman form, dan kesulitan merangkai teks resmi.
-* **Gejala di Masyarakat:**
-  * Tidak tahu kolom harus diisi apa, format contohnya seperti apa, dan apa pantangannya.
-  * Terbentur istilah birokrasi asing (*Apostille*, *Affidavit of Support*, *Substituted Power of Attorney*).
-  * Menghadapi formulir berbahasa asing pada portal kedutaan luar negeri.
-  * Bingung merangkai kata pada kolom esai/keterangan/alasan (*writer's block*).
-* **Solusi Savvy.AI:**
-  * **Forms Guide (Kamus Petunjuk Form Lengkap):** Menampilkan kartu petunjuk resmi per elemen field yang aktif:
-    * *Meaning:* Penjelasan arti kolom dalam bahasa sederhana.
-    * *How to Fill:* Langkah teknis pengisian yang sah.
-    * *Example Valid Value:* Contoh isian nyata yang sah dan benar.
-    * *Common Pitfalls:* Peringatan dini kesalahan fatal yang sering bikin gugur.
-  * **Explain This (Snip Lightshot-Style):** Penjelasan instan elemen layar dengan DOM Masking PII otomatis via Muse Spark Open.
-  * **Scoped Page Translation:** Terjemahan label halaman berbasis WeakMap tanpa merusak locator asli dan tanpa mengubah isian pengguna.
-  * **Magic Pen (Anti-Writer's Block):** Mengubah 3 poin bullet kasar menjadi draf formal/ringkas/elaboratif dengan label transparan *"Dibuat AI"*.
-  * **Chatbot & Handsfree Voicebot:** Tanya jawab interaktif juknis resmi dengan Silero VAD dan dual guardrail anti-prompt injection.
-
-#### 2. COMPLEXITY (Kerumitan Mekanis, Teknis Portal, dan Standarisasi Berkas)
-* **Akar Masalah:** Gesekan teknis sistem formulir dan persyaratan media digital yang kaku.
-* **Gejala di Masyarakat:**
-  * File PDF / scan KTP ditolak sistem karena melebihi batas ukuran (*"File melebihi 200 KB"*).
-  * Tidak yakin apakah pasfoto memenuhi standar regulasi paspor/visa (rasio kepala, ketajaman, dimensi).
-  * Formulir memiliki puluhan kolom yang melelahkan jika diketik manual berulang kali.
-  * Hambatan visual atau kesulitan fokus pada formulir yang padat.
-* **Solusi Savvy.AI:**
-  * **Form Utility Link (formmate.in):** Akses instan ke alat konversi berkas (JPG/PNG/PDF/Docx), kompresi cerdas, dan resizer dokumen.
-  * **Audit Kepatuhan Foto (Deterministik & Aman Regulasi):** Validasi otomatis rasio kepala, dimensi 2x2 / 35x45 mm, dan ketajaman tanpa mengubah piksel foto (100% mematuhi aturan US Dept of State & ICAO 9303).
-  * **Multiple Vault Autofill & Seed Phrase:** Penyimpanan aman berenkripsi AES-256-GCM lokal dengan 12-Word Seed Phrase (BIP-39), pengisian instan 1-klik, dan fungsi Undo 100%.
-  * **Upload to Vault (On-Device OCR):** Ekstraksi data KTP langsung ke Vault menggunakan model lokal MobileSAM Q4 + RapidOCR ONNX (18 MB).
-  * **Accessibility HUB:** Pengaturan kenyamanan membaca (ADHD focus reading bar, OpenDyslexic font, kontras tinggi).
-
-#### 3. ANXIETY (Kecemasan Mental, Ketakutan Salah Klik, dan Risiko Diskualifikasi)
-* **Akar Masalah:** Konsekuensi fatal dari kesalahan sepele dalam pendaftaran resmi (uang pendaftaran hangus, visa ditolak, atau gugur berkas beasiswa).
-* **Gejala di Masyarakat:**
-  * Takut mengklik tombol yang salah atau tersesat di alur portal.
-  * Ragu apakah petunjuk di internet valid atau sudah usang.
-  * Kecemasan memuncak saat mendekati tombol *Submit* (khawatir format tanggal terbalik, gelar akademis masuk ke nama paspor, atau NIK kurang 1 digit).
-* **Solusi Savvy.AI:**
-  * **Interactive Visual Walkthrough (Beacon Spotlight):** Lampu sorot penuntun visual langkah demi langkah di atas layar asli portal di dalam Closed Shadow DOM.
-  * **Animated Virtual Cursor:** Kursor semu visual yang meluncur memandu mata ke kolom berikutnya tanpa merebut mouse fisik pengguna.
-  * **Honest Badging Tiga Tingkat:** Pembedaan tegas antara sumber terverifikasi instansi (🟢 **Official**), kurasi tim (🔵 **Savvy Curated**), dan saran kecerdasan buatan (🟡 **AI Guidance**).
-  * **Pre-Submission Traffic Light Auditor:** Audit komprehensif berlampu merah, kuning, dan hijau sebelum submit untuk mendeteksi kesalahan fatal.
 
 ---
 
 ## 3. Tahapan Alur Perjalanan Pengguna (End-to-End User Journey)
 
-### Tahap 1: Onboarding & Pengenalan Halaman (Discovery & Orientation)
-* **Situasi Pengguna:** Membuka portal resmi (misal portal beasiswa atau visa) dan dihadapkan pada puluhan tab serta istilah hukum rumit.
+### Tahap 1: Orientasi Halaman & Pencarian Makna (Pilar UNDERSTAND)
+* **Situasi Pengguna:** Membuka portal resmi (misal portal beasiswa atau visa) dan dihadapkan pada puluhan kolom dan istilah birokrasi rumit (*Apostille*, *Affidavit of Support*).
 * **Titik Stres (Pain Points):**
-  * Tidak tahu harus mulai dari mana.
-  * Teks portal padat, kecil, atau berbahasa asing.
-* **Solusi & Respon Savvy.AI:**
-  * **Auto-Domain Match:** Ekstensi mendeteksi URL aktif dan menampilkan badge status panduan resmi di Side Panel.
-  * **Explain This (Snip Tool):** Pengguna menyeleksi area layar untuk memperoleh penjelasan instan ramah awam.
-  * **Accessibility HUB:** Mengaktifkan mode kontras tinggi atau ADHD focus bar jika teks sulit dibaca.
+  * Tidak paham arti istilah hukum formulir.
+  * Teks formulir rapat dan melelahkan mata.
+* **Respon & Fitur Savvy.AI:**
+  * **Auto-Domain Match & Juknis RAG:** Ekstensi mendeteksi domain portal dan menghubungkan ke **Meta Vector Store** resmi terkait.
+  * **Beacon Spotlight & Kartu Panduan 4-Elemen:** Menyorot field aktif dengan kursor semu visual (*Animated Virtual Cursor*) dan menampilkan kartu petunjuk (*Meaning, How to Fill, Example Valid Value, Common Pitfalls*) dengan badge bukti transparan (🟢 Official / 🔵 Curated / 🟡 AI Guidance).
+  * **Explain This (Multimodal Snip):** Pengguna menyeleksi instruksi rumit; DOM Masking otomatis menutupi data pribadi, lalu **Muse Spark Open** menjelaskan konteksnya secara ramah awam.
+  * **Accessibility HUB:** Mengaktifkan ADHD Reading Ruler atau font OpenDyslexic untuk kenyamanan membaca.
 
 ---
 
-### Tahap 2: Bimbingan & Penelusuran Alur Resmi (Guided Navigation)
-* **Situasi Pengguna:** Memulai pengisian langkah demi langkah.
+### Tahap 2: Pengisian Data Aman & Cepat (Pilar FILL)
+* **Situasi Pengguna:** Mengisi puluhan kolom identitas, riwayat, dan teks narasi motivasi/alasan beasiswa.
 * **Titik Stres (Pain Points):**
-  * Takut salah klik tombol yang bisa menggugurkan pendaftaran.
-  * Bingung apa maksud suatu field dan format apa yang diminta instansi.
-* **Solusi & Respon Savvy.AI:**
-  * **Interactive Visual Walkthrough:** Layar meredup halus dan lampu sorot (*beacon spotlight*) menunjuk langsung ke elemen yang wajib diisi.
-  * **Kursor Semu Beranimasi:** Meluncur visual mengarahkan fokus saat pengguna menekan `Tab` / `Enter` atau pindah kolom.
-  * **Kartu Field Guidance Resmi:** Menampilkan *Meaning, How to Fill, Example Valid Value,* dan *Common Pitfalls*.
-  * **Evidence-Based Scoring:** Menjamin skor akurasi berdasarkan data resmi, atau menampilkan *"Tanyakan ke instansi"* jika tidak ada bukti sah.
+  * Lelah mengetik identitas berulang kali di berbagai form.
+  * Khawatir data pribadi bocor jika disimpan di cloud pihak ketiga.
+  * Mengalami *writer's block* di kolom esai penting.
+* **Respon & Fitur Savvy.AI:**
+  * **Multiple Vault (Password-Protected):** Akses profil terisolasi (*Pribadi*, *Pasangan*, *Pekerjaan*) terenkripsi lokal WebCrypto `AES-256-GCM` berbasis Master Password (tanpa seed phrase rumit).
+  * **1-Click Autofill & Instant Undo:** Memetakan data identitas ke form seketika, dengan jaminan tombol Undo 100% mengembalikan kondisi awal.
+  * **Upload KTP to Vault (On-Device OCR):** Foto KTP diekstraksi langsung di browser via MobileSAM Q4 + RapidOCR ONNX (18 MB) tanpa kirim foto ke server.
+  * **Handsfree Voicebot:** Interaksi tanya jawab dan pendiktean handsfree didukung Silero VAD lokal + **Muse Voice Transcribe** (Meta Model API) + audio cerdas (ElevenLabs HD Demo / Web Speech fallback).
+  * **Essay Coach (Smart Drafting):** Memasukkan 3 poin fakta kasar → disintesiskan menjadi draf narasi terstruktur yang formal, ringkas, dan selaras rubrik beasiswa tanpa mengarang fakta palsu.
 
 ---
 
-### Tahap 3: Pengisian Data & Bantuan Pengetikan (Data Input & Assistance)
-* **Situasi Pengguna:** Mengisi identitas, tanggal lahir, riwayat pendidikan, serta kolom esai/alasan.
+### Tahap 3: Verifikasi Dokumen & Berkas Pendukung (Pilar AUDIT - Bagian 1)
+* **Situasi Pengguna:** Mengunggah pasfoto visa/paspor dan dokumen kelengkapan resmi.
 * **Titik Stres (Pain Points):**
-  * Lelah mengetik identitas berulang kali di puluhan kolom.
-  * Mengalami *writer's block* di kolom teks narasi (*"Tujuan Kunjungan"*, *"Rencana Studi"*).
-* **Solusi & Respon Savvy.AI:**
-  * **Multiple Vault Autofill:** Mengisi otomatis dari Vault aktif dengan 1-klik, lengkap dengan tombol **Undo Autofill**.
-  * **Voice Form-Filling & Handsfree VAD:** Pengguna cukup mendiktekan jawaban via mikrofon (didukung Silero VAD).
-  * **Magic Pen (Anti-Writer's Block):** Mengetik 3 poin santai → diubah menjadi pilihan draf narasi resmi (Formal/Ringkas/Elaboratif).
+  * Pasfoto rawan diskualifikasi karena salah rasio aspek, blur, atau proporsi kepala tidak sesuai ICAO 9303.
+  * Takut berkas salah format atau tidak memiliki spesimen sah pembanding.
+* **Respon & Fitur Savvy.AI:**
+  * **Audit Kepatuhan Foto (Zero-Pixel Manipulation):** Backend `sharp` deterministik memeriksa rasio aspek (2x2 inci / 35x45 mm), ketajaman (Laplacian variance), dan rasio biometrik tinggi kepala (50% - 69%) tanpa memanipulasi piksel foto demi mematuhi hukum internasional.
+  * **Official Specimen & Template Previewer:** Membuka modal spesimen resmi dummy beranotasi untuk membandingkan stempel/legalisir basah sah vs fotokopi ditolak, serta tombol unduh template resmi (`.docx` / `.pdf`).
 
 ---
 
-### Tahap 4: Persiapan & Unggah Berkas (Document Preparation & Specimen)
-* **Situasi Pengguna:** Diminta mengunggah dokumen KTP/Ijazah dan pasfoto resmi.
+### Tahap 4: Pemeriksaan Akhir Sebelum Kirim (Pilar AUDIT - Bagian 2)
+* **Situasi Pengguna:** Semua field telah terisi dan pengguna bersiap menekan tombol submit.
 * **Titik Stres (Pain Points):**
-  * Berkas ditolak sistem karena ukuran melebihi batas portal (*"File melebihi 200 KB"*).
-  * Ragu apakah pasfoto sudah memenuhi syarat biometrik visa/paspor.
-  * Bingung format surat rekomendasi yang sah seperti apa.
-* **Solusi & Respon Savvy.AI:**
-  * **Form Utility Link:** Tautan cepat ke platform `formmate.in` untuk kompresi file PDF/gambar dan konversi format.
-  * **Audit Kepatuhan Foto:** Validasi otomatis rasio kepala, dimensi, dan ketajaman tanpa manipulasi piksel wajah.
-  * **Official Specimen & Template Previewer:**
-    * *Interactive Specimen Modal:* Menampilkan contoh berkas sah resmi dummy beranotasi yang dapat di-zoom.
-    * *One-Click Template Download:* Mengunduh langsung template resmi (`.docx` / `.pdf`).
-    * *Side-by-Side Pre-Upload Verification:* Pratinjau berdampingan di Side Panel antara berkas pengguna dengan spesimen resmi sebelum upload.
-
----
-
-### Tahap 5: Pemeriksaan Akhir Sebelum Kirim (Pre-Submission Audit)
-* **Situasi Pengguna:** Semua field telah terisi dan tombol "Submit Permohonan" sudah aktif.
-* **Titik Stres (Pain Points):**
-  * Kecemasan memuncak (*anxiety peak*): Apakah ada tanggal yang terbalik? Apakah NIK kurang 1 digit? Apakah gelar akademik masuk ke nama paspor?
-* **Solusi & Respon Savvy.AI:**
-  * **Pre-Submission Traffic Light Auditor:** Memindai seluruh halaman sebelum kirim:
-    * 🟢 *Hijau:* Format data sah dan sesuai standar regulasi.
-    * 🟡 *Kuning:* Peringatan format meragukan (mis. format tanggal ambigu).
-    * 🔴 *Merah:* Kesalahan fatal yang pasti menggugurkan (NIK tidak 16 digit, gelar masuk nama paspor, field wajib kosong).
-  * **One-Click Jump to Drawer:** Menampilkan drawer daftar perbaikan; klik salah satu saran langsung menyorot field yang bersangkutan.
+  * Puncak kecemasan (*anxiety peak*): Takut salah satu digit NIK, format tanggal terbalik (DD/MM vs MM/DD), atau nama paspor tidak sinkron yang berujung penolakan fatal.
+* **Respon & Fitur Savvy.AI:**
+  * **Traffic Light Pre-Submit Auditor:**
+    * 🔴 **Merah:** Field wajib kosong, format regex salah (NIK tidak 16 digit), berkas melebihi limit.
+    * 🟡 **Kuning:** Format tanggal ambigu, gelar akademik masuk kolom nama paspor.
+    * 🟢 **Hijau:** Isian valid dan siap dikirim.
+  * **Consistency Checker Agent (Cross-Field):** Penalaran **Muse Spark Open** memvalidasi keselarasan logis:
+    * Nama di form vs Nama di paspor/identitas.
+    * Tanggal lahir di form vs angka tanggal lahir pada NIK.
+    * Tanggal keberangkatan vs masa berlaku paspor (> 6 bulan).
+  * **Jump to Drawer (1-Click Remedy):** Drawer ringkasan masalah menampilkan daftar anomali; mengklik item langsung mengarahkan spotlight dan kursor ke kolom bermasalah untuk diperbaiki.
+  * **Prinsip Emas:** Savvy.AI tidak pernah men-submit otomatis; pengguna memegang kendali akhir 100%.
 
 ---
 
 ## 4. Matriks Rilis Fitur (MVP Hackathon vs Next Roadmap)
 
-| Fitur / Modul | Fase Rilis | Peran & Alasan Prioritas |
-| :--- | :---: | :--- |
-| **Official Verified Guidance Hub** | **MVP (P0)** | Pilar panduan resmi tanpa risiko salah informasi hukum. |
-| **A11y Visual Spotlight & Navigation** | **MVP (P0)** | Mengarahkan panduan visual interaktif di atas DOM portal. |
-| **Multi-Layer Locator Engine (5-Layer)** | **MVP (P0)** | Ketahanan panduan terhadap perubahan UI portal instansi. |
-| **Chatbot & Handsfree Voicebot** | **MVP (P0)** | Kanal interaktif teks & suara (Muse Voice Transcribe + Silero VAD). |
-| **Multiple Vault Autofill & Seed Phrase** | **MVP (P0)** | Enkripsi WebCrypto AES-256-GCM + BIP-39 dan tombol Undo. |
-| **Upload to Vault (On-Device OCR KTP)** | **MVP (P0)** | Ekstraksi identitas instan via MobileSAM Q4 + RapidOCR ONNX. |
-| **Pre-Submission Traffic Light Auditor** | **MVP (P0)** | Mencegah diskualifikasi administrasi fatal sebelum submit. |
-| **Audit Kepatuhan Foto (In-Memory)** | **MVP (P0)** | Validasi pasfoto deterministik tanpa manipulasi piksel biometrik. |
-| **Form Utility Link (formmate.in)** | **MVP (P0)** | Solusi cepat kompresi dan konversi berkas eksternal. |
-| **Official Specimen & Template Previewer**| **MVP (P0)** | Pratinjau contoh berkas sah dan unduh template surat resmi. |
-| **Magic Pen (Help Me Write)** | **MVP (P0)** | Menghilangkan *writer's block* pada kolom narasi esai/alasan. |
-| **Explain This (Lightshot Snip + Masking)**| **MVP (P0)** | Analisis multimodal istilah hukum layar via Muse Spark Open. |
-| **SVG Talking Avatar (Lipsync Viseme)** | **MVP (P1)** | Visualisasi interaktif status bicara suara (Listening/Speaking). |
-| **Multi-Document Cross-Verification** | **Next Roadmap (v2)**| Pengecekan silang otomatis konsistensi antar-dokumen (KTP vs Ijazah). |
+| Fitur / Modul | Pilar | Status Hackathon | Model / Engine Terkait |
+| :--- | :---: | :---: | :--- |
+| **Field Coach & Official Specimen** | Understand | **MVP (P0)** | Meta Vector Store (`file_search`) + Muse Spark Open |
+| **Beacon Spotlight & Virtual Cursor** | Understand | **MVP (P0)** | Closed Shadow DOM + Deterministic A11y Tree |
+| **Explain This (Multimodal Snip)** | Understand | **MVP (P0)** | Muse Spark Open (Vision) + Local DOM Masking |
+| **Handsfree Voicebot** | Understand | **MVP (P0)** | Muse Voice Transcribe (STT) + ElevenLabs / Web Speech (TTS) + Silero VAD |
+| **Accessibility HUB** | Understand | **MVP (P0)** | Deterministik (ADHD Ruler, OpenDyslexic, High Contrast) |
+| **Multiple Vault (Password Protected)**| Fill | **MVP (P0)** | WebCrypto `AES-256-GCM` + `PBKDF2-SHA256` |
+| **1-Click Autofill & Safe Undo** | Fill | **MVP (P0)** | Resilient Semantic Locator + Native Event Dispatch |
+| **Upload KTP to Vault (OCR)** | Fill | **MVP (P0)** | On-device MobileSAM Q4 + RapidOCR ONNX (~18 MB) |
+| **Essay Coach (Smart Drafting)** | Fill | **MVP (P0)** | Muse Spark Open (3-Bullet Formal Synthesizer) |
+| **Traffic Light Pre-Submit Auditor** | Audit | **MVP (P0)** | Deterministic Regex & Syntax Checker |
+| **Audit Kepatuhan Foto (Zero-Pixel)** | Audit | **MVP (P0)** | In-memory `sharp` Deterministik (ICAO 9303 Compliant) |
+| **Consistency Checker Agent** | Audit | **MVP (P0)** | Muse Spark Open (Cross-Field Logical Validation) |
+| **Jump to Drawer (1-Click Fix)** | Audit | **MVP (P0)** | Interactive Drawer & Focus Spotlight |
+| **Multi-Language Support (ID & EN)** | Cross | **MVP (P0)** | Muse Voice Transcribe + ElevenLabs / Web Speech API |
+| **Multi-Document Cross-Verification**| Audit | **Next Roadmap (v2)**| Ekstraksi PDF multi-halaman & pencocokan silang ijazah |
