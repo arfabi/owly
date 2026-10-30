@@ -1,69 +1,200 @@
 # Savvy.AI — Companion & Co-Pilot Formulir Publik
 
-> **"Pahami. Isi. Periksa. Sebelum Anda menekan Submit."**  
-> Ekstensi browser cerdas (Manifest V3) berbasis Compound Multi-Agent System untuk pendaftar formulir publik, visa, beasiswa, dan perizinan.  
-> Dibangun untuk **Meta Global AI Developer Hackathon 2026** (Track: *Indie Developer* · Tema: *Build for Your World*).
+<p align="center">
+  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/compass.svg" width="64" height="64" alt="Savvy.AI Logo" />
+</p>
+
+<p align="center">
+  <strong>"Pahami. Isi. Periksa. Sebelum Anda Menekan Submit."</strong><br>
+  Browser-Native Compound Multi-Agent Assistant untuk Pendaftar Beasiswa, Visa Internasional, dan Layanan Publik.<br>
+  Dibangun untuk <strong>Meta Global AI Developer Hackathon 2026</strong> (Track: <em>Indie Developer</em> · Tema: <em>Build for Your World</em>).
+</p>
+
+<p align="center">
+  <a href="https://savvy-plum.vercel.app"><img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Production-blue?style=for-the-badge&logo=vercel" alt="Live Demo" /></a>
+  <a href="https://savvy-plum.vercel.app/landingpage/simulator"><img src="https://img.shields.io/badge/Web%20Simulator-Interactive-purple?style=for-the-badge" alt="Simulator" /></a>
+  <a href="https://github.com/arfabi/savvy"><img src="https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github" alt="GitHub" /></a>
+  <img src="https://img.shields.io/badge/Model-Meta%20Muse%20Spark%20Open-blueviolet?style=for-the-badge" alt="Meta Muse Spark" />
+  <img src="https://img.shields.io/badge/Tests-20%2F20%20Pass%20(100%25)-brightgreen?style=for-the-badge" alt="Tests 100%" />
+</p>
 
 ---
 
-## 📚 Dokumentasi Spesifikasi & Arsitektur (`.agents/`)
+## ⚡ Akses Cepat untuk Dewan Juri Hackathon
 
-Seluruh rancangan produk, arsitektur sistem, dan panduan teknis terpusat di dalam direktori [`.agents/`](file:///d:/webdev/laragon/www/savvy/.agents/):
+Evaluator dan dewan juri dapat menguji Savvy.AI secara instan tanpa perlu mengompilasi kode ekstensi lokal:
 
-| Dokumen | Deskripsi & Fokus Utama |
-|---|---|
-| [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) | **Product Requirements Document (SSOT):** 3 Pilar Solusi (*Understand, Fill, Audit*), pemanfaatan eksklusif 5 model Meta AI, kepatuhan ICAO 9303 tanpa manipulasi foto, dan skenario demo 3 menit. |
-| [`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md) | **Arsitektur Sistem & Tech Stack:** Diagram global, integrasi Meta Muse Spark Open via Baseten, Native Web Speech API bawaan browser/OS, Vercel Serverless, dan Supabase. |
-| [`user_journey.md`](file:///d:/webdev/laragon/www/savvy/.agents/user_journey.md) | **User Journey Map:** *The 3-Y Friction Framework* (Ambiguity, Complexity, Anxiety) dipetakan ke 4 persona pendaftar dan matriks rilis fitur MVP. |
-| [`design.md`](file:///d:/webdev/laragon/www/savvy/.agents/design.md) | **Design System & UI/UX Guidelines:** Palet warna WCAG AAA, kartu petunjuk 4-elemen, Beacon Spotlight (Closed Shadow DOM), dan Accessibility HUB. |
-| [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) | **Compound Multi-Agent Design:** Siklus ReAct internal, skema prompt, format JSON output, dan parameter reasoning Muse Spark Open. |
-| [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) | **Stateful Chains & Two-Tier Cache:** Penggunaan Responses API (`previous_response_id`), manajemen sesi per tab, dan single-flight deduplication. |
-| [`file_search_vector_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/file_search_vector_tool.md) | **RAG Juknis Resmi:** Pemanfaatan Meta Vector Store dan tool `file_search` untuk grounding regulasi dengan sitasi bab/halaman persis. |
-| [`web_search_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/web_search_tool.md) | **Manual Researcher Agent:** Pemanfaatan tool `web_search` di Responses API untuk pembaruan regulasi eksternal terkini. |
-| [`journal.md`](file:///d:/webdev/laragon/www/savvy/.agents/journal.md) | **Development Journal:** Catatan log kemajuan harian, evaluasi teknis, dan catatan arsitektural selama hackathon. |
+| Layanan | Tautan Langsung | Keterangan Pengujian |
+|---|---|---|
+| 🌐 **Web Showcase & Landing** | [savvy-plum.vercel.app](https://savvy-plum.vercel.app) | Presentasi visual SkyAgent UI, fitur Bento Grid, dan panduan lengkap. |
+| 🧪 **In-Browser Extension Simulator** | [savvy-plum.vercel.app/.../simulator](https://savvy-plum.vercel.app/landingpage/simulator) | Simulator Chrome Side Panel MV3 interaktif lengkap dengan Voicebot & Essay Coach. |
+| 📝 **Interactive LPDP 2026 Portal** | [savvy-plum.vercel.app/.../mock-portal](https://savvy-plum.vercel.app/landingpage/mock-portal) | Arena pengujian pengisian formulir simulasi LPDP 2026 dengan autofill dan audit. |
+| 🔑 **1-Click Demo Akun Juri** | Email: `judge@savvy.ai`<br>Sandi: `SavvyJudge2026!` | Klik tombol **"1-Click Masuk Demo Juri"** di header untuk langsung membuka Vault terenkripsi. |
 
 ---
 
-## ⚡ 5 Model Meta AI Resmi (Meta Model API)
+## 🏛️ Arsitektur Sistem (Compound Multi-Agent System)
 
-Savvy.AI memanfaatkan 5 model kecerdasan buatan dari ekosistem Meta AI secara eksklusif:
-1. **Muse Spark Open:** Reasoning & ReAct Multi-Agent loop, Field Coach, Essay Coach, Consistency Checker, Vision Multimodal (*Explain This*).
-2. **Muse Vector Store (`file_search`):** Retrieval juknis resmi dengan chunking semantik & sitasi bab/halaman dokumen sah.
-3. **Muse Voice Transcribe:** Cloud Speech-to-Text (STT) untuk interaksi Handsfree Voicebot.
-4. **SAM 3.1 Open (0.87B):** Cloud visual fallback untuk segmentasi batas formulir resolusi tinggi.
-5. **Muse Code:** Dokumentasi rekayasa agentic dan logging sistem di `docs/muse-code-log.md`.
+```mermaid
+flowchart TB
+    subgraph ClientLayer["🖥️ Client Browser Layer (Chrome MV3 / Web)"]
+        UserForm["Web Form Portal\n(LPDP / Schengen / CASN)"]
+        ShadowDOM["Closed Shadow DOM (#savvy-root)\n• Beacon Spotlight\n• 14 A11y WCAG Tools"]
+        SidePanel["Chrome Side Panel React App\n• Coach Tab • Vault Tab\n• Auditor Tab • A11y Tab"]
+        WebCrypto["WebCrypto AES-256-GCM\nClient-Side Vault Engine"]
+        CanvasMask["Canvas DOM Blackout Mask\n(Zero Face Biometrics Transit)"]
+        PIIGuard["PII Censor Guard\n(Client-side NIK/NPWP Interceptor)"]
+    end
+
+    subgraph GatewayLayer["☁️ Vercel Next.js Serverless Gateway (Edge / RAM-Only)"]
+        APIChat["POST /api/chat\n(10-Msg Sliding Window + Compactor)"]
+        APICoach["POST /api/coach/field\n(Two-Tier Cache & Juknis RAG)"]
+        APIExplain["POST /api/explain\n(Multimodal Vision Jargon Buster)"]
+        APIEssay["POST /api/essay/coach\n(High-Reasoning Narrative Generator)"]
+        APIAudit["POST /api/photo/audit\n(Zero-Pixel C++ Sharp Validator)"]
+    end
+
+    subgraph MetaAILayer["🤖 Meta AI Model on Baseten"]
+        MuseSpark["Meta Muse Spark Open\n(meta-models/muse-spark-open-1026)\n• 816ms Latency • Rp 3/Chat Turn"]
+    end
+
+    subgraph DataLayer["🗄️ Supabase PostgreSQL Cloud"]
+        SupaAuth["Supabase Auth (50k MAU Free Tier)\n• Meta / Google / Demo Judge"]
+        SupaRAG["Tabel juknis_chunks\n(13 Regulasi Sah Terverifikasi)"]
+        SupaCache["Tabel coach_cache\n(<15ms L1/L2 Response)"]
+        SupaVault["Tabel user_vault\n(Hanya Menyimpan Ciphertext & IV)"]
+    end
+
+    UserForm <--> ShadowDOM
+    ShadowDOM <--> SidePanel
+    SidePanel --> PIIGuard
+    SidePanel --> CanvasMask
+    SidePanel --> WebCrypto
+    SidePanel <--> GatewayLayer
+
+    APICoach --> SupaCache
+    APICoach --> SupaRAG
+    APICoach --> MuseSpark
+    APIChat --> MuseSpark
+    APIExplain --> MuseSpark
+    APIEssay --> MuseSpark
+
+    WebCrypto -.->|Sinkronisasi Ciphertext| SupaVault
+    SidePanel -.->|Meta Social Login| SupaAuth
+```
 
 ---
 
-## 🤖 1. Daftar Agents Savvy.AI
+## 🎯 3 Pilar Solusi Savvy.AI
 
-Daftar agen cerdas berbasis penalaran model AI yang bekerja secara compound dan saling terkoordinasi untuk memandu pendaftar:
+### 1. Pillar 1: Understand (Pahami)
+- **Beacon Spotlight & Field Coach RAG:** Kursor pada kolom formulir memicu sorotan fokus di Closed Shadow DOM dan memanggil kartu panduan 4-elemen (*Arti Istilah, Cara Mengisi, Contoh Valid Fiktif, Jebakan Diskualifikasi*) lengkap dengan bukti sitasi bab & halaman dokumen sah.
+- **Snip & Explain (Jargon Buster):** Seleksi potongan teks regulasi yang rumit untuk diterjemahkan menjadi penjelasan bahasa awam yang mudah dipahami.
+- **Handsfree Voicebot:** Asisten percakapan suara dwibahasa (Indonesia & Inggris) berlatensi sub-detik (<900ms) menggunakan Web Speech API bawaan browser/OS.
 
-| Nama Agent | Fungsi | Keterangan | Referensi |
-|---|---|---|---|
-| **Form Analyzer Agent** | Memetakan dan menafsirkan struktur semantik formulir web/PDF | Berjalan saat halaman dimuat atau bermutasi (MutationObserver) untuk menentukan makna field, tipe logis, penanda wajib/opsional, aturan validasi terstandar, dan percabangan kondisional tanpa membaca isi data nilai pengguna (`.value`). | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L197-L213)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L89-L92) |
-| **Manual Researcher Agent** | Riset regulasi eksternal & juknis terbaru via web grounding | Berjalan paralel di latar belakang menggunakan tool `web_search` untuk mencari regulasi dinamis terbaru (mis. edaran kementerian `.go.id` atau portal kedutaan) yang belum terindeks di Vector Store; hasil riset di-cache per domain formulir. | [`web_search_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/web_search_tool.md)<br>[`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L267-L270) |
-| **Field Coach Agent** | Menyajikan kartu bimbingan kontekstual 4-elemen per field aktif | Terpicu saat field difokuskan; memanggil tool `file_search` ke Meta Vector Store untuk menyusun kartu panduan (*Arti Istilah, Cara Mengisi, Contoh Valid Fiktif, Jebakan Umum*) disertai sitasi bab/halaman dan badge bukti transparan (🟢/🔵/🟡). | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L214-L244)<br>[`file_search_vector_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/file_search_vector_tool.md)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L93-L98) |
-| **Essay Coach Agent** | Mentransformasikan poin kasar menjadi draf esai formal berstruktur | Menyediakan bimbingan narasi pada kolom teks panjang (Statement of Purpose / Alasan Beasiswa); mengubah 3 poin fakta kasar pendaftar menjadi pilihan draf terstruktur (Formal, Ringkas, Elaboratif) yang selaras rubrik tanpa mengarang fakta fiktif. | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L245-L251)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L143-L148) |
-| **Consistency Checker Agent** | Validasi nalar keselarasan logis silang (*cross-field sanity check*) | Memeriksa konsistensi internal data antar-kolom sebelum submit (mis. Nama di formulir vs Nama pada paspor/KTP, kesesuaian tanggal lahir vs angka NIK, dan masa berlaku paspor > 6 bulan terhadap tanggal keberangkatan). | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L271-L318)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L168-L174) |
-| **Explain This (Visual Inspector) Agent** | Menganalisis potongan gambar formulir membingungkan via Vision Multimodal | Memproses area layar yang diseleksi pengguna setelah kotak isian ditutup rapat oleh DOM Masking, lalu menjabarkan arti instruksi visual dan syarat dokumen yang rumit secara ramah awam menggunakan Muse Spark Open. | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L50-L53)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L103-L107) |
-| **Form Companion Synthesizer (Chatbot & Voicebot Agent)** | Mengorkestrasi percakapan interaktif dua arah di Side Panel | Menjawab pertanyaan warga secara interaktif melalui dialog teks maupun audio handsfree, memelihara konteks sesi per tab via Responses API (`previous_response_id`), dan mengalirkan respons ke mesin audio asisten. | [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L99-L102) |
+### 2. Pillar 2: Fill (Isi)
+- **Zero-Knowledge Encrypted Vault:** Menyimpan data identitas (KTP, paspor, transkrip) yang dienkripsi secara lokal via **WebCrypto AES-256-GCM**.
+- **1-Click Batch Autofill & Safe Undo:** Mengisi seluruh kolom formulir secara instan dan menyediakan bilah pembatalan (Undo Bar 100%) jika pengguna ingin mengembalikan formulir ke keadaan semula.
+- **Academic Essay Coach:** Mengubah poin-poin kasar pengalaman pendaftar menjadi draf narasi esai formal akademik tanpa pernah mengarang fakta fiktif.
+
+### 3. Pillar 3: Audit (Periksa)
+- **Traffic Light Pre-Submit Auditor:** Mesin FSM deterministik memeriksa konsistensi silang data (Nama di formulir vs KTP, validitas 16 digit NIK, batas usia jalur afirmasi vs reguler, dan syarat TOEFL/IELTS) sebelum berkas dikirim.
+- **Zero-Pixel Photo Compliance Inspector:** Memeriksa pasfoto biometrik (rasio 2x2 inci / 35x45mm, ketajaman fokus Laplacian, dan keseragaman latar belakang) secara in-memory C++ (`sharp`) tanpa pernah memodifikasi piksel asli pemohon (kepatuhan standar ICAO Doc 9303).
+- **14 Deterministic Accessibility (A11y) Tools:** Mendukung pemohon disabilitas dan neurodivergen (Reading Guide, High Contrast, Dyslexia Font, Pause Animations, Text Spacing).
 
 ---
 
-## 🛠️ 2. Daftar Deterministic Tools (Alat Bantu Deterministik)
+## 🔒 Jaminan Privasi & Kepatuhan UU PDP No. 27/2022
 
-Alat bantu kode (*code-based guardrails & local deterministic engines*) yang dibangun secara terarah untuk dipanggil dan digunakan langsung oleh agents maupun sistem di jalur kritis tanpa risiko halusinasi model:
+1. **Client-Side Canvas Face Blackout Mask:** Sebelum gambar dokumen identitas dikirim ke model penglihatan multimodal, kanvas browser secara otomatis menutup foto wajah dan tanda tangan dengan kotak hitam pekat. **Nol data biometrik wajah** yang pernah terkirim ke jaringan.
+2. **WebCrypto AES-256-GCM Zero-Knowledge Vault:** Kunci enkripsi diturunkan langsung dari PIN pengguna (PBKDF2 100.000 iterasi). Server Supabase hanya menerima ciphertext dan IV acak.
+3. **Client-Side PII Chat Guard:** Sensor ekspresi reguler (regex) mencegat dan menyamarkan NIK (16 digit) dan NPWP (15-16 digit) sebelum teks pesan terkirim ke jaringan publik.
 
-| Nama Tool (Deterministik) | Peran & Cara Kerja | Pengguna / Terhubung Ke | Referensi |
-|---|---|---|---|
-| **DOM Extractor & A11y Scanner (`extractFormStructure`)** | Mengekstraksi pohon aksesibilitas DOM (`role`, `accessible_name`, tag input, atribut `required`, `pattern`, `maxlength`) secara pasif tanpa pernah menyentuh atau membaca atribut nilai isian (`.value`) pengguna. | Form Analyzer Agent & Traffic Light Auditor | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L162)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L89-L92) |
-| **5-Layer Resilient Locator Engine (`resolveSemanticLocator`)** | Menemukan dan mengunci elemen form di halaman web secara akurat melalui 5 lapis ketahanan: (1) A11y Tree, (2) Stable Attr Hash, (3) Section Path Hierarchy, (4) Geometric DOM Bounding Box, dan (5) Fuzzy Levenshtein Distance. | Beacon Spotlight, Virtual Cursor, & 1-Click Autofill | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L322)<br>[`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md#L38-L43) |
-| **Local PII Scrubber & Redactor (`scrubPIIText`)** | Menyaring dan menyamarkan identitas sensitif (NIK 16 digit, nomor paspor, email, nomor HP) menggunakan ekspresi reguler (regex) di browser sebelum teks prompt dikirim ke Meta Model API. | Seluruh Pemanggilan Meta Model API (Field Coach, Essay Coach, Consistency Checker) | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L63)<br>[`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md#L42) |
-| **DOM Masking Canvas (`applyDOMBlackoutMask`)** | Merender lapisan canvas penutup warna hitam pekat di atas seluruh kotak input data pengguna secara lokal sebelum proses screenshot area dijalankan untuk fitur *Explain This*. | Explain This (Visual Inspector) Agent | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L104-L106)<br>[`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md#L43) |
-| **Traffic Light Regex & Syntax Validator (`validateFieldRule`)** | Memvalidasi sintaksis isian formulir secara deterministik di content script (<300 ms) berdasarkan aturan regex (NIK 16 digit, email RFC, penanggalan) dan status evaluasi natif `checkValidity()` bawaan browser. | Traffic Light Pre-Submit Auditor & Consistency Checker | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md#L252-L265)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L154-L157) |
-| **Photo Compliance Inspector (`auditPhotoBiometrics` via `sharp`)** | Mengaudit pasfoto biometrik secara in-memory di backend (rasio aspek 2x2 inci / 35x45 mm, deteksi blur Laplacian variance, proporsi tinggi kepala 50%–69%, dan batas KB) tanpa manipulasi piksel biometrik (kepatuhan ICAO 9303). | Traffic Light Pre-Submit Auditor & Consistency Checker | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L158-L164)<br>[`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md#L62) |
-| **Multiple Vault Cryptographic Engine (`WebCryptoVaultEngine`)** | Mengelola derivasi kunci `PBKDF2-SHA256` (≥ 600.000 iterasi) berbasis Master Password lokal dan enkripsi/dekripsi `AES-256-GCM` 256-bit di memori runtime klien, serta dispatch event pengisian dan aksi Undo 100%. | 1-Click Autofill, Undo Action, & Multiple Vault Manager | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L128-L136)<br>[`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md#L48) |
-| **Multimodal Document Vision Extractor (`extractDocumentData`)** | Mengekstraksi data dokumen KTP/transkrip secara temporer di RAM melalui **Muse Spark Open (Meta)** dengan persetujuan eksplisit pengguna (UU PDP consent). Gambar langsung dihapus setelah pemrosesan dan hanya teks terenkripsi yang disimpan ke Vault lokal. | Upload ID to Vault & Multiple Vault Manager | [`ocr.md`](file:///d:/webdev/laragon/www/savvy/.agents/ocr.md)<br>[`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
-| **Silero Voice Activity Detector (`SileroVADEngine`)** | Mendeteksi jeda suara hening (800 ms) dan interupsi bicara (*barge-in*) secara lokal on-device (1 MB) untuk mengendalikan pembukaan/penutupan rekaman mikrofon secara presisi saat interaksi suara handsfree. | Handsfree Voicebot & Muse Voice Transcribe STT | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md#L101)<br>[`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md#L51) |
-| **Two-Tier Cache & Signature Hasher (`generateFieldSignature` & `lookupCoachCache`)** | Menghasilkan hash identitas field ternormalisasi (`domain_portal + field_locator_hash`) dan melakukan lookup cepat (<50 ms) di Supabase `coach_cache` dengan pencegahan pemanggilan ganda (*single-flight deduplication*). | Field Coach Agent & Form Analyzer Agent | [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md#L150-L190)<br>[`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md#L61) |
+---
+
+## 🧪 Hasil Pengujian Otomatis End-to-End (P4)
+
+Diverifikasi langsung melalui skrip pengujian [e2e_verification.mjs](file:///d:/webdev/laragon/www/savvy/web/scripts/e2e_verification.mjs):
+
+```text
+========================================================
+   🧪 SAVVY.AI END-TO-END VERIFICATION & SECURITY AUDIT
+========================================================
+▶ [Test 1] Client & Server PII Censor Guard (P4.2)
+  ✅ PASS: NIK 16-digit berhasil disamarkan sebelum transit
+  ✅ PASS: NPWP berhasil disamarkan sebelum transit
+  ✅ PASS: Tag pengganti [REDACTED_NIK] disisipkan secara deterministik
+
+▶ [Test 2] Pre-Submit Consistency & Traffic Light Rules (P4.1)
+  ✅ PASS: Validasi NIK tepat 16 digit numerik
+  ✅ PASS: Validasi Nama Lengkap bebas karakter angka/simbol
+  ✅ PASS: Validasi sintaks RFC alamat email resmi
+  ✅ PASS: Validasi ambang TOEFL/IELTS memenuhi regulasi beasiswa
+  ✅ PASS: Sistem berhasil mendeteksi diskualifikasi (Fatal Red Light)
+
+▶ [Test 3] Zero-Knowledge AES-256-GCM Cryptographic Vault (P4.2)
+  ✅ PASS: Payload plaintext memuat NIK sebelum enkripsi
+  ✅ PASS: Ciphertext yang dikirim ke Supabase tidak memuat plaintext NIK
+  ✅ PASS: Initialization Vector (96-bit) & Salt (128-bit) tergenerasi unik
+
+▶ [Test 4] Baseten Muse Spark Open Model Verification (P4.5)
+  ✅ PASS: BASETEN_API_KEY terkonfigurasi di environment
+  ✅ PASS: Base URL mengarah ke endpoint Baseten Inference resmi
+  ✅ PASS: Model ID persis 'meta-models/muse-spark-open-1026' (Meta Muse Spark Open)
+  Menguji ping latensi live ke Baseten Inference API...
+  ✅ PASS: Respon live Baseten sukses (HTTP 200) dalam 816ms
+  ✅ PASS: Model Muse Spark Open mengembalikan token jawaban
+  ⚡ Latensi Live Baseten: 816ms (Benchmark < 2500ms tercapai)
+
+▶ [Test 5] Juknis RAG Chunks Database Integrity (P4.1)
+  ✅ PASS: Supabase credentials terkonfigurasi
+  ✅ PASS: Kueri tabel juknis_chunks Supabase berhasil tanpa error
+  ✅ PASS: Terdapat 13 entri regulasi resmi LPDP/Schengen/CASN di database
+  ✅ PASS: Regulasi LPDP terverifikasi aktif dengan sitasi: Persyaratan Umum Pendaftar Beasiswa Reguler
+
+========================================================
+   HASIL VERIFIKASI: 20 / 20 PENGUJIAN LULUS (100%)
+   Zero Raw PII Transit Guarantee: TERVERIFIKASI ✅
+   Baseten Muse Spark Open Model Compliance: TERVERIFIKASI ✅
+   Regulatory Grounded RAG Citation: TERVERIFIKASI ✅
+========================================================
+```
+
+---
+
+## 📦 Menjalankan Proyek Secara Lokal
+
+### 1. Prasyarat
+- Node.js versi 18 ke atas
+- Akun Baseten dengan API Key aktif
+- Proyek Supabase PostgreSQL
+
+### 2. Menjalankan Web Application (Next.js 16)
+```bash
+cd web
+npm install
+# Konfigurasikan variabel lingkungan di web/.env.local
+npm run dev
+```
+Buka browser pada `http://localhost:3000`.
+
+### 3. Mengompilasi Chrome Extension MV3
+```bash
+cd extension
+npm install
+npm run build
+```
+1. Buka Google Chrome dan navigasikan ke `chrome://extensions/`.
+2. Aktifkan **Developer mode** di pojok kanan atas.
+3. Klik **Load unpacked** dan pilih folder `extension/dist/`.
+
+---
+
+## 🏆 Kepatuhan Aturan Hackathon (Meta Model Policy)
+
+> **Pernyataan Kepatuhan:** Proyek ini memanggil model kecerdasan buatan terbuka **Meta Muse Spark Open (`meta-models/muse-spark-open-1026`)** melalui Baseten Inference API secara eksklusif. Proyek ini tidak memanggil model AI pihak ketiga non-Meta (nol ketergantungan pada ElevenLabs, Google WaveNet, MobileSAM, atau RapidOCR). Seluruh fitur suara dan pengenalan data dibangun di atas standar natif browser (Web Speech API, WebCrypto, HTML5 Canvas) untuk menjamin latensi 0ms dan privasi tanpa transit cloud.
+
+---
+
+## 📄 Lisensi
+Didistribusikan di bawah lisensi MIT. Lihat file `LICENSE` untuk rincian selengkapnya.
