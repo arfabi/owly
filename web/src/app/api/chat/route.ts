@@ -34,7 +34,7 @@ function sanitizePII(text: string): { cleanText: string; hasPII: boolean } {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { sessionId, userId, message, portalDomain = 'beasiswalpdp.kemenkeu.go.id' } = body;
+    const { sessionId, userId, message, portalDomain = 'web-page', pageUrl = '', pageTitle = '' } = body;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Pesan tidak boleh kosong' }, { status: 400 });
@@ -115,15 +115,27 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Susun Context Payload untuk Muse Spark Open di Baseten
+    // 4. Susun Context Payload adaptif untuk Muse Spark Open di Baseten
+    const isScholarshipPortal = portalDomain.toLowerCase().includes('lpdp') || portalDomain.toLowerCase().includes('beasiswa');
+    const isImmigrationPortal = portalDomain.toLowerCase().includes('paspor') || portalDomain.toLowerCase().includes('visa') || portalDomain.toLowerCase().includes('imigrasi');
+
+    const systemPromptContent = `Kamu adalah Savvy AI — Smart Form & Public Service Web Companion yang ramah, solutif, empatik, dan cerdas.
+Konteks Halaman Pengguna Saat Ini:
+- Website / Domain: "${portalDomain || 'Halaman Web'}"
+${pageUrl ? `- URL Halaman: "${pageUrl}"` : ''}
+${pageTitle ? `- Judul Halaman: "${pageTitle}"` : ''}
+
+Pedoman Asisten:
+1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website atau formulir yang sedang mereka akses saat ini.
+2. JANGAN mengasumsikan pengguna sedang mendaftar beasiswa KECUALI domain/halaman yang dibuka memang tentang beasiswa (${isScholarshipPortal ? 'aktif: portal beasiswa' : 'bukan portal beasiswa'}) atau pengguna sendiri yang spesifik bertanya tentang beasiswa!
+3. Jika pengguna membuka portal imigrasi/paspor, OSS, perizinan, formulir pendaftaran kerja, atau website umum lainnya, jawablah secara tepat sasaran sesuai konteks topik tersebut.
+4. Jika ada informasi yang membutuhkan data identitas pribadi (seperti NIK, NPWP, atau nomor kartu), ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi (UU PDP).
+5. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
+
     const messagesPayload: any[] = [
       {
         role: 'system',
-        content: `Kamu adalah Savvy AI — Scholarship & Public Bureaucracy Coach yang ramah, solutif, empatik, dan 100% patuh pada aturan resmi juknis beasiswa/visa.
-Aturan:
-1. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.
-2. Jika ada informasi yang membutuhkan dokumen identitas (NIK/NPWP), ingatkan pengguna untuk menyimpannya di Vault Pribadi mereka yang terenkripsi.
-3. Hindari asumsi atau informasi palsu.`
+        content: systemPromptContent
       }
     ];
 

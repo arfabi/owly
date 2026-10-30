@@ -23,7 +23,8 @@ export function App() {
   const [activeTab, setActiveTab] = useState<"assistant" | "guide" | "vault" | "audit">("assistant");
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [isFormAnalyzed, setIsFormAnalyzed] = useState(false);
-  const [activePortalTitle, setActivePortalTitle] = useState("Portal LPDP 2026");
+  const [activeTabUrl, setActiveTabUrl] = useState<string>("");
+  const [activeTabTitle, setActiveTabTitle] = useState<string>("");
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [a11yModalOpen, setA11yModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
@@ -61,14 +62,13 @@ export function App() {
     }
   }, []);
 
-  // Sync active tab URL & Title in Chrome Extension context
+  // Sync real active tab URL & Title in Chrome Extension context
   useEffect(() => {
     if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.query) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0];
-        if (tab?.title) {
-          setActivePortalTitle(tab.title);
-        }
+        if (tab?.url) setActiveTabUrl(tab.url);
+        if (tab?.title) setActiveTabTitle(tab.title);
       });
     }
   }, []);
@@ -131,6 +131,8 @@ export function App() {
           <AiAssistantTab
             isVaultUnlocked={isVaultUnlocked}
             isFormAnalyzed={isFormAnalyzed}
+            currentUrl={activeTabUrl}
+            currentTitle={activeTabTitle}
             onAnalyzeForm={() => setIsFormAnalyzed(true)}
             onNavigateTab={(tab) => setActiveTab(tab)}
             onOpenAccessibilityHub={() => setA11yModalOpen(true)}

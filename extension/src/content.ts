@@ -3,12 +3,44 @@
 // Injeksi Closed Shadow DOM, Field Detection, dan Accessibility Controller
 // ============================================================================
 
-import { agentLog } from "./lib/agentLogger";
-
 (() => {
   // Cegah injeksi ganda
   if ((window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__) return;
   (window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__ = true;
+
+  // Inlined Logger: Menjamin content script 100% classic IIFE tanpa external ES module import
+  const BADGE_STYLES: Record<string, { bg: string; color: string; icon: string }> = {
+    PERCEPTION: { bg: "#398CF5", color: "#FFFFFF", icon: "👁️" },
+    ACTION: { bg: "#F59E0B", color: "#000000", icon: "⚡" },
+  };
+
+  function logContentAgent(domain: "PERCEPTION" | "ACTION", message: string, data?: any) {
+    const timestamp = new Date().toLocaleTimeString();
+    const cfg = BADGE_STYLES[domain] || { bg: "#398CF5", color: "#FFFFFF", icon: "🤖" };
+    const badgeStyle = `background: ${cfg.bg}; color: ${cfg.color}; font-weight: bold; border-radius: 4px; padding: 2px 6px; font-size: 11px;`;
+    const timeStyle = `color: #64748B; font-size: 10px; margin-left: 4px;`;
+    const msgStyle = `color: #0F172A; font-weight: 600; font-size: 12px;`;
+
+    if (data !== undefined) {
+      console.log(`%c${cfg.icon} [Savvy Agent: ${domain}]%c ${timestamp}%c ${message}`, badgeStyle, timeStyle, msgStyle, data);
+    } else {
+      console.log(`%c${cfg.icon} [Savvy Agent: ${domain}]%c ${timestamp}%c ${message}`, badgeStyle, timeStyle, msgStyle);
+    }
+
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+        chrome.runtime.sendMessage({
+          type: "AGENT_LOG_EVENT",
+          event: { timestamp, domain, message, data: data ? JSON.parse(JSON.stringify(data)) : null },
+        }).catch(() => {});
+      }
+    } catch (_) {}
+  }
+
+  const agentLog = {
+    perception: (msg: string, data?: any) => logContentAgent("PERCEPTION", msg, data),
+    action: (msg: string, data?: any) => logContentAgent("ACTION", msg, data),
+  };
 
   agentLog.perception("Content Script activated. Closed Shadow DOM host initialized on page.");
 

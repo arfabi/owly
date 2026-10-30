@@ -11,11 +11,15 @@ export const API_BASE_URL = "https://savvy-companion.vercel.app";
 export async function sendChatMessage(
   message: string,
   sessionId?: string | null,
-  portalDomain: string = "beasiswalpdp.kemenkeu.go.id"
+  portalDomain: string = "web-page",
+  pageUrl?: string,
+  pageTitle?: string
 ): Promise<{ reply: string; sessionId?: string; piiBlocked?: boolean }> {
   const startTime = Date.now();
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/chat`, {
     portalDomain,
+    pageUrl,
+    pageTitle,
     message: message.substring(0, 60) + (message.length > 60 ? "..." : ""),
     sessionId: sessionId || "new_session",
   });
@@ -28,6 +32,8 @@ export async function sendChatMessage(
         message,
         sessionId,
         portalDomain,
+        pageUrl,
+        pageTitle,
       }),
     });
 

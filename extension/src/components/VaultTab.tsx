@@ -24,6 +24,7 @@ import {
 import { encryptVaultItem, decryptVaultItem } from "../lib/crypto/vault";
 import { agentLog } from "../lib/agentLogger";
 import { generateEssayDraft } from "../lib/api/client";
+import { sendTabMessage } from "../lib/tabMessenger";
 
 interface VaultTabProps {
   isVaultUnlocked: boolean;
@@ -177,29 +178,17 @@ export function VaultTab({
     });
 
     // Send autofill message to content script
-    if (typeof chrome !== "undefined" && chrome.tabs?.query) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, {
-            type: "BATCH_AUTOFILL",
-            payload: formData,
-          });
-        }
-      });
-    }
+    sendTabMessage({
+      type: "BATCH_AUTOFILL",
+      payload: formData,
+    });
   };
 
   // 6. Undo Autofill
   const handleUndoAutofill = () => {
     setShowUndoBar(false);
     agentLog.action("↩️ Undo Autofill requested. Restoring previous values across form elements.");
-    if (typeof chrome !== "undefined" && chrome.tabs?.query) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, { type: "UNDO_AUTOFILL" });
-        }
-      });
-    }
+    sendTabMessage({ type: "UNDO_AUTOFILL" });
   };
 
   const handleSimulateOcr = async () => {

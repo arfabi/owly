@@ -110,17 +110,6 @@ export function Header({
           </button>
         </div>
       </div>
-
-      {/* Target Goal & Active Portal Badge */}
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 text-[11px]">
-        <div className="flex items-center gap-1.5 text-slate-600 font-mono truncate max-w-[190px]">
-          <Compass className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-          <span className="truncate">{t.header.portalDetected}</span>
-        </div>
-        <div className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold border border-blue-100 text-[10px] shrink-0">
-          {t.header.targetGoal}
-        </div>
-      </div>
     </div>
   );
 }

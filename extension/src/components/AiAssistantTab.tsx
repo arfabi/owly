@@ -27,6 +27,7 @@ import { auditFormData } from "../lib/audit/rules";
 import { SimpleVadDetector } from "../lib/voice/vad";
 import { agentLog } from "../lib/agentLogger";
 import { sendChatMessage, transcribeVoiceAudio } from "../lib/api/client";
+import { sendTabMessage } from "../lib/tabMessenger";
 
 interface Message {
   id: string;
@@ -40,6 +41,8 @@ interface Message {
 interface AiAssistantTabProps {
   isVaultUnlocked: boolean;
   isFormAnalyzed: boolean;
+  currentUrl?: string;
+  currentTitle?: string;
   onAnalyzeForm: () => void;
   onNavigateTab: (tabId: "assistant" | "guide" | "vault" | "audit") => void;
   onOpenAccessibilityHub: () => void;
@@ -48,6 +51,8 @@ interface AiAssistantTabProps {
 export function AiAssistantTab({
   isVaultUnlocked,
   isFormAnalyzed,
+  currentUrl,
+  currentTitle,
   onAnalyzeForm,
   onNavigateTab,
   onOpenAccessibilityHub,
@@ -237,7 +242,15 @@ export function AiAssistantTab({
 
     // 2. Live Hit to Cloud API (https://savvy-companion.vercel.app/api/chat)
     try {
-      const data = await sendChatMessage(text, chatSessionId, "beasiswalpdp.kemenkeu.go.id");
+      let activeDomain = "web-page";
+      if (currentUrl) {
+        try {
+          activeDomain = new URL(currentUrl).hostname;
+        } catch (_) {
+          activeDomain = currentUrl;
+        }
+      }
+      const data = await sendChatMessage(text, chatSessionId, activeDomain, currentUrl, currentTitle);
       if (data.sessionId) setChatSessionId(data.sessionId);
 
       setMessages((prev) => [
@@ -287,25 +300,13 @@ export function AiAssistantTab({
   // Action 2: Explain This (Snip on page)
   const triggerExplainThis = () => {
     agentLog.planner("Triggered starter: 'Explain This' -> Activating screen snip mode.");
-    if (typeof chrome !== "undefined" && chrome.tabs?.query) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, { type: "START_SNIP_SELECTION" }, () => {});
-        }
-      });
-    }
+    sendTabMessage({ type: "START_SNIP_SELECTION" });
   };
 
   // Action 3: Show Me (Spotlight beacon on input)
   const triggerShowMe = () => {
     agentLog.planner("Triggered starter: 'Show Me' -> Navigating beacon spotlight to active field.");
-    if (typeof chrome !== "undefined" && chrome.tabs?.query) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.id) {
-          chrome.tabs.sendMessage(tabs[0].id, { type: "SHOW_FIELD_SPOTLIGHT" }, () => {});
-        }
-      });
-    }
+    sendTabMessage({ type: "SHOW_FIELD_SPOTLIGHT" });
     handleSendMessage(isId ? "Tunjukkan letak kolom aktif di halaman" : "Show me where the active field is located");
   };
 

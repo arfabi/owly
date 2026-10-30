@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { agentLog } from "../lib/agentLogger";
+import { sendTabMessage } from "../lib/tabMessenger";
 
 export function AccessibilityHubTab() {
   const { t } = useLanguage();
@@ -43,18 +44,13 @@ export function AccessibilityHubTab() {
       const nextVal = !prev[id];
       agentLog.action(`👓 A11y feature '${id}' set to: ${nextVal ? "ENABLED" : "DISABLED"}`);
 
-      // Dispatch to content script
-      if (typeof chrome !== "undefined" && chrome.tabs?.query) {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]?.id) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-              type: "SET_A11Y_FEATURE",
-              feature: id,
-              enabled: nextVal,
-            });
-          }
-        });
-      }
+      // Safe dispatch to content script
+      sendTabMessage({
+        type: "SET_A11Y_FEATURE",
+        feature: id,
+        enabled: nextVal,
+      });
+
       return {
         ...prev,
         [id]: nextVal,
