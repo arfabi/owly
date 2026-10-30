@@ -10,7 +10,7 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **P0** | Foundation, Specs & Core Architecture | 8 | 8 | 0 | **100%** |
 | **P1** | Web Showcase & MV3 Extension Client | 10 | 8 | 2 | **80%** |
-| **P2** | Backend API Gateway & Meta Model API | 8 | 0 | 8 | **0%** |
+| **P2** | Backend API Gateway & Baseten Inference API (Muse Spark Open) | 8 | 0 | 8 | **0%** |
 | **P3** | Real On-Device AI Models & Voice Engine | 6 | 0 | 6 | **0%** |
 | **P4** | End-to-End Testing & Security Verification | 5 | 0 | 5 | **0%** |
 | **P5** | Hackathon Deliverables & Video Submission | 5 | 0 | 5 | **0%** |
@@ -43,7 +43,7 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
   - Paths: `.gitignore` (root) & `extension/.gitignore`
   - Complete exclusion of `node_modules/`, `dist/`, `.next/`, `*.log`, and sensitive `.env*` files.
 - [x] **P0.8: Technical Research & AI Stack Finalization**
-  - Free $150 Meta Model API credits claimed; architecture streamlined exclusively on Meta Model API without GPU middleware dependencies (no Baseten).
+  - Free $150 Baseten Inference API (Muse Spark Open) credits claimed; architecture streamlined exclusively on Baseten Inference API (Muse Spark Open) without GPU middleware dependencies (no Baseten).
 
 ---
 
@@ -81,8 +81,8 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 
 ---
 
-## ⚡ P2: Backend API Gateway & Meta Model API Integration
-*Serverless Node.js endpoints bridging user requests to Meta Muse Spark 1.3, Meta Vector Store, and Supabase.*
+## ⚡ P2: Backend API Gateway & Baseten Inference API (Muse Spark Open) Integration
+*Serverless Node.js endpoints bridging user requests to Meta Muse Spark 1.3, Juknis RAG Store, and Supabase.*
 
 - [ ] **P2.1: Backend Project Setup & Environment Configuration**
   - Path: `backend/`
@@ -90,7 +90,7 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
   - Configured `.env` matching `.env.example` with `META_MODEL_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 - [ ] **P2.2: Field Coach RAG Endpoint (`/api/coach/field`)**
   - Input: `{ portal_id, field_id, field_name, label_text, context_text }`
-  - Flow: Query `coach_cache` in Supabase; if miss, invoke Meta Vector Store (`file_search` tool) with Juknis LPDP/Visa documents. Format response with official rule, pitfall, and page citation.
+  - Flow: Query `coach_cache` in Supabase; if miss, invoke Juknis RAG Store (`file_search` tool) with Juknis LPDP/Visa documents. Format response with official rule, pitfall, and page citation.
 - [ ] **P2.3: General Assistant & Voice Chat Endpoint (`/api/chat`)**
   - Input: `{ session_id, message, form_context, language }`
   - Flow: ReAct streaming agent using Meta Muse Spark 1.3 with tool definitions (`file_search`, `set_accessibility_feature`, `recommend_vault_field`).
@@ -108,7 +108,7 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
   - Flow: Proxy to `Muse Voice Transcribe` API; return clean transcribed string with timestamp and detected language.
 - [ ] **P2.8: Regulatory Vector Store Ingestion Script**
   - Path: `backend/scripts/seed_vector_stores.ts`
-  - Ingest official PDF guidelines (LPDP 2026 Booklet, Schengen Visa Application Handbook, OSS User Guide) into Meta Vector Store via API.
+  - Ingest official PDF guidelines (LPDP 2026 Booklet, Schengen Visa Application Handbook, OSS User Guide) into Juknis RAG Store via API.
 
 ---
 
@@ -165,7 +165,7 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 - [ ] **P5.2: Public GitHub Repository Optimization**
   - Polish `README.md` with visual architecture diagrams, installation instructions, environment setup, and demo GIF animations.
 - [ ] **P5.3: Meta AI Dev Credits & API Usage Proof**
-  - Document Meta Model API endpoint calls, token usage logs (`docs/muse-code-log.md`), and compliance with hackathon rules.
+  - Document Baseten Inference API (Muse Spark Open) endpoint calls, token usage logs (`docs/muse-code-log.md`), and compliance with hackathon rules.
 - [ ] **P5.4: Pitch Deck / Slide Deck (PDF)**
   - 10-slide pitch: Problem, Solution, Target Personas, Tech Stack, Competitive Advantage (Zero-Integration + Zero-Knowledge), Roadmap.
 - [ ] **P5.5: Final Submission Form on Devpost / Hackathon Portal**

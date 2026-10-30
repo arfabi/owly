@@ -55,7 +55,7 @@ Sistem warna menggunakan acuan warna netral shadcn/ui dan SkyAgent Magic UI, dir
 
 ### 2.3 Evidence Badges (Lencana Sumber Regulasi)
 * 🟢 **Resmi (`Official`):**
-  * Syarat: Wajib memiliki sitasi dokumen sah (nama file, bab, dan nomor halaman) dari Meta Vector Store (`file_search`).
+  * Syarat: Wajib memiliki sitasi dokumen sah (nama file, bab, dan nomor halaman) dari Juknis RAG Store (`file_search`).
   * Tampilan: `bg-emerald-50 text-emerald-800 border-emerald-200` (Light) | `bg-emerald-950/80 text-emerald-300 border-emerald-500/40` (Dark).
   * Format teks: *"Resmi • Juknis LPDP 2026, hlm. 14"*.
 * 🔵 **Dikurasi (`Curated`):**

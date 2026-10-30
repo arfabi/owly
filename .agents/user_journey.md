@@ -4,7 +4,7 @@
 > Menghubungkan titik masalah emosional (*The 3-Y Friction Framework*) dan teknis pendaftar saat berhadapan dengan formulir birokrasi resmi dengan solusi terarah **Savvy.AI** (Pilar: *Understand*, *Fill*, *Audit*).  
 > Dokumen Pendamping:
 > - [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) — Product Requirements Document & Feature Specs
-> - [`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md) — Arsitektur Sistem, Tech Stack, & Meta Model API
+> - [`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md) — Arsitektur Sistem, Tech Stack, & Baseten Inference API (Muse Spark Open)
 
 ---
 
@@ -58,7 +58,7 @@ Pengalaman buruk pendaftar dalam formulir digital berakar pada **The 3-Y Frictio
   • Petunjuk Kolom Form Gelap        • Ratusan Kolom & Lelah Mengetik   • Takut Salah Alur / Tombol
     ──► Field Coach (4 Elemen Card)    ──► Multiple Vault (Master PW)     ──► Beacon Spotlight & Cursor
   • Juknis Resmi Tersebar / Hilang   • Butuh Pengisian Cepat            • Ragu Format Nilai / Tanggal
-    ──► Meta Vector Store RAG          ──► 1-Click Autofill & Undo        ──► Pre-Submit Traffic Light
+    ──► Juknis RAG Store RAG          ──► 1-Click Autofill & Undo        ──► Pre-Submit Traffic Light
   • Istilah Hukum Birokrasi          • Dokumen KTP Fisik ke Form        • Foto Rawan Diskualifikasi
     ──► Explain This (Snip Multimodal) ──► Upload to Vault (OCR KTP)      ──► Audit Kepatuhan Foto (Sharp)
   • Butuh Tanya Jawab Langsung       • Writer's Block Kolom Esai        • Data Silang Beda Huruf
@@ -77,7 +77,7 @@ Pengalaman buruk pendaftar dalam formulir digital berakar pada **The 3-Y Frictio
   * Tidak paham arti istilah hukum formulir.
   * Teks formulir rapat dan melelahkan mata.
 * **Respon & Fitur Savvy.AI:**
-  * **Auto-Domain Match & Juknis RAG:** Ekstensi mendeteksi domain portal dan menghubungkan ke **Meta Vector Store** resmi terkait.
+  * **Auto-Domain Match & Juknis RAG:** Ekstensi mendeteksi domain portal dan menghubungkan ke **Juknis RAG Store** resmi terkait.
   * **Beacon Spotlight & Kartu Panduan 4-Elemen:** Menyorot field aktif dengan kursor semu visual (*Animated Virtual Cursor*) dan menampilkan kartu petunjuk (*Meaning, How to Fill, Example Valid Value, Common Pitfalls*) dengan badge bukti transparan (🟢 Official / 🔵 Curated / 🟡 AI Guidance).
   * **Explain This (Multimodal Snip):** Pengguna menyeleksi instruksi rumit; DOM Masking otomatis menutupi data pribadi, lalu **Muse Spark Open** menjelaskan konteksnya secara ramah awam.
   * **Accessibility HUB:** Mengaktifkan ADHD Reading Ruler atau font OpenDyslexic untuk kenyamanan membaca.
@@ -94,7 +94,7 @@ Pengalaman buruk pendaftar dalam formulir digital berakar pada **The 3-Y Frictio
   * **Multiple Vault (Password-Protected):** Akses profil terisolasi (*Pribadi*, *Pasangan*, *Pekerjaan*) terenkripsi lokal WebCrypto `AES-256-GCM` berbasis Master Password (tanpa seed phrase rumit).
   * **1-Click Autofill & Instant Undo:** Memetakan data identitas ke form seketika, dengan jaminan tombol Undo 100% mengembalikan kondisi awal.
   * **Upload KTP to Vault (Multimodal Vision):** Foto KTP diekstraksi secara temporer di RAM melalui **Muse Spark Open (Meta)** dengan persetujuan eksplisit pengguna (UU PDP consent). Gambar langsung dihapus setelah pemrosesan dan hanya teks terenkripsi yang disimpan ke Vault lokal.
-  * **Handsfree Voicebot:** Interaksi tanya jawab dan pendiktean handsfree didukung Silero VAD lokal + **Muse Voice Transcribe** (Meta Model API) + sintesis audio instan via Web Speech API bawaan browser/OS.
+  * **Handsfree Voicebot:** Interaksi tanya jawab dan pendiktean handsfree didukung Silero VAD lokal + **Muse Voice Transcribe** (Baseten Inference API (Muse Spark Open)) + sintesis audio instan via Web Speech API bawaan browser/OS.
   * **Essay Coach (Smart Drafting):** Memasukkan 3 poin fakta kasar → disintesiskan menjadi draf narasi terstruktur yang formal, ringkas, dan selaras rubrik beasiswa tanpa mengarang fakta palsu.
 
 ---
@@ -132,7 +132,7 @@ Pengalaman buruk pendaftar dalam formulir digital berakar pada **The 3-Y Frictio
 
 | Fitur / Modul | Pilar | Status Hackathon | Model / Engine Terkait |
 | :--- | :---: | :---: | :--- |
-| **Field Coach & Official Specimen** | Understand | **MVP (P0)** | Meta Vector Store (`file_search`) + Muse Spark Open |
+| **Field Coach & Official Specimen** | Understand | **MVP (P0)** | Juknis RAG Store (`file_search`) + Muse Spark Open |
 | **Beacon Spotlight & Virtual Cursor** | Understand | **MVP (P0)** | Closed Shadow DOM + Deterministic A11y Tree |
 | **Explain This (Multimodal Snip)** | Understand | **MVP (P0)** | Muse Spark Open (Vision) + Local DOM Masking |
 | **Handsfree Voicebot** | Understand | **MVP (P0)** | Muse Voice Transcribe (STT) + Browser/OS Web Speech API (TTS) + Silero VAD |

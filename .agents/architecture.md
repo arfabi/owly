@@ -6,8 +6,8 @@
 > Dokumen Spesifikasi Terkait:
 > - [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) — Product Requirements Document & Feature Specs
 > - [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) — Arsitektur Compound Multi-Agent & Prompt Schemas
-> - [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) — Responses API, Stateful Chains, & Two-Tier Cache
-> - [`file_search_vector_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/file_search_vector_tool.md) — Meta Vector Stores & Tool `file_search`
+> - [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) — Baseten Chaining, Sliding Window Context, & Two-Tier Cache
+> - [`file_search_vector_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/file_search_vector_tool.md) — Juknis RAG Storage & Tool `file_search`
 > - [`web_search_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/web_search_tool.md) — Manual Researcher Agent & Tool `web_search`
 
 ---
@@ -18,8 +18,8 @@ Savvy.AI dibangun di atas prinsip **Zero-Integration / Zero-SDK**, di mana asist
 
 Arsitektur sistem memisahkan secara tegas antara:
 1. **Deterministic Guardrails (Lokal/Klien):** Validasi regex, enkripsi AES-256-GCM, FSM navigasi, OCR lokal, dan audit pasfoto (sharp) yang tidak diserahkan pada halusinasi model AI.
-2. **Agentic Reasoning & RAG (Meta Model API):** Penalaran konteks instruksi birokrasi, retrieval juknis resmi, sintesis draf esai, dan konsistensi data silang menggunakan ekosistem Meta AI resmi.
-3. **Audio Presentation Layer:** Transkripsi STT berbasis **Muse Voice Transcribe** via Meta Model API, dan output suara asisten berbasis **Browser/OS Native Web Speech API** (`window.speechSynthesis`, zero-latency, 100% lokal, tanpa dependensi server).
+2. **Agentic Reasoning & RAG (Muse Spark Open via Baseten):** Penalaran konteks instruksi birokrasi, retrieval juknis resmi, sintesis draf esai, dan konsistensi data silang menggunakan model resmi Meta (`meta-models/muse-spark-open-1026`) yang di-host di Baseten Inference API.
+3. **Audio Presentation Layer:** Input suara menggunakan Web Speech API (Browser STT) atau audio recording, dan output suara asisten berbasis **Browser/OS Native Web Speech API** (`window.speechSynthesis`, zero-latency, 100% lokal, tanpa dependensi server).
 
 ---
 
@@ -57,22 +57,21 @@ Arsitektur sistem memisahkan secara tegas antara:
  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
  │                                           BACKEND API GATEWAY (VERCEL SERVERLESS)                                         │
  │                                                                                                                           │
- │   ├── Session & Chain Manager: Pemeliharaan context window via Responses API (`current_chain_id`, `tab_id`)               │
+ │   ├── Session & Context Manager: Pemeliharaan context sliding window & Supabase session (`session_id`, `tab_id`)          │
  │   ├── Shared Cache Engine: In-memory single-flight deduplication + lookup `coach_cache` (<50 ms)                          │
  │   └── Photo Compliance Engine: Audit pasfoto in-memory via `sharp` (Aspek rasio, Laplacian blur, proporsi kepala)        │
  └───────────────────────────────┬───────────────────────────────────────────────────────────────────┬───────────────────────┘
                                  │                                                                   │
                                  ▼                                                                   ▼
  ┌──────────────────────────────────────────────┐                   ┌─────────────────────────────────────────────────────────┐
- │             SUPABASE POSTGRESQL              │                   │                 META MODEL API (CLOUD)                  │
+ │             SUPABASE POSTGRESQL              │                   │              BASETEN INFERENCE API (CLOUD)              │
  │                                              │                   │                                                         │
- │  • savvy_sessions (Stateful Chain Tracking)  │                   │  1. Muse Spark Open (Reasoning & Multi-Agent ReAct)     │
- │  • coach_cache (Normalized Signature Cache)  │                   │  2. Muse Vector Store (file_search RAG Juknis)          │
- │  • vector_stores (Mapping Domain Portal)     │                   │  3. Muse Voice Transcribe (STT Ucapan Warga)            │
- │  • feedback_reports (User Crowdsourced Bugs) │                   │  4. SAM 3.1 Open (Cloud Visual Segmentation Fallback)   │
- │  • Row-Level Security (RLS) & Anon Auth      │                   │  5. Muse Code (Engineering Architecture Log)            │
+ │  • savvy_sessions (Session & State Tracking) │                   │  1. Muse Spark Open (`meta-models/muse-spark-open-1026`)│
+ │  • coach_cache (Normalized Signature Cache)  │                   │     - Reasoning Engine (low/med/high/xhigh)             │
+ │  • juknis_chunks (Grounding Dokumen RAG)     │                   │     - Multimodal Vision (Explain This & Vault OCR)      │
+ │  • feedback_reports (User Crowdsourced Bugs) │                   │     - Native Tool Calling & ReAct Orchestrator          │
+ │  • Row-Level Security (RLS) & Anon Auth      │                   │  2. Muse Code (Engineering Architecture Log)            │
  └──────────────────────────────────────────────┘                   └─────────────────────────────────────────────────────────┘
-```
 ```
 
 ---
@@ -88,45 +87,32 @@ Arsitektur sistem memisahkan secara tegas antara:
 | **Backend Gateway** | **Vercel Serverless (Node/TS)** | Node.js 20 LTS | Hosting gateway API serverless cepat, gratis, dan scale-to-zero |
 | | **Sharp** | v0.33+ | Pemrosesan citra deterministik C++ in-memory (Laplacian variance blur, rasio aspek biometrik) |
 | **Database & Cache** | **Supabase PostgreSQL** | v15 (Cloud) | Penyimpanan sesi stateful, cache respons field, dan Auth Anonim dengan RLS |
-| **Cloud AI Models** | **Muse Spark Open** | Meta Model API / Baseten | Otak utama: ReAct orchestrator, Field Coach, Essay Coach, Consistency Checker, Multimodal Vision Document Extractor (in-RAM only, UU PDP consent) |
-| | **Muse Vector Store** | Meta Model API | Cloud RAG juknis resmi portal dengan chunking semantik & sitasi bab/halaman persis |
-| | **Muse Voice Transcribe** | Meta Model API | Cloud STT mengubah audio ucapan warga menjadi teks interaktif |
-| | **SAM 3.1 Open (0.87B)** | Meta Model API | Cloud visual fallback untuk segmentasi dokumen resolusi tinggi |
+| **Cloud AI Models** | **Muse Spark Open** | Baseten (`meta-models/muse-spark-open-1026`) | Otak utama: ReAct orchestrator, Field Coach, Essay Coach, Consistency Checker, Multimodal Vision Document Extractor (in-RAM only, UU PDP consent) via Baseten Inference API |
+| | **Juknis Knowledge Store** | Supabase PostgreSQL / Local JSON | Grounding RAG juknis resmi portal dengan chunking semantik & sitasi bab/halaman persis diinjeksikan ke context Muse Spark Open |
 | | **Muse Code** | Meta Tooling | Dokumentasi rekayasa sistem agentic di `docs/muse-code-log.md` |
 | **Audio Presentation** | **Web Speech API** | Native Browser/OS | Sintesis suara instan (<50 ms) bawaan browser/sistem operasi (`window.speechSynthesis`) untuk bahasa Indonesia, Inggris, dll. Zero-cost, zero-latency, 100% lokal tanpa beban server. |
 
 ---
 
-## 4. Rincian Pemanfaatan Model AI (Eksklusif Meta Model API)
+## 4. Rincian Pemanfaatan Model AI (Eksklusif Model Meta via Baseten)
 
-Seluruh pemodelan kecerdasan buatan dijalankan secara eksklusif melalui **Meta Model API** resmi tanpa hosting perantara pihak ketiga (tanpa Baseten):
+Seluruh pemodelan kecerdasan buatan dijalankan secara eksklusif menggunakan model resmi Meta yaitu **Muse Spark Open** (`meta-models/muse-spark-open-1026`) yang di-host pada platform inferensi **Baseten**:
 
 ### 4.1 Muse Spark Open (The Orchestrator & Multi-Agent Brain)
 * **Peran:**
-  * Menjalankan siklus ReAct (*Think → Act → Observe*) pada Field Coach dan Chatbot.
-  * Menerima input visual gambar beranotasi pada fitur **Explain This** (Vision Multimodal) setelah kotak isian ditutup oleh DOM Masking.
-  * Bertindak sebagai **Essay Coach**: menstrukturkan 3 bullet fakta kasar menjadi draft narasi formal tanpa halusinasi fakta.
+  * Menjalankan siklus ReAct (*Think → Act → Observe*) pada Field Coach dan Chatbot dengan Tool Calling standar OpenAI-compatible.
+  * Menerima input visual gambar beranotasi pada fitur **Explain This** (Vision Multimodal) serta pemindaian dokumen ID/KTP untuk vault via input base64 `image_url`.
+  * Bertindak sebagai **Essay Coach**: menstrukturkan bullet fakta kasar menjadi draft narasi formal tanpa halusinasi fakta dengan penalaran mendalam (`reasoning_effort: "high"`).
   * Bertindak sebagai **Consistency Checker**: membandingkan silang keselarasan data antar-field (misal: Nama di Form vs Nama di Paspor).
-* **Integrasi:** Dipanggil melalui endpoint backend `POST /api/chat`, `POST /api/coach/field`, `POST /api/essay/coach`, dan `POST /api/audit/consistency`.
+* **Integrasi:** Dipanggil melalui endpoint gateway backend `POST /api/chat`, `POST /api/coach/field`, `POST /api/essay/coach`, dan `POST /api/audit/consistency` yang mengarah ke `https://inference.baseten.co/v1/chat/completions`.
 
-### 4.2 Muse Vector Store (`file_search` Tool)
+### 4.2 Juknis RAG Knowledge Base (`file_search` Tool)
 * **Peran:**
-  * Menyimpan representasi semantik juknis resmi portal beasiswa/visa (misal: LPDP, Schengen Visa, US Visa Guide).
-  * Menghasilkan grounding kutipan resmi (🟢 **Official Badge**) disertai referensi nomor halaman dan nomor bab yang dapat diverifikasi pengguna.
-* **Integrasi:** Terhubung sebagai tool bawaan (`file_search`) pada sesi inferensi Muse Spark Open.
+  * Menyimpan representasi semantik juknis resmi portal beasiswa/visa (misal: LPDP, Schengen Visa, US Visa Guide) pada database Supabase / file JSON terstruktur.
+  * Menghasilkan grounding kutipan resmi (🟢 **Official Badge**) disertai referensi nomor halaman dan nomor bab yang diinjeksikan langsung ke dalam konteks penalaran Muse Spark Open.
+* **Integrasi:** Dijalankan via function calling tool `search_scholarship_guide` / `lookup_official_docs` pada loop agent Muse Spark Open di Baseten.
 
-### 4.3 Muse Voice Transcribe (Speech-to-Text)
-* **Peran:**
-  * Mengonversi rekaman suara ucapan warga dari mikrofon browser menjadi teks pertanyaan secara akurat.
-  * Bekerja sama dengan on-device **Silero VAD** yang mendeteksi kapan pengguna mulai dan selesai berbicara (jeda hening 800 ms).
-* **Integrasi:** Dipanggil melalui endpoint backend `POST /api/voice/transcribe`.
-
-### 4.4 SAM 3.1 Open 0.87B (Visual Fallback)
-* **Peran:**
-  * Fallback server-side untuk segmentasi dokumen, batas tepi formulir, atau pemindaian resolusi tinggi jika perangkat klien memiliki keterbatasan WebAssembly/RAM.
-* **Integrasi:** Dipanggil via backend saat analisis visual membutuhkan resolusi tinggi.
-
-### 4.5 Muse Code (Agentic Engineering)
+### 4.3 Muse Code (Agentic Engineering)
 * **Peran:**
   * Dokumentasi alur pengembangan vibecoding sistem multi-agent, pencatatan iterasi schema JSON, dan logging perbaikan sistem di `docs/muse-code-log.md`.
 
@@ -165,9 +151,9 @@ Untuk menghasilkan asisten suara yang responsif, zero-latency, dan tidak bergant
 
 ---
 
-## 6. Two-Tier Cache & Stateful Responses API
+## 6. Two-Tier Cache & Sliding Window Conversation Flow
 
-Untuk menghemat kuota Meta Model API dan mencapai waktu respons instan:
+Untuk menghemat pemanggilan inferensi Baseten dan mencapai waktu respons instan:
 
 ```
 [ Pengguna Fokus ke Kolom / Bertanya ] 
@@ -182,18 +168,17 @@ Untuk menghemat kuota Meta Model API dan mencapai waktu respons instan:
                [ MISS ]
                   │
                   ▼
-       Meta Model API (Responses API)
-     Muse Spark Open + file_search
+        Baseten Inference API
+      Muse Spark Open + RAG Context
                   │
                   ▼
        Simpan ke coach_cache & Kirim
 ```
 
-1. **Sesi Stateful via Responses API:**
-   * Riwayat percakapan tidak dikirim ulang secara penuh (*preventing token ballooning*).
-   * Backend mengelola pointer `current_chain_id` pada tabel `savvy_sessions` per `(user_id, tab_id)`.
+1. **Manajemen Konteks Sesi:**
+   * Menggunakan riwayat percakapan array `messages: [...]` yang dikelola secara efisien dengan *sliding window* (10 pesan aktif) dan di-chaining ke Baseten.
 2. **Single-Flight Deduplication:**
-   * Jika beberapa tab menanyakan field yang sama secara bersamaan, gateway hanya melakukan satu panggilan inferensi ke Meta Model API dan mendistribusikan hasilnya ke seluruh pemanggil.
+   * Jika beberapa tab menanyakan field yang sama secara bersamaan, gateway hanya melakukan satu panggilan inferensi ke Baseten dan mendistribusikan hasilnya ke seluruh pemanggil.
 
 ---
 
@@ -207,7 +192,7 @@ Untuk menghemat kuota Meta Model API dan mencapai waktu respons instan:
 2. **DOM Masking Otomatis:**
    * Fitur *Explain This* melakukan render canvas penutup warna hitam pekat di atas seluruh elemen input data pengguna sebelum mengambil cuplikan layar.
 3. **Local PII Scrubber:**
-   * Regex sisi klien menyamarkan NIK, nomor paspor, dan kontak sebelum teks prompt dikirim ke Meta Model API.
+   * Regex sisi klien menyamarkan NIK, nomor paspor, dan kontak sebelum teks prompt dikirim ke model AI.
 
 ---
 
@@ -218,9 +203,10 @@ Untuk menghemat kuota Meta Model API dan mencapai waktu respons instan:
 * **Database & Auth:** Terhubung ke proyek **Supabase Cloud** dengan kebijakan Row-Level Security aktif.
 * **Environment Variables yang Dibutuhkan:**
   ```env
-  # Meta Model API (Wajib)
-  META_MODEL_API_KEY=your_meta_model_api_key
-  META_MODEL_API_URL=https://api.meta.ai/v1
+  # Baseten Inference API (Wajib untuk Muse Spark Open)
+  BASETEN_API_KEY=your_baseten_api_key
+  BASETEN_BASE_URL=https://inference.baseten.co/v1
+  MUSE_SPARK_MODEL_NAME=meta-models/muse-spark-open-1026
 
   # Supabase Service & Client (Wajib)
   SUPABASE_URL=https://your-project.supabase.co

@@ -1,14 +1,14 @@
 # Savvy.AI: Web Search Tool & Manual Researcher - Muse Spark 1.3
 
-_Cara memakai `web_search` (search grounding) di Meta Model API, dan agent Manual Researcher yang memakainya untuk mencari pedoman pengisian form. Siap untuk `docs/web_search_tool.md`._
+_Cara memakai `web_search` (search grounding) di Baseten Inference API, dan agent Manual Researcher yang memakainya untuk mencari pedoman pengisian form. Siap untuk `docs/web_search_tool.md`._
 
-> **Dokumen terkait:** `file_search_vector_tool.md` (RAG untuk PDF juknis resmi, termasuk tabel perbandingan file_search vs web_search vs pgvector), `multi_chain_cache.md` (Responses API dan chain), `multi_agents.md` (arsitektur agent).
+> **Dokumen terkait:** `file_search_vector_tool.md` (RAG untuk PDF juknis resmi, termasuk tabel perbandingan file_search vs web_search vs pgvector), `multi_chain_cache.md` (Native Tool Calling (OpenAI-compatible) dan chain), `multi_agents.md` (arsitektur agent).
 
 ---
 
 ## 1. Peran `web_search`
 
-- `web_search` adalah tool bawaan di **Responses API** (bukan Chat Completions). Jawaban berbasis web terkini disertai **sitasi** (search grounding).
+- `web_search` adalah tool bawaan di **Native Tool Calling (OpenAI-compatible)** (bukan Chat Completions). Jawaban berbasis web terkini disertai **sitasi** (search grounding).
 - Dipakai untuk: aturan terbaru 2026 yang berubah, berita, halaman penyelenggara, peraturan terkait, pedoman pengisian form yang belum ada di Vector Store.
 - Aturan emas: juknis resmi publik -> `file_search`; aturan terbaru / berita -> `web_search`; KTP/KK user -> tidak masuk tool pencarian manapun (detail di `file_search_vector_tool.md` bagian 5).
 - Kombinasi terbaik: `file_search` untuk juknis, `web_search` untuk update terbaru.
@@ -28,7 +28,7 @@ tools: [
 ]
 ```
 
-Pemakaian lengkap bersama `previous_response_id` (chain per user per tab) ada di `multi_chain_cache.md` bagian 4.2.
+Pemakaian lengkap bersama `messages` (chain per user per tab) ada di `multi_chain_cache.md` bagian 4.2.
 
 ### 1.2 Aturan dalam prompt
 

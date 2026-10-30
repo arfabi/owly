@@ -1,6 +1,6 @@
-# Savvy.AI: Multi Chain & Cache (Responses API, Chain ID, Supabase, Cache) - Muse Spark 1.3
+# Savvy.AI: Multi Chain & Cache (Baseten Chat Completions API, Chain ID, Supabase, Cache) - Muse Spark 1.3
 
-_Gabungan dokumen Responses API & Chain ID (agar tidak tercampur antar user), manajemen token, skema Supabase, dan strategi cache (browser + database bersama). Siap untuk `docs/multi_chain_cache.md`._
+_Gabungan dokumen Baseten Chat Completions API & Chain ID (agar tidak tercampur antar user), manajemen token, skema Supabase, dan strategi cache (browser + database bersama). Siap untuk `docs/multi_chain_cache.md`._
 
 > **Dokumen terkait:** `multi_agents.md` (arsitektur agent, sandbox, deterministic tools), `web_search_tool.md`, `file_search_vector_tool.md`.
 
@@ -11,7 +11,7 @@ _Gabungan dokumen Responses API & Chain ID (agar tidak tercampur antar user), ma
 ### 1.1 Apa yang dibuat Meta vs apa yang kita simpan
 
 ```
-[Meta Model API] -- bikin --> response_id (contoh: resp_abc123)
+[Baseten Inference API] -- bikin --> response_id (contoh: resp_abc123)
 
 [Backend Kita]   -- simpan --> mapping user_id + tab_id -> response_id
 ```
@@ -22,10 +22,10 @@ _Gabungan dokumen Responses API & Chain ID (agar tidak tercampur antar user), ma
 
 ### 1.2 Analogi n8n
 
-| n8n | Meta Spark Responses API |
+| n8n | Meta Spark Baseten Chat Completions API |
 |---|---|
 | Memory Node simpan di Postgres kamu | History disimpan di server Meta |
-| Tiap run kamu kirim ulang full history (10jt token untuk 100 pesan) | Kamu cuma kirim `previous_response_id` (200k token untuk 100 pesan) |
+| Tiap run kamu kirim ulang full history (10jt token untuk 100 pesan) | Kamu cuma kirim `messages context history` (200k token untuk 100 pesan) |
 | Hemat? Tidak, boros token | Hemat 50x lipat |
 
 ---
@@ -62,7 +62,7 @@ await supabase.from('savvy_sessions').upsert({
 
 ## 3. Skema Supabase
 
-### 3.1 Tabel `savvy_sessions` (chain privat, butuh `previous_response_id`)
+### 3.1 Tabel `savvy_sessions` (chain privat, butuh `messages context history`)
 
 ```sql
 create table savvy_sessions (
@@ -85,7 +85,7 @@ create index idx_sessions_expires on savvy_sessions(expires_at);
 
 ### 3.2 Tabel `coach_cache` (cache bersama, generik)
 
-Skema gabungan dari dua rancangan (rancangan Responses API dan rancangan cache form). Semua kolom dari kedua versi dipertahankan; kolom yang artinya sama disatukan dan ditandai di komentar.
+Skema gabungan dari dua rancangan (rancangan Baseten Chat Completions API dan rancangan cache form). Semua kolom dari kedua versi dipertahankan; kolom yang artinya sama disatukan dan ditandai di komentar.
 
 ```sql
 create table coach_cache (
@@ -115,8 +115,8 @@ create index on coach_cache (form_id);
 
 ### 3.3 Beda penggunaan
 
-- `savvy_sessions` -> pakai **Responses API + `previous_response_id`** (privat, ada PII).
-- `coach_cache` -> pakai **Chat Completions stateless TANPA `previous_response_id`** (publik, bisa di-share 10 user).
+- `savvy_sessions` -> pakai **Baseten Chat Completions API + `messages context history`** (privat, ada PII).
+- `coach_cache` -> pakai **Chat Completions stateless TANPA `messages context history`** (publik, bisa di-share 10 user).
 
 ---
 
@@ -172,7 +172,7 @@ export async function saveChainId(userId, tabId, portalKey, newResponseId, token
 }
 ```
 
-### 4.2 Prompt + `previous_response_id` (Field Coach)
+### 4.2 Prompt + `messages context history` (Field Coach)
 
 ```js
 // lib/savvyAgent.js
@@ -219,10 +219,10 @@ Badge: Official jika ada confirmation_ref, Curated jika dari cache, AI Guidance 
       }
     })
   } else {
-    // Lanjutan chain - CUMA kirim previous_response_id + input baru
+    // Lanjutan chain - CUMA kirim messages context history + input baru
     response = await meta.responses.create({
       model: 'muse-spark-1.3',
-      previous_response_id: chain.currentId, // <-- INI KUNCINYA (HEMAT TOKEN)
+      messages context history: chain.currentId, // <-- INI KUNCINYA (HEMAT TOKEN)
       input: prompt,
       reasoning_effort: 'low',
       tools: [{ type: 'web_search' }]
@@ -243,7 +243,7 @@ Versi dengan `file_search` (RAG juknis resmi) ada di `file_search_vector_tool.md
 if (token_count > 80000 || message_count > 50) {
   const summary = await meta.responses.create({
     model: 'muse-spark-1.3',
-    previous_response_id: lastId,
+    messages context history: lastId,
     input: 'Ringkas progres audit Tahap 1-2 dalam 200 token untuk lanjut Tahap 3',
     reasoning_effort: 'low'
   })
@@ -270,7 +270,7 @@ Untuk menyimpan file .js hasil `code_execution` agent, lihat `multi_agents.md` b
 - 100 pesan x 2k token x rata-rata 50 pesan history = ~10 juta token input
 - Biaya: 10jt * $1.25 = **$12.5 / user / sesi**
 
-**Responses API (stateful, yang kita pakai)**
+**Baseten Chat Completions API (stateful, yang kita pakai)**
 
 - Tiap turn cuma kirim 2k baru
 - 100 pesan = 200k token input
@@ -402,7 +402,7 @@ Output wajib JSON sesuai schema field_contents.
 - [ ] Jangan pernah pakai global var `lastResponseId`
 - [ ] Selalu `getCurrentChainId(userId, tabId)` dari Supabase
 - [ ] Chain ID simpan per user per tab di `savvy_sessions`
-- [ ] Cache bersama (`coach_cache`) pakai Chat Completions stateless, BUKAN Responses API
+- [ ] Cache bersama (`coach_cache`) pakai Chat Completions stateless, BUKAN Baseten Chat Completions API
 - [ ] Single-flight (`inflight`) hanya untuk Chat Completions
 - [ ] Redact PII sebelum kirim prompt (NIK, HP, alamat jadi [REDACTED])
 - [ ] TTL 48 jam: kalau expired, mulai chain baru; reset chain kalau >50 pesan / 80k token

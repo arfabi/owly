@@ -15,7 +15,7 @@ Officer upload PDF 100 halaman -> Kamu chunk manual -> embedding via API -> simp
 
 Dengan File Search:
 ```
-Officer upload PDF -> Upload ke Meta Vector Store -> Meta auto chunk + embedding
+Officer upload PDF -> Upload ke Juknis Knowledge RAG Store -> Meta auto chunk + embedding
 User tanya -> Agent otomatis call tool file_search -> Meta balikin 3 chunk + sitasi halaman
 ```
 
@@ -121,7 +121,7 @@ export async function uploadJuknisToVectorStore({ vectorStoreId, filePath, fileN
 }
 ```
 
-### Step 3: Pakai di Field Coach (Combo dengan previous_response_id)
+### Step 3: Pakai di Field Coach (Combo dengan messages)
 
 ```js
 export async function askWithFileSearch({ userId, tabId, portalKey, question }) {
@@ -167,7 +167,7 @@ export async function askWithFileSearch({ userId, tabId, portalKey, question }) 
   } else {
     response = await meta.responses.create({
       model: 'muse-spark-1.3',
-      previous_response_id: chain.currentId, // hemat token
+      messages: chain.currentId, // hemat token
       input: prompt,
       tools: [
         { type: 'file_search', vector_store_ids: [vectorStoreId] },
@@ -231,7 +231,7 @@ Best practice Savvy:
 
 ## 8. Dashboard Cek
 
-Di dev.meta.ai -> Vector Stores:
+Di inference.baseten.co -> Vector Stores:
 - Lihat `4 / 100 used`
 - Lihat status file: processing / ready / failed
 - Hapus file draft yang tidak dipakai untuk hemat storage

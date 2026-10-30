@@ -4,8 +4,8 @@
 > Versi 2.1 · 28 Okt 2026 · Meta Global AI Developer Hackathon 2026 · Track: Indie Developer · Tema: Build for Your World  
 > Dokumen Arsitektur & Spesifikasi Pendamping:
 > - [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) — Arsitektur Compound Multi-Agent, FSM Guardrail, & Deterministic Tools
-> - [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) — Responses API, Stateful Multi-Chain Loop, & Two-Tier Cache System
-> - [`file_search_vector_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/file_search_vector_tool.md) — Meta Vector Stores & Tool `file_search` untuk Juknis Resmi
+> - [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) — Baseten Chaining, Sliding Window Context, & Two-Tier Cache System
+> - [`file_search_vector_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/file_search_vector_tool.md) — Juknis RAG Stores & Tool `file_search` untuk Juknis Resmi
 > - [`web_search_tool.md`](file:///d:/webdev/laragon/www/savvy/.agents/web_search_tool.md) — Manual Researcher Agent & Real-Time `web_search` Tool
 
 ---
@@ -19,7 +19,7 @@ Savvy.AI mengombinasikan siklus agen ReAct (*Think → Act → Observe*) berbasi
 ### Tiga Pilar Solusi
 | Pilar | Pertanyaan Pengguna | Inti Solusi | Implementasi Spesifik |
 |---|---|---|---|
-| **Understand** | *"Kolom ini maksudnya apa dan apa aturannya?"* | Contextual Guidance & Accessibility | • **Field Coach** & **Chatbot/Voicebot** via Meta Vector Store (`file_search`)<br>• **Explain This** (Multimodal Snip)<br>• **Accessibility HUB** (14 Deterministic Tools: Reading Spotlight, TTS, Contrast, Dyslexic Font, dll.)<br>• **Beacon Spotlight** (Shadow DOM) |
+| **Understand** | *"Kolom ini maksudnya apa dan apa aturannya?"* | Contextual Guidance & Accessibility | • **Field Coach** & **Chatbot/Voicebot** via Juknis RAG Store (`file_search`)<br>• **Explain This** (Multimodal Snip)<br>• **Accessibility HUB** (14 Deterministic Tools: Reading Spotlight, TTS, Contrast, Dyslexic Font, dll.)<br>• **Beacon Spotlight** (Shadow DOM) |
 | **Fill** | *"Bagaimana mengisinya dengan benar, konsisten, dan cepat?"* | Secure Autofill & Smart Drafting | • **Multiple Vault (Password)** lokal AES-256-GCM<br>• **Upload to Vault** (Ekstraksi KTP via Muse Spark Open Multimodal Vision in-RAM)<br>• **Essay Coach** (Brainstorming & Drafting narasi 3-bullet) |
 | **Audit** | *"Apakah ada yang salah atau berpotensi ditolak?"* | Deterministic & Consistency Pre-Audit | • **Traffic Light Auditor** (Validasi format/regex)<br>• **Audit Kepatuhan Foto** (`sharp` deterministik tanpa sentuh piksel)<br>• **Consistency Checker Agent** (Kesesuaian data silang) |
 
@@ -27,7 +27,7 @@ Savvy.AI mengombinasikan siklus agen ReAct (*Think → Act → Observe*) berbasi
 - **Produk Siap Pakai:** Ekstensi Manifest V3 (Developer Mode) yang beroperasi mulus di mock portal (`frontend/public/mock-portal/`) dan formulir PDF.
 - **Pemanfaatan Nyata Meta AI & Model Stack:**
   - **Muse Spark Open:** Penalaran multimodal, Field Coach, Essay Coach, Vision Document Extractor, dan orkestrasi ReAct loop.
-  - **Meta Vector Store (`file_search`):** Retrieval juknis resmi dengan sitasi dokumen halaman persis.
+  - **Juknis RAG Store (`file_search`):** Retrieval juknis resmi dengan sitasi dokumen halaman persis.
   - **Muse Voice Transcribe:** Transkripsi audio STT untuk interaksi handsfree warga.
   - **SAM 3.1 Open 0.87B:** Segmentasi visual presisi tinggi.
   - **Muse Code:** Dokumentasi log vibecoding agentic di `docs/muse-code-log.md`.
@@ -57,7 +57,7 @@ Savvy.AI mengombinasikan siklus agen ReAct (*Think → Act → Observe*) berbasi
 2. **Aksi Penulisan Eksplisit:** Savvy.AI hanya mengisi kolom DOM atas persetujuan sadar pengguna (klik *Autofill*, *Insert*, atau *Apply Fix*). Seluruh perubahan tercatat pada batch Undo instan.
 3. **Mode Pasif Tanpa Pembacaan Nilai (`.value`):** Dalam kondisi pasif, ekstensi hanya memetakan struktur form (`role`, `accessible name`, locator). Dilarang membaca `.value`, dilarang screenshot otomatis, dilarang keylogger.
 4. **Badge & Transparansi Bukti:** Setiap rekomendasi wajib memiliki label sumber:
-   - 🟢 **Official:** Bersumber langsung dari juknis resmi via Meta Vector Store (`file_search`).
+   - 🟢 **Official:** Bersumber langsung dari juknis resmi via Juknis RAG Store (`file_search`).
    - 🔵 **Savvy Curated / Verified Cache:** Jawaban valid yang tersimpan di `coach_cache`.
    - 🟡 **AI Guidance:** Penalaran AI berbasis konteks DOM (jika confidence < 0.6, sarankan *"Konfirmasi ke instansi penerbit"*).
 5. **PII Masking & Privacy First:** Redaksi identitas (NIK, nomor paspor, kontak) dilakukan di sisi klien sebelum data teks/visual dikirim ke inference backend.
@@ -68,16 +68,16 @@ Savvy.AI mengombinasikan siklus agen ReAct (*Think → Act → Observe*) berbasi
 
 ## 4. Cakupan Bahasa & Dukungan Suara (Multilingual Support)
 
-Mendukung warga global dan pendaftar internasional dengan asistensi teks, transkripsi suara (Meta Model API: Muse Voice Transcribe), dan output suara cerdas bawaan browser/OS (Web Speech API):
+Mendukung warga global dan pendaftar internasional dengan asistensi teks, transkripsi suara (Baseten Inference API: Muse Voice Transcribe), dan output suara cerdas bawaan browser/OS (Web Speech API):
 
 | No | Bahasa | Prioritas / Status | Mesin Suara / Audio Stack |
 |---|---|---|---|
-| 1 | **Bahasa Indonesia** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
-| 2 | **Bahasa Inggris** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
-| 3 | **Bahasa Mandarin** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
-| 4 | **Bahasa Spanyol** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
-| 5 | **Bahasa Arab Standar** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
-| 6 | **Bahasa Prancis, Jerman, Jepang, Portugis** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
+| 1 | **Bahasa Indonesia** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Baseten Inference API) + Browser/OS Web Speech API |
+| 2 | **Bahasa Inggris** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Baseten Inference API) + Browser/OS Web Speech API |
+| 3 | **Bahasa Mandarin** | Didukung | Muse Voice Transcribe (Baseten Inference API) + Browser/OS Web Speech API |
+| 4 | **Bahasa Spanyol** | Didukung | Muse Voice Transcribe (Baseten Inference API) + Browser/OS Web Speech API |
+| 5 | **Bahasa Arab Standar** | Didukung | Muse Voice Transcribe (Baseten Inference API) + Browser/OS Web Speech API |
+| 6 | **Bahasa Prancis, Jerman, Jepang, Portugis** | Didukung | Muse Voice Transcribe (Baseten Inference API) + Browser/OS Web Speech API |
 
 ### 4.1 Arsitektur Modular i18n & Zero Hardcoded Strings
 1. **Aturan Baku Antarmuka:** Seluruh penulisan teks/string pada antarmuka pengguna (baik di `frontend/` web showcase/mock portal maupun `extension/` Chrome Side Panel) **dilarang keras di-hardcode**. Seluruh string tampilan wajib dimuat secara modular melalui modul terjemahan terpusat (`translate.js` / kamus `i18n`).
@@ -96,14 +96,14 @@ Mendukung warga global dan pendaftar internasional dengan asistensi teks, transk
    - Menghasilkan *normalized field signature* untuk mendeteksi tipe input tanpa membaca isian data pengguna.
 2. **Field Coach Agent (Contextual Q&A):**
    - Terpicu saat pengguna fokus pada field tertentu atau bertanya di Side Panel.
-   - Menggunakan **Responses API & Chain ID** (`multi_chain_cache.md`) untuk memelihara konteks sesi percakapan per tab secara efisien.
+   - Menggunakan **Session ID & Sliding Window Context** (`multi_chain_cache.md`) untuk memelihara konteks percakapan ke Baseten secara efisien.
    - Melakukan retrieval berjenjang:
      1. Cek `coach_cache` (Supabase) untuk field identik → respons instan (<50 ms).
-     2. Jika tidak ada di cache, panggil tool `file_search` ke **Meta Vector Store** juknis portal terkait → sitasi nomor bab & halaman resmi.
+     2. Jika tidak ada di cache, panggil tool `file_search` ke **Juknis RAG Store** juknis portal terkait → sitasi nomor bab & halaman resmi.
      3. Jika pertanyaan menyangkut regulasi dinamis terbaru, panggil tool `web_search` via **Manual Researcher Agent**.
 3. **Chatbot "Tanya Savvy" & Handsfree Voicebot:**
    - **Teks:** Dialog interaktif di Side Panel dengan riwayat terhubung per tab.
-   - **Voice:** Interaksi Handsfree berbasis **Silero VAD** on-device (deteksi jeda hening dan barge-in) → transkripsi **Muse Voice Transcribe** (Meta Model API) → sintesis audio instan via browser **Web Speech API**.
+   - **Voice:** Interaksi Handsfree berbasis **Silero VAD** on-device (deteksi jeda hening dan barge-in) → transkripsi **Muse Voice Transcribe** (Baseten Inference API) → sintesis audio instan via browser **Web Speech API**.
    - **Avatar Talking & Lipsync:** Indikator visual SVG interaktif (*Listening / Thinking / Speaking*).
 4. **Explain This (Multimodal Snip):**
    - Pengguna menyeleksi area formulir yang membingungkan.
@@ -198,7 +198,7 @@ Pengaturan aksesibilitas deterministik langsung di sisi klien (`content_scripts`
 2. **Dual Autofill Mode (Single-Field & Batch All-Fields) & Safe Undo:**
    - **Mode Granular (Single-Field Autofill):** Tersedia langsung di kartu panduan Field Coach untuk mengisi satu kolom aktif secara presisi (misal: hanya mengisi kolom NIK atau Tanggal Lahir) tanpa menyentuh kolom lain.
    - **Mode Batch (1-Click Form Autofill):** Tombol di Side Panel yang memetakan seluruh data profil Vault aktif ke semua kolom formulir yang cocok secara serentak.
-   - **Keamanan Zero Cloud Transit:** Proses pengisian berjalan 100% di browser klien (`content_scripts`) dari memori Vault langsung ke input DOM (`element.value` + dispatch native event `input` dan `change`). Data identitas warga **sama sekali tidak dikirim ke Supabase atau Meta Model API** saat proses autofill.
+   - **Keamanan Zero Cloud Transit:** Proses pengisian berjalan 100% di browser klien (`content_scripts`) dari memori Vault langsung ke input DOM (`element.value` + dispatch native event `input` dan `change`). Data identitas warga **sama sekali tidak dikirim ke Supabase atau Baseten Inference API** saat proses autofill.
    - **Proteksi Status Vault:** Opsi autofill hanya dapat dipicu jika Vault dalam status **Unlocked** (Master Password telah dimasukkan di sesi runtime aktif).
    - **Safe Undo (100% Reversible):** Tombol **Undo Autofill** mengembalikan seluruh perubahan nilai ke kondisi awal seketika melalui snapshot memori lokal.
 
@@ -285,7 +285,7 @@ Sebagai etalase publik dan sarana demonstrasi langsung bagi juri hackathon, plat
   ```sql
   -- ============================================================================
   -- 1. TABEL: savvy_sessions
-  -- Pengelolaan sesi stateful per user per tab browser via Meta Responses API.
+  -- Pengelolaan sesi percakapan per user per tab browser via Baseten Inference API.
   -- Memungkinkan multi-turn conversation tanpa mengirim ulang seluruh riwayat chat.
   -- ============================================================================
   CREATE TABLE savvy_sessions (
@@ -294,7 +294,7 @@ Sebagai etalase publik dan sarana demonstrasi langsung bagi juri hackathon, plat
       tab_id TEXT NOT NULL,                          -- ID tab unik browser (mis. 'tab_lpdp_kemenkeu_go_id')
       portal_key TEXT NOT NULL,                      -- Domain aktif portal formulir
       current_chain_id TEXT NOT NULL,                -- Identifier chain sesi aktif
-      current_response_id TEXT NOT NULL,             -- ID respons Meta terbaru (resp_xxx) untuk previous_response_id
+      current_response_id TEXT NOT NULL,             -- ID respons Meta terbaru (resp_xxx) untuk messages
       token_count INT DEFAULT 0,                     -- Akumulasi token sesi untuk pemantauan kuota
       message_count INT DEFAULT 0,                   -- Jumlah pertukaran pesan dalam sesi
       created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -333,12 +333,12 @@ Sebagai etalase publik dan sarana demonstrasi langsung bagi juri hackathon, plat
 
   -- ============================================================================
   -- 3. TABEL: vector_stores
-  -- Katalog pemetaan portal formulir resmi ke Meta Vector Store ID untuk tool file_search.
+  -- Katalog pemetaan portal formulir resmi ke Juknis RAG Store ID untuk tool file_search.
   -- ============================================================================
   CREATE TABLE vector_stores (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       domain TEXT NOT NULL UNIQUE,                   -- Domain web portal resmi (mis. 'beasiswalpdp.kemenkeu.go.id')
-      vector_store_id TEXT NOT NULL,                 -- ID Vector Store resmi di Meta Model API (vs_xxx)
+      vector_store_id TEXT NOT NULL,                 -- ID Vector Store resmi di Baseten Inference API (vs_xxx)
       portal_name TEXT NOT NULL,                     -- Nama resmi portal (mis. 'Beasiswa LPDP 2026')
       document_title TEXT NOT NULL,                  -- Judul juknis (mis. 'Buku Panduan Pendaftaran LPDP 2026')
       doc_version TEXT NOT NULL DEFAULT '2026',      -- Versi rilis juknis
@@ -403,16 +403,16 @@ Sebagai etalase publik dan sarana demonstrasi langsung bagi juri hackathon, plat
       FOR ALL USING (auth.uid() = user_id);
   ```
 
-### 6.3 Pemanfaatan Model AI (Eksklusif Meta Model API)
+### 6.3 Pemanfaatan Model AI (Eksklusif Baseten Inference API)
 
-Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **Meta Model API** resmi. Pemanfaatan model AI dibatasi secara terfokus pada 5 model resmi:
+Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **Baseten Inference API** resmi. Pemanfaatan model AI dibatasi secara terfokus pada 5 model resmi:
 
 | No | Komponen / Fitur | Model AI | Jalur Akses / Provider | Peran Utama di Savvy.AI |
 |---|---|---|---|---|
-| 1 | **Multi-Agent Orchestrator & Reasoning** | **Muse Spark Open** | Cloud Meta Model API | Field Coach, Essay Coach, Consistency Checker, Explain This (Multimodal) |
-| 2 | **Document Retrieval (RAG)** | **Muse Vector Store (`file_search`)** | Cloud Meta Model API | Retrieval juknis resmi dengan chunking semantik & sitasi halaman persis |
-| 3 | **STT (Speech-to-Text)** | **Muse Voice Transcribe** | Cloud Meta Model API | Transkripsi audio dari mikrofon klien untuk Handsfree Voicebot |
-| 4 | **Visual Segmentation** | **SAM 3.1 Open 0.87B** | Cloud Meta Model API | Segmentasi visual dokumen/formulir lanjutan bila input melebihi kapasitas klien |
+| 1 | **Multi-Agent Orchestrator & Reasoning** | **Muse Spark Open** | Cloud Baseten Inference API | Field Coach, Essay Coach, Consistency Checker, Explain This (Multimodal) |
+| 2 | **Document Retrieval (RAG)** | **Muse Vector Store (`file_search`)** | Cloud Baseten Inference API | Retrieval juknis resmi dengan chunking semantik & sitasi halaman persis |
+| 3 | **STT (Speech-to-Text)** | **Muse Voice Transcribe** | Cloud Baseten Inference API | Transkripsi audio dari mikrofon klien untuk Handsfree Voicebot |
+| 4 | **Visual Segmentation** | **SAM 3.1 Open 0.87B** | Cloud Baseten Inference API | Segmentasi visual dokumen/formulir lanjutan bila input melebihi kapasitas klien |
 | 5 | **Agentic Vibecoding & Engineering** | **Muse Code** | Meta Developer Tooling | Dokumentasi rekayasa agentic dan log vibecoding di `docs/muse-code-log.md` |
 
 *(Catatan: Output suara/TTS asisten dijalankan secara deterministik on-device via browser Web Speech API tanpa memerlukan model eksternal).*
@@ -435,14 +435,14 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
                                  ▼
  ┌───────────────────────────────────────────────────────────────┐
  │               Backend API Gateway (Vercel Node/TS)            │
- │  ├── Session & Chain Manager (savvy_sessions via Responses API)│
+ │  ├── Session & Context Manager (savvy_sessions via Baseten API) │
  │  ├── Shared Cache Engine (coach_cache - single flight)        │
  │  └── Photo Auditor Engine (sharp in-memory deterministik)     │
  └───────────────────────┬───────────────────────┬───────────────┘
                          │                       │
                          ▼                       ▼
  ┌───────────────────────────────┐     ┌───────────────────────────────────┐
- │      Supabase PostgreSQL      │     │          Meta Model API           │
+ │      Supabase PostgreSQL      │     │          Baseten Inference API           │
  │  - Sessions (savvy_sessions)  │     │  - Muse Spark Open (Reasoning)    │
  │  - Coach Cache (coach_cache)  │     │  - Muse Vector Store (file_search)│
  │  - Store Maps (vector_stores) │     │  - Muse Voice Transcribe (STT)    │
@@ -455,13 +455,13 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
 
 | Metode & Path | Fungsi | Engine / Model Terkait | Dokumen Rujukan |
 |---|---|---|---|
-| `POST /api/chat` (stream) | Tanya jawab Field Coach berbasis Chain ID & Responses API | Muse Spark Open + Meta `file_search` / `web_search` | [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) |
+| `POST /api/chat` (stream) | Tanya jawab Field Coach berbasis Session ID & Sliding Window | Muse Spark Open via Baseten + Juknis RAG / Web Search Tool | [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) |
 | `POST /api/coach/field` | Penjelasan cepat field aktif via cache atau inference tunggal | `coach_cache` + Muse Spark Open | [`multi_chain_cache.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_chain_cache.md) |
 | `POST /api/explain` | Analisis visual snip formulir ter-masking | Muse Spark Open (Multimodal) | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) |
 | `POST /api/essay/coach` | Brainstorming, feedback rubrik, dan drafting narasi esai | Muse Spark Open | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) |
 | `POST /api/audit/consistency` | Pemeriksaan keselarasan silang antar-kolom (cross-field) | Muse Spark Open | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) |
 | `POST /api/photo/audit` | Audit teknis pasfoto (aspek rasio, blur Laplacian, ukuran) | `sharp` (in-memory deterministik) | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
-| `POST /api/voice/transcribe` | Transkripsi audio ucapan pengguna ke teks | Muse Voice Transcribe (Meta Model API) | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
+| `POST /api/voice/transcribe` | Transkripsi audio ucapan pengguna ke teks | Muse Voice Transcribe (Baseten Inference API) | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
 | Sisi Klien (On-Device) | Sintesis audio ucapan respons asisten instan (<50ms) | Browser/OS Native Web Speech API (`window.speechSynthesis`) | [`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md) |
 | `POST /api/feedback` | Pengiriman laporan kendala warga | Supabase DB | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
 
@@ -487,7 +487,7 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
 |---|---|---|
 | Audit formulir lokal (≤ 50 field) | < 300 ms | Pengecekan regex deterministik di content script |
 | Respons cache Field Coach (`coach_cache`) | < 50 ms | Single-flight Supabase lookup |
-| Token pertama chat stream RAG | < 1,8 detik | Responses API streaming + Meta Vector Store |
+| Token pertama chat stream RAG | < 1,8 detik | Baseten SSE streaming + Juknis RAG Store |
 | Latensi audio suara asisten (TTS) | < 100 ms | Web Speech API lokal on-device |
 | Explain This respons visual multimodal | < 4 detik | Muse Spark Open inference |
 | Ukuran bundle ekstensi | Ringan (< 5 MB) | Silero VAD (1 MB) + UI WXT React (Zero Heavy Non-Meta Models) |
@@ -502,7 +502,7 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
    - Menampilkan mock portal visa/beasiswa dengan istilah rumit (*"Affidavit of Support"*, batas ukuran pasfoto ketat).
    - Menunjukkan tingginya risiko penolakan akibat salah paham instruksi birokrasi.
 2. **0:30–1:15 (Understand — Multi-Agent & RAG):**
-   - Kursor fokus pada kolom: Field Coach langsung memunculkan kartu panduan resmi berlabel 🟢 **Official** dari Meta Vector Store juknis.
+   - Kursor fokus pada kolom: Field Coach langsung memunculkan kartu panduan resmi berlabel 🟢 **Official** dari Juknis RAG Store juknis.
    - Demo **Explain This** snip visual pada instruksi rumit.
    - Tanya jawab singkat via **Handsfree Voicebot** (*"Apa format surat rekomendasi yang sah?"*).
 3. **1:15–1:55 (Fill — Vault & Essay Coach):**
@@ -519,8 +519,8 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
 
 ### 9.2 Kriteria Penilaian Hackathon
 - **Impact (30%):** Memecahkan friksi birokrasi universal warga dunia secara langsung di atas portal formulir nyata tanpa perlu API dari pemerintah.
-- **Use of Meta AI Tooling (25%):** Pemanfaatan mendalam Muse Spark Open, Meta Vector Stores (`file_search`), `web_search`, SAM 3.1, Muse Voice Transcribe, dan dokumentasi Muse Code.
-- **Technical Depth (20%):** Compound multi-agent system, Responses API stateful loop, on-device AI 19 MB, zero-knowledge multiple vault, dan deterministic guardrails.
+- **Use of Meta AI Tooling (25%):** Pemanfaatan mendalam Muse Spark Open, Juknis RAG Stores (`file_search`), `web_search`, SAM 3.1, Muse Voice Transcribe, dan dokumentasi Muse Code.
+- **Technical Depth (20%):** Compound multi-agent system, Baseten Muse Spark Open reasoning loop, on-device Silero VAD, zero-knowledge multiple vault, dan deterministic guardrails.
 - **Demo Quality (25%):** Mock portal interaktif yang stabil dan responsif tanpa kendala ketergantungan jaringan luar.
 
 ---
@@ -532,4 +532,4 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
 | Latensi panggilan LLM & Tool Search | Sedang | *Two-tier cache*: `coach_cache` lokal/server menampung 80% pertanyaan field umum; single-flight request mencegah duplikasi komputasi. |
 | Variasi struktur HTML pada portal liar | Sedang | Multi-layer locator 5 lapis (Semantic A11y Tree, Stable Attributes, Section Hierarchy, Geometric DOM, Fuzzy Levenshtein). |
 | Penolakan izin mikrofon pengguna | Rendah | Fallback penuh ke mode input teks chat di Side Panel. |
-| Biaya & kuota Meta Model API | Rendah | Utilisasi kredit hackathon $150 Meta API secara terukur; optimasi two-tier cache (`coach_cache`) menekan konsumsi token hingga 80%. |
+| Biaya & kuota Baseten Inference API | Rendah | Utilisasi kredit hackathon $150 Meta API secara terukur; optimasi two-tier cache (`coach_cache`) menekan konsumsi token hingga 80%. |

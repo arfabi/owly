@@ -1,13 +1,13 @@
 # Savvy.AI: Multi-Agent Form Guidance dengan Muse Spark 1.3
 
 Catatan pembahasan, disusun 27 Oktober 2026.
-Tujuan: merancang fitur pemandu pengisian form (field per field) di ekstensi Chrome Savvy.AI, memakai Meta Model API (Muse Spark 1.3) dengan stack berbasis JavaScript/TypeScript.
+Tujuan: merancang fitur pemandu pengisian form (field per field) di ekstensi Chrome Savvy.AI, memakai Baseten Inference API (Muse Spark 1.3) dengan stack berbasis JavaScript/TypeScript.
 
 > Status dokumen: ini rangkuman diskusi desain, bukan spesifikasi resmi. Bagian yang berasal dari dokumentasi pihak ketiga atau yang belum diverifikasi ditandai di bagian 16.
 
 ---
 
-> **Dokumen terkait:** `web_search_tool.md` (Manual Researcher dan `web_search`), `file_search_vector_tool.md` (File Search dan Vector Store), `multi_chain_cache.md` (Responses API chain, Supabase, strategi cache).
+> **Dokumen terkait:** `web_search_tool.md` (Manual Researcher dan `web_search`), `file_search_vector_tool.md` (File Search dan Vector Store), `multi_chain_cache.md` (Baseten OpenAI-Compatible API chain, Supabase, strategi cache).
 
 ---
 
@@ -24,7 +24,7 @@ Tujuan: merancang fitur pemandu pengisian form (field per field) di ekstensi Chr
 
 ---
 
-## 2. Meta Model API dan Muse Spark 1.3
+## 2. Baseten Inference API dan Muse Spark 1.3
 
 ### 2.1 Fakta yang ditemukan
 
@@ -37,25 +37,25 @@ Tujuan: merancang fitur pemandu pengisian form (field per field) di ekstensi Chr
 | Output | Teks |
 | Harga (via OpenRouter) | sekitar $1,25 per juta token input, $4,25 per juta token output, cached input sekitar $0,15 |
 | Model ID | `muse-spark-1.3` (Standard) dan `muse-spark-1.3-contributor` |
-| Base URL | `https://api.meta.ai/v1` |
+| Base URL | `https://inference.baseten.co/v1` |
 | Kompatibilitas | OpenAI SDK, Anthropic SDK, agent CLI seperti OpenCode dan Claude Code |
 | Status | Public preview. Pada awal peluncuran akses untuk developer di AS (perlu dicek untuk akun dari Indonesia) |
 | Bobot model | Tidak tersedia untuk deployment lokal atau fine-tuning |
 
 ### 2.2 Kemampuan API
 
-- **Format endpoint:** Chat Completions (stateless), Responses API (menyimpan state lewat `previous_response_id`, dan menyediakan tool bawaan seperti `web_search`), Messages API.
+- **Format endpoint:** Chat Completions (stateless), Baseten OpenAI-Compatible API (menyimpan state lewat `messages`, dan menyediakan tool bawaan seperti `web_search`), Messages API.
 - **Streaming**, **function/tool calling**, **structured output**, **prompt caching**.
 - **Reasoning:** model reasoning. Token berpikir dilaporkan di `reasoning_tokens` dan ditagih sebagai output. Level `reasoning_effort`: `minimal`, `low`, `medium`, `high`, `xhigh` (dan `max` di 1.3). Opsi `none` ditolak.
 - **Batasan (dari dokumentasi 1.1):** tidak mendukung logprobs, `n > 1`, `stop`, dan audio input/output.
-- **Memori:** tidak ada memori jangka panjang bawaan. Untuk state sesi gunakan Responses API. Untuk memori antar sesi, bangun sendiri (database dan retrieval).
+- **Memori:** tidak ada memori jangka panjang bawaan. Untuk state sesi gunakan Baseten OpenAI-Compatible API. Untuk memori antar sesi, bangun sendiri (database dan retrieval).
 - **Web search grounding:** tersedia untuk jawaban berbasis web terkini dengan sitasi.
 - **Efisiensi 1.3 (klaim Meta):** pemanggilan tool turun sekitar 20% dan penggunaan token turun sekitar 25% dibanding versi sebelumnya. Model lebih sering bertanya saat instruksi ambigu dan meminta konfirmasi sebelum aksi besar.
 
 ### 2.3 Sumber
 
 - Cookbook resmi: https://github.com/meta-models/meta-model-cookbook/
-- Dokumentasi developer Meta: https://dev.meta.ai/docs
+- Dokumentasi developer Meta: https://inference.baseten.co/docs
 - Halaman produk: https://developer.meta.com/ai/products/meta-model-api/
 
 ### 2.4 Isi cookbook (ringkas)
@@ -64,7 +64,7 @@ Tujuan: merancang fitur pemandu pengisian form (field per field) di ekstensi Chr
 2. **Agent patterns:** agent loop, interleaved reasoning dan tool use, manajemen konteks, validated in-place edits.
 3. **Use cases:** analisis chart, bug fix dari screenshot, slide generator, web design terverifikasi di browser, sandbox execution, multi-agent product studio, perception grounding, GitHub repo agent, computer use (Linux dan macOS).
 4. **Muse Code:** audit log, staged approvals, sandbox, subagent fanout, goal tracking dengan judge, loop dan cron.
-5. **Muse Image:** generate dan edit gambar lewat Responses API.
+5. **Muse Image:** generate dan edit gambar lewat Baseten OpenAI-Compatible API.
 6. **Muse Voice Transcribe:** speech-to-text real-time lewat WebSocket (bukan endpoint HTTP).
 7. **SAM 3:** segmentasi gambar dan video.
 
@@ -74,7 +74,7 @@ Tujuan: merancang fitur pemandu pengisian form (field per field) di ekstensi Chr
 
 ### 3.1 Apa itu multi-agent di sini
 
-Meta Model API hanya menyediakan model. Tidak ada runtime multi-agent bawaan. Multi-agent adalah **pola di backend**:
+Baseten Inference API hanya menyediakan model. Tidak ada runtime multi-agent bawaan. Multi-agent adalah **pola di backend**:
 
 > Agent = satu panggilan (atau loop panggilan) ke model dengan system prompt, tool, dan tugas sendiri.
 > Multi-agent = beberapa agent yang hasilnya dirangkai oleh kode.
@@ -320,11 +320,11 @@ const findings = merge(rulesFindings, llmFindings);
 
 ## 6. Tools dan pemakaian API
 
-| Kebutuhan | Fitur Meta Model API |
+| Kebutuhan | Fitur Baseten Inference API |
 |---|---|
 | Panggilan dasar | Chat Completions (OpenAI SDK dengan `baseURL` diganti) |
-| State sesi | Responses API dengan `previous_response_id` |
-| Pencarian pedoman | `web_search` (search grounding) lewat Responses API |
+| State sesi | Baseten OpenAI-Compatible API dengan `messages` |
+| Pencarian pedoman | `web_search` (search grounding) lewat Baseten OpenAI-Compatible API |
 | Output antar komponen | Structured output (JSON valid) |
 | Penghematan biaya | Prompt caching (taruh prefiks stabil di awal), reasoning `low` untuk langkah ringan |
 | Membaca halaman/PDF/foto | Vision dan input PDF |
@@ -336,7 +336,7 @@ Helper dasar:
 ```ts
 import OpenAI from "openai";
 const client = new OpenAI({
-  baseURL: "https://api.meta.ai/v1",
+  baseURL: "https://inference.baseten.co/v1",
   apiKey: process.env.MODEL_API_KEY!,
 });
 
@@ -581,7 +581,7 @@ Agent di Meta nulis kode -> jalanin di microVM 5-10 detik -> VM mati, file hilan
 
 Sandbox tidak punya akses ke Supabase kamu. Hanya untuk test.
 
-Hasil dari tool `code_execution` di Responses API berbentuk `response.output = [{ type: 'code', code: 'export function validateNIK...' ... }]`.
+Hasil dari tool `code_execution` di Baseten OpenAI-Compatible API berbentuk `response.output = [{ type: 'code', code: 'export function validateNIK...' ... }]`.
 
 ### 12.2 Alur simpan file .js tanpa build (Node.js)
 
