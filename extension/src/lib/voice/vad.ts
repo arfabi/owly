@@ -108,10 +108,13 @@ export class SimpleVadDetector {
       };
 
       checkAudio();
-    } catch (err) {
+    } catch (err: any) {
       this.stop();
-      callbacks.onError?.(err);
-      throw err;
+      if (callbacks.onError) {
+        callbacks.onError(err);
+      } else {
+        throw err;
+      }
     }
   }
 

@@ -1,12 +1,12 @@
-# Savvy.AI — Companion & Co-Pilot Formulir Publik
+# Savvy.AI — Your AI Browser Companion for Forms & Web
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/compass.svg" width="64" height="64" alt="Savvy.AI Logo" />
 </p>
 
 <p align="center">
-  <strong>"Pahami. Isi. Periksa. Sebelum Anda Menekan Submit."</strong><br>
-  Browser-Native Compound Multi-Agent Assistant untuk Pendaftar Beasiswa, Visa Internasional, dan Layanan Publik.<br>
+  <strong>Savvy.AI — Your AI Browser Companion for Forms & Web</strong><br>
+  <em>Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark.</em><br>
   Dibangun untuk <strong>Meta Global AI Developer Hackathon 2026</strong> (Track: <em>Indie Developer</em> · Tema: <em>Build for Your World</em>).
 </p>
 

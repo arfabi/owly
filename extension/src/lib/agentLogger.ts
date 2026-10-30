@@ -15,7 +15,8 @@ export type AgentDomain =
   | "REASONING" 
   | "ACTION" 
   | "SECURITY" 
-  | "VOICE";
+  | "VOICE"
+  | "GATEWAY";
 
 const BADGE_STYLES: Record<AgentDomain, { bg: string; color: string; icon: string }> = {
   PLANNER: { bg: "#7045ED", color: "#FFFFFF", icon: "🧭" },     // Savvy Purple
@@ -24,6 +25,7 @@ const BADGE_STYLES: Record<AgentDomain, { bg: string; color: string; icon: strin
   ACTION: { bg: "#F59E0B", color: "#000000", icon: "⚡" },      // Amber
   SECURITY: { bg: "#EF5350", color: "#FFFFFF", icon: "🛡️" },    // Savvy Red
   VOICE: { bg: "#6366F1", color: "#FFFFFF", icon: "🎙️" },       // Indigo
+  GATEWAY: { bg: "#0284C7", color: "#FFFFFF", icon: "☁️" },     // Sky Blue (Cloud Gateway)
 };
 
 export interface AgentLogEvent {
@@ -87,5 +89,6 @@ export const agentLog = {
   action: (msg: string, data?: any, broadcast = true) => logAgent("ACTION", msg, data, broadcast),
   security: (msg: string, data?: any, broadcast = true) => logAgent("SECURITY", msg, data, broadcast),
   voice: (msg: string, data?: any, broadcast = true) => logAgent("VOICE", msg, data, broadcast),
+  gateway: (msg: string, data?: any, broadcast = true) => logAgent("GATEWAY", msg, data, broadcast),
   getTrace: () => [...traceBuffer],
 };

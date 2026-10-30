@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Savvy.AI — Pahami. Isi. Periksa. Sebelum Anda Menekan Submit.",
+  title: "Savvy.AI - Your AI Browser Companion for Forms & Web",
   description:
-    "Asisten browser cerdas berbasis Compound Multi-Agent System (Meta Muse Spark 1.3) untuk warga dan pendaftar formulir publik — bimbingan juknis RAG resmi, autofill aman Zero-Knowledge, dan audit deterministik.",
+    "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
   keywords: [
     "Savvy.AI",
     "Meta Global AI Hackathon",

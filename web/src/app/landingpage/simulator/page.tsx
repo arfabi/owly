@@ -682,8 +682,8 @@ export default function SimulatorPage() {
                 <span className="font-extrabold text-xs text-slate-900 tracking-tight">
                   Savvy<span className="text-[#398CF5]">.AI</span>
                 </span>
-                <span className="text-[10px] text-slate-400 block -mt-0.5">
-                  Meta Muse Spark 1.3
+                <span className="text-[10px] text-slate-400 block -mt-0.5 truncate max-w-[170px]" title="Your AI Browser Companion for Forms & Web">
+                  Your AI Browser Companion for Forms & Web
                 </span>
               </div>
             </div>

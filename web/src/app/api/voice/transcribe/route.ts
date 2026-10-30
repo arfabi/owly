@@ -80,7 +80,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       text: transcribedText,
-      detectedLanguage: 'id'
+      detectedLanguage: 'id',
+      agent_logs: [
+        {
+          domain: 'VOICE',
+          message: `Decoded audio chunk for Speech-to-Text (${Math.round((audioBase64?.length || 0) / 1024)} KB)`
+        },
+        {
+          domain: 'REASONING',
+          message: `Meta Muse Voice transcribed verbatim: "${transcribedText.substring(0, 50)}${transcribedText.length > 50 ? '...' : ''}"`,
+          data: { model: modelName }
+        }
+      ]
     });
 
   } catch (error: any) {

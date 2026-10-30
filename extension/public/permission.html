@@ -126,35 +126,6 @@
     <div id="statusBox" class="status-box"></div>
   </div>
 
-  <script>
-    const btn = document.getElementById('btnGrant');
-    const statusBox = document.getElementById('statusBox');
-
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      btn.innerText = 'Meminta izin ke Chrome...';
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        // Stop the tracks immediately after permission is granted
-        stream.getTracks().forEach(track => track.stop());
-
-        statusBox.className = 'status-box status-success';
-        statusBox.style.display = 'block';
-        statusBox.innerHTML = '✅ <strong>Izin mikrofon berhasil diberikan!</strong><br><span style="font-size:12px; font-weight:400; color:#047857">Tab ini akan otomatis ditutup dalam 2 detik. Silakan kembali ke Side Panel Savvy.</span>';
-        btn.style.display = 'none';
-
-        setTimeout(() => {
-          window.close();
-        }, 2200);
-      } catch (err) {
-        btn.disabled = false;
-        btn.innerText = 'Coba Lagi';
-        statusBox.className = 'status-box status-error';
-        statusBox.style.display = 'block';
-        statusBox.innerHTML = '⚠️ <strong>Izin mikrofon ditolak atau dibatalkan.</strong><br><span style="font-size:12px; font-weight:400; color:#B91C1C">Klik ikon gembok/setelan di kiri URL bar browser untuk mengizinkan mikrofon.</span>';
-      }
-    });
-  </script>
+  <script src="permission.js"></script>
 </body>
 </html>

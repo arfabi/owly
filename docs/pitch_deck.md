@@ -7,9 +7,9 @@
 ---
 
 ### Slide 1: Cover & Vision
-**Title:** Savvy.AI
-**Subtitle:** Browser-Native Compound Multi-Agent Assistant for Public Form Applicants
-**Tagline:** *"Pahami. Isi. Periksa. Sebelum Anda Menekan Submit."*
+**Title:** Savvy.AI - Your AI Browser Companion for Forms & Web
+**Subtitle:** Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark
+**Tagline:** *"Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark"*
 **Track:** Indie Developer (Meta Global AI Developer Hackathon 2026)
 **Presenter:** Antigravity & Indie Developer Team
 

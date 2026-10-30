@@ -32,9 +32,21 @@ function sanitizePII(text: string): { cleanText: string; hasPII: boolean } {
 }
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  const agent_logs: Array<{ domain: string; message: string; data?: any }> = [];
+
   try {
     const body = await req.json();
-    const { sessionId, userId, message, portalDomain = 'web-page', pageUrl = '', pageTitle = '' } = body;
+    const {
+      sessionId,
+      userId,
+      message,
+      portalDomain = 'web-page',
+      pageUrl = '',
+      pageTitle = '',
+      imageBase64 = null,
+      meta = null,
+    } = body;
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Pesan tidak boleh kosong' }, { status: 400 });
@@ -43,11 +55,21 @@ export async function POST(req: NextRequest) {
     // 1. Sensor PII (UU PDP Guard)
     const { cleanText, hasPII } = sanitizePII(message);
     if (hasPII) {
+      agent_logs.push({
+        domain: 'SECURITY',
+        message: 'UU PDP Scrubber: Blocked sensitive PII in prompt (NIK/NPWP/Card).'
+      });
       return NextResponse.json({
         reply: 'Demi keamanan dan privasi datamu (UU PDP), mohon untuk tidak mengirimkan nomor identitas pribadi (seperti NIK, NPWP, atau nomor kartu) ke dalam kolom chat. Silakan simpan dan enkripsi data tersebut di Vault Data Pribadi kamu.',
-        piiBlocked: true
+        piiBlocked: true,
+        agent_logs
       });
     }
+
+    agent_logs.push({
+      domain: 'SECURITY',
+      message: 'UU PDP Scrubber: Verified clean prompt, 0 PII leaks detected.'
+    });
 
     // 2. Ambil atau buat sesi chat
     let activeSessionId = sessionId;
@@ -119,16 +141,25 @@ export async function POST(req: NextRequest) {
     const isScholarshipPortal = portalDomain.toLowerCase().includes('lpdp') || portalDomain.toLowerCase().includes('beasiswa');
     const isImmigrationPortal = portalDomain.toLowerCase().includes('paspor') || portalDomain.toLowerCase().includes('visa') || portalDomain.toLowerCase().includes('imigrasi');
 
+    const metaInfoLines: string[] = [];
+    if (meta?.description) metaInfoLines.push(`- Meta Deskripsi Halaman: "${meta.description}"`);
+    if (meta?.keywords) metaInfoLines.push(`- Meta Keywords: "${meta.keywords}"`);
+    if (meta?.ogTitle && meta.ogTitle !== pageTitle) metaInfoLines.push(`- OpenGraph Title: "${meta.ogTitle}"`);
+    if (meta?.ogDescription && meta.ogDescription !== meta.description) metaInfoLines.push(`- OpenGraph Deskripsi: "${meta.ogDescription}"`);
+    if (meta?.lang) metaInfoLines.push(`- Bahasa Halaman: "${meta.lang}"`);
+    if (imageBase64) metaInfoLines.push(`- Lampiran Gambar: Tangkapan layar area visual snip (Lightshot crop) berhasil dilampirkan.`);
+
     const systemPromptContent = `Kamu adalah Savvy AI — Smart Form & Public Service Web Companion yang ramah, solutif, empatik, dan cerdas.
 Konteks Halaman Pengguna Saat Ini:
 - Website / Domain: "${portalDomain || 'Halaman Web'}"
 ${pageUrl ? `- URL Halaman: "${pageUrl}"` : ''}
 ${pageTitle ? `- Judul Halaman: "${pageTitle}"` : ''}
+${metaInfoLines.length > 0 ? metaInfoLines.join('\n') : ''}
 
 Pedoman Asisten:
-1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website atau formulir yang sedang mereka akses saat ini.
+1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website, meta informasi, dan tangkapan layar area yang mereka tanyakan saat ini (baik berupa tabel, perbandingan data, instruksi formulir, diagram, teks regulasi, atau konten web lainnya).
 2. JANGAN mengasumsikan pengguna sedang mendaftar beasiswa KECUALI domain/halaman yang dibuka memang tentang beasiswa (${isScholarshipPortal ? 'aktif: portal beasiswa' : 'bukan portal beasiswa'}) atau pengguna sendiri yang spesifik bertanya tentang beasiswa!
-3. Jika pengguna membuka portal imigrasi/paspor, OSS, perizinan, formulir pendaftaran kerja, atau website umum lainnya, jawablah secara tepat sasaran sesuai konteks topik tersebut.
+3. Jika pengguna membuka portal imigrasi/paspor, visa, OSS, perizinan, formulir pendaftaran kerja, atau website umum lainnya, jawablah secara tepat sasaran sesuai konteks topik tersebut.
 4. Jika ada informasi yang membutuhkan data identitas pribadi (seperti NIK, NPWP, atau nomor kartu), ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi (UU PDP).
 5. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
 
@@ -152,11 +183,30 @@ Pedoman Asisten:
       messagesPayload.push(...historyMessages);
     }
 
-    // Tambahkan pesan user saat ini
-    messagesPayload.push({ role: 'user', content: cleanText });
+    // Tambahkan pesan user saat ini (Multimodal jika ada imageBase64)
+    if (imageBase64) {
+      agent_logs.push({
+        domain: 'PERCEPTION',
+        message: 'Multimodal Vision: Attached Lightshot visual snip for Muse Spark reasoning.'
+      });
+      messagesPayload.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: cleanText },
+          {
+            type: 'image_url',
+            image_url: {
+              url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
+            }
+          }
+        ]
+      });
+    } else {
+      messagesPayload.push({ role: 'user', content: cleanText });
+    }
 
     // 5. Panggil Baseten Inference API
-    const response = await fetch(`${basetenBaseUrl}/chat/completions`, {
+    let response = await fetch(`${basetenBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${basetenApiKey}`,
@@ -171,6 +221,29 @@ Pedoman Asisten:
       })
     });
 
+    // Fallback: Jika endpoint model Baseten text-only, kirim ulang tanpa image_url array
+    if (!response.ok && imageBase64) {
+      console.warn('Multimodal request failed, falling back to text prompt with metadata context');
+      messagesPayload[messagesPayload.length - 1] = {
+        role: 'user',
+        content: `[Tangkapan Layar Crop Area Terlampir]\n${cleanText}`
+      };
+      response = await fetch(`${basetenBaseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${basetenApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: messagesPayload,
+          reasoning_effort: 'medium',
+          temperature: 0.3,
+          max_tokens: 800
+        })
+      });
+    }
+
     if (!response.ok) {
       const errText = await response.text();
       console.error('Baseten API Error:', errText);
@@ -179,6 +252,18 @@ Pedoman Asisten:
 
     const completion = await response.json();
     const reply = completion.choices?.[0]?.message?.content || 'Maaf, saya tidak dapat memproses jawaban saat ini.';
+    const latency = Date.now() - startTime;
+
+    agent_logs.push({
+      domain: 'REASONING',
+      message: `Meta Muse Spark Open inference completed in ${latency}ms`,
+      data: {
+        model: modelName,
+        totalTokens: completion.usage?.total_tokens,
+        promptTokens: completion.usage?.prompt_tokens,
+        completionTokens: completion.usage?.completion_tokens
+      }
+    });
 
     // 6. Simpan percakapan ke database Supabase
     if (activeSessionId) {
@@ -198,13 +283,18 @@ Pedoman Asisten:
 
       // 7. Auto-Compacting Background: Jika pesan > 10, buat ringkasan profil user
       if (updatedCount > 10 && updatedCount % 6 === 0) {
+        agent_logs.push({
+          domain: 'PLANNER',
+          message: 'Background Compactor: Triggered 10-message sliding window summarization.'
+        });
         triggerCompacting(activeSessionId, messagesPayload);
       }
     }
 
     return NextResponse.json({
       reply,
-      sessionId: activeSessionId
+      sessionId: activeSessionId,
+      agent_logs
     });
 
   } catch (error: any) {

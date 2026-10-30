@@ -158,10 +158,10 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     },
     hero: {
       hackathonBadge: "Meta Global AI Developer Hackathon 2026 • Build for Your World",
-      titleLine1: "Pahami. Isi. Periksa.",
-      titleHighlight: "Sebelum Anda Menekan Submit.",
+      titleLine1: "Your AI Browser Companion",
+      titleHighlight: "for Forms & Web",
       description:
-        "Asisten browser cerdas berbasis Compound Multi-Agent System (Meta Muse Spark 1.3) untuk warga dan pendaftar formulir publik — tanpa perlu integrasi dari pemilik portal, dengan jaminan privasi Zero-Knowledge.",
+        "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
       ctaMockPortal: "Uji Coba di Mock Portal LPDP",
       ctaLearnSecurity: "Pelajari Arsitektur & Keamanan",
     },
@@ -346,10 +346,10 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     },
     hero: {
       hackathonBadge: "Meta Global AI Developer Hackathon 2026 • Build for Your World",
-      titleLine1: "Understand. Fill. Verify.",
-      titleHighlight: "Before You Click Submit.",
+      titleLine1: "Your AI Browser Companion",
+      titleHighlight: "for Forms & Web",
       description:
-        "Intelligent browser assistant powered by a Compound Multi-Agent System (Meta Muse Spark 1.3) for citizens and public form applicants — no portal integration needed, zero-knowledge privacy guaranteed.",
+        "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
       ctaMockPortal: "Test in LPDP Mock Portal",
       ctaLearnSecurity: "Explore Architecture & Security",
     },

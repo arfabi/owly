@@ -7,8 +7,8 @@
 ---
 
 ## 📌 Submission Overview
-- **Project Name:** Savvy.AI
-- **Tagline:** Pahami. Isi. Periksa. Sebelum Anda Menekan Submit — Browser-Native AI Co-Pilot for Public Form Applicants.
+- **Project Name:** Savvy.AI - Your AI Browser Companion for Forms & Web
+- **Tagline:** Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark.
 - **Live Demo Web App:** [https://savvy-plum.vercel.app](https://savvy-plum.vercel.app)
 - **Live Extension Simulator:** [https://savvy-plum.vercel.app/landingpage/simulator](https://savvy-plum.vercel.app/landingpage/simulator)
 - **Interactive Mock Portal:** [https://savvy-plum.vercel.app/landingpage/mock-portal](https://savvy-plum.vercel.app/landingpage/mock-portal)

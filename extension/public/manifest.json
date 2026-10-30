@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Savvy.AI — Form Coach & Pre-Submit Auditor",
+  "name": "Savvy.AI - Your AI Browser Companion for Forms & Web",
   "version": "1.0.0",
-  "description": "Browser-native compound multi-agent assistant for public form applicants (Meta Global AI Developer Hackathon 2026).",
+  "description": "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
   "permissions": [
     "sidePanel",
     "storage",

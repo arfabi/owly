@@ -109,7 +109,18 @@ Berikan penjelasan terstruktur dalam format JSON valid tanpa tanda markdown deng
 
     return NextResponse.json({
       success: true,
-      analysis: parsedResult
+      analysis: parsedResult,
+      agent_logs: [
+        {
+          domain: 'PERCEPTION',
+          message: `Multimodal Vision: Processed cropped visual snip (${Math.round(imageBase64.length / 1024)} KB)`
+        },
+        {
+          domain: 'REASONING',
+          message: `Meta Muse Spark Multimodal parsed jargon: "${parsedResult.title || contextLabel}"`,
+          data: { model: modelName }
+        }
+      ]
     });
 
   } catch (error: any) {

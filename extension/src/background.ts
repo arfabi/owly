@@ -49,9 +49,31 @@ chrome.runtime.onConnect.addListener((port) => {
   }
 });
 
-// 2. Listener Tab Update untuk mendeteksi portal resmi
+// 2. Listener Tab Switch & Update untuk Sinkronisasi Global Accessibility Settings
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.storage.local.get("savvy_a11y_settings", (res) => {
+    if (res && res.savvy_a11y_settings) {
+      chrome.tabs.sendMessage(activeInfo.tabId, {
+        type: "APPLY_ALL_A11Y_SETTINGS",
+        settings: res.savvy_a11y_settings,
+      }).catch(() => {});
+    }
+  });
+});
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url) {
+    if (tab.url.startsWith("http") || tab.url.startsWith("file")) {
+      chrome.storage.local.get("savvy_a11y_settings", (res) => {
+        if (res && res.savvy_a11y_settings) {
+          chrome.tabs.sendMessage(tabId, {
+            type: "APPLY_ALL_A11Y_SETTINGS",
+            settings: res.savvy_a11y_settings,
+          }).catch(() => {});
+        }
+      });
+    }
+
     const isPublicPortal =
       tab.url.includes("lpdp.kemenkeu.go.id") ||
       tab.url.includes("m-paspor") ||
@@ -95,6 +117,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       sendResponse({ tabId: tabs[0]?.id });
     });
+    return true; // Keep channel open for async response
+  }
+
+  if (message.type === "CAPTURE_VISIBLE_TAB") {
+    const targetWinId = sender.tab?.windowId;
+    const captureOptions = { format: "jpeg" as const, quality: 90 };
+
+    const tryCapture = (winId?: number) => {
+      const callback = (dataUrl?: string) => {
+        const err = chrome.runtime.lastError;
+        if (err || !dataUrl) {
+          console.warn("[Savvy.AI Background] captureVisibleTab failed (winId: " + winId + "):", err?.message);
+          if (winId !== undefined) {
+            // Fallback retry without specifying winId
+            tryCapture(undefined);
+          } else {
+            sendResponse({ success: false, error: err?.message || "Capture failed" });
+          }
+        } else {
+          sendResponse({ success: true, dataUrl });
+        }
+      };
+
+      try {
+        if (winId !== undefined) {
+          chrome.tabs.captureVisibleTab(winId, captureOptions, callback);
+        } else {
+          chrome.tabs.captureVisibleTab(captureOptions, callback);
+        }
+      } catch (e: any) {
+        sendResponse({ success: false, error: e?.message || "Capture exception" });
+      }
+    };
+
+    tryCapture(targetWinId);
     return true; // Keep channel open for async response
   }
 

@@ -21,16 +21,17 @@ export async function sendTabMessage<T = any>(message: any): Promise<{ success: 
       const tabId = activeTab.id;
       const url = activeTab.url || "";
 
-      // 1. Guard against restricted browser internal URLs (content scripts forbidden)
-      if (
-        url.startsWith("chrome://") ||
-        url.startsWith("edge://") ||
-        url.startsWith("chrome-extension://") ||
-        url.startsWith("about:") ||
-        url.startsWith("view-source:")
-      ) {
-        agentLog.perception(`⚠️ Halaman '${url.substring(0, 30)}...' adalah halaman internal browser. Silakan buka halaman web biasa (http/https).`);
-        resolve({ success: false, reason: "Restricted browser page" });
+      // 1. Guard against non-web or restricted browser internal URLs (content scripts forbidden)
+      const isInjectableWebUrl =
+        url.startsWith("http://") ||
+        url.startsWith("https://") ||
+        url.startsWith("file://");
+
+      if (!isInjectableWebUrl) {
+        agentLog.perception(
+          `ℹ️ Tab aktif (${url ? url.substring(0, 35) : "internal"}) bukan halaman web formulir. Silakan beralih ke tab website yang ingin dianalisis.`
+        );
+        resolve({ success: false, reason: "Restricted or non-web page" });
         return;
       }
 

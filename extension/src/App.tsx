@@ -14,13 +14,14 @@ import {
   ShieldCheck,
   X,
   Compass,
+  BookOpen,
 } from "lucide-react";
 
 import { agentLog, logAgent, AgentDomain } from "./lib/agentLogger";
 
 export function App() {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<"assistant" | "guide" | "vault" | "audit">("assistant");
+  const [activeTab, setActiveTab] = useState<"guide" | "vault" | "audit">("guide");
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [isFormAnalyzed, setIsFormAnalyzed] = useState(false);
   const [activeTabUrl, setActiveTabUrl] = useState<string>("");
@@ -74,20 +75,19 @@ export function App() {
   }, []);
 
   const tabs = [
-    { id: "assistant", label: t.tabs.assistant, icon: Bot },
-    { id: "guide", label: t.tabs.guide, icon: FileText },
-    { id: "vault", label: t.tabs.vault, icon: Zap },
-    { id: "audit", label: t.tabs.audit, icon: ShieldCheck },
+    { id: "guide", label: "Guide", icon: BookOpen },
+    { id: "vault", label: "Auto Fill", icon: Zap },
+    { id: "audit", label: "Audit Form", icon: ShieldCheck },
   ] as const;
 
   return (
     <div className="w-full h-screen bg-slate-50 flex flex-col overflow-hidden text-left font-sans antialiased select-none">
       {/* Extension Header */}
       <Header
-        isVaultUnlocked={isVaultUnlocked}
-        setIsVaultUnlocked={setIsVaultUnlocked}
         currentUser={currentUser}
         onOpenAuthModal={() => setAuthModalOpen(true)}
+        onOpenAccessibilityHub={() => setA11yModalOpen(true)}
+        onLogout={() => setCurrentUser(null)}
       />
 
       <AuthModal
@@ -98,9 +98,9 @@ export function App() {
         onLogout={() => setCurrentUser(null)}
       />
 
-      {/* Clean Capsule Top Navigation Tabs */}
+      {/* Clean Capsule Top Navigation Tabs (3 Tabs) */}
       <div className="bg-white border-b border-slate-200 px-3 py-2 shrink-0">
-        <div className="grid grid-cols-4 bg-slate-100/90 p-1 rounded-xl gap-1 text-center font-bold text-xs">
+        <div className="grid grid-cols-3 bg-slate-100/90 p-1 rounded-xl gap-1 text-center font-bold text-xs">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -127,22 +127,19 @@ export function App() {
 
       {/* Main Tab Content Body */}
       <div className="flex-1 overflow-y-auto relative">
-        {activeTab === "assistant" && (
+        {activeTab === "guide" && (
           <AiAssistantTab
             isVaultUnlocked={isVaultUnlocked}
             isFormAnalyzed={isFormAnalyzed}
             currentUrl={activeTabUrl}
             currentTitle={activeTabTitle}
             onAnalyzeForm={() => setIsFormAnalyzed(true)}
-            onNavigateTab={(tab) => setActiveTab(tab)}
+            onNavigateTab={(tab) => {
+              if (tab === "guide" || tab === "vault" || tab === "audit") {
+                setActiveTab(tab);
+              }
+            }}
             onOpenAccessibilityHub={() => setA11yModalOpen(true)}
-          />
-        )}
-        {activeTab === "guide" && (
-          <FormsGuideTab
-            isVaultUnlocked={isVaultUnlocked}
-            isFormAnalyzed={isFormAnalyzed}
-            onAnalyzeForm={() => setIsFormAnalyzed(true)}
           />
         )}
         {activeTab === "vault" && (
@@ -179,20 +176,10 @@ export function App() {
         )}
       </div>
 
-      {/* Bottom Status Ribbon (Manifest V3 + Privacy Guarantee) */}
-      <div className="bg-white border-t border-slate-200 px-3 py-2 flex items-center justify-between text-[10px] text-slate-400 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-savvy-green animate-pulse" />
-          <span className="font-semibold text-slate-600">Savvy Side Panel MV3</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-savvy-blue font-bold">
-            <Bot className="w-3 h-3" />
-            <span>Muse Spark 1.3</span>
-          </span>
-          <span className="text-slate-300">•</span>
-          <span className="text-slate-500 font-mono">Zero Cloud PII</span>
-        </div>
+      {/* Footer: Privacy Notice */}
+      <div className="bg-white border-t border-slate-200 px-3 py-2 flex items-center justify-center text-[10px] text-slate-500 font-medium shrink-0 gap-1.5">
+        <ShieldCheck className="w-3.5 h-3.5 text-savvy-blue shrink-0" />
+        <span>Your data stays in your private device</span>
       </div>
     </div>
   );
