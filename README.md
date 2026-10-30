@@ -47,6 +47,7 @@ flowchart TB
     end
 
     subgraph GatewayLayer["☁️ Vercel Next.js Serverless Gateway (Edge / RAM-Only)"]
+        APIAnalyze["POST /api/form/analyze\n(3-Agent CMAS Triad Orchestrator)"]
         APIChat["POST /api/chat\n(10-Msg Sliding Window + Compactor)"]
         APICoach["POST /api/coach/field\n(Two-Tier Cache & Juknis RAG)"]
         APIExplain["POST /api/explain\n(Multimodal Vision Jargon Buster)"]
@@ -55,13 +56,13 @@ flowchart TB
     end
 
     subgraph MetaAILayer["🤖 Meta AI Model on Baseten"]
-        MuseSpark["Meta Muse Spark Open\n(meta-models/muse-spark-open-1026)\n• 816ms Latency • Rp 3/Chat Turn"]
+        MuseSpark["Meta Muse Spark Open\n(meta-models/muse-spark-open-1026)\n• Multimodal Vision • Native Tool Calling\n• Dynamic Reasoning: 32 - 256 Tokens"]
     end
 
     subgraph DataLayer["🗄️ Supabase PostgreSQL Cloud"]
         SupaAuth["Supabase Auth (50k MAU Free Tier)\n• Meta / Google / Demo Judge"]
         SupaRAG["Tabel juknis_chunks\n(13 Regulasi Sah Terverifikasi)"]
-        SupaCache["Tabel coach_cache\n(<15ms L1/L2 Response)"]
+        SupaCache["Tabel coach_cache\n(<15ms L1/L2 Response & 24h TTL)"]
         SupaVault["Tabel user_vault\n(Hanya Menyimpan Ciphertext & IV)"]
     end
 
@@ -72,6 +73,8 @@ flowchart TB
     SidePanel --> WebCrypto
     SidePanel <--> GatewayLayer
 
+    APIAnalyze --> SupaCache
+    APIAnalyze --> MuseSpark
     APICoach --> SupaCache
     APICoach --> SupaRAG
     APICoach --> MuseSpark
@@ -82,6 +85,53 @@ flowchart TB
     WebCrypto -.->|Sinkronisasi Ciphertext| SupaVault
     SidePanel -.->|Meta Social Login| SupaAuth
 ```
+
+---
+
+## 🤖 Triad Input & 3-Agent Collaborative Pipeline ("Analyze This Form")
+
+Ketika pengguna menekan tombol **"Analyze This Form"** di ekstensi, Savvy.AI tidak hanya membaca pohon teks DOM, melainkan mengekstrak **Triad Input** lengkap untuk diproses oleh **3 Agen Spesialis** secara orkestrasi di backend (`POST /api/form/analyze`):
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        TRIAD INPUT DARI EKSTENSI CHROME MV3                           │
+│  1. DOM Terstruktur (ID, Label, Tipe, Validasi - tanpa menyentuh .value pribadi)       │
+│  2. Metadata Halaman (URL, Domain Instansi, Page Title, Meta Description & Keywords)   │
+│  3. Tangkapan Layar Visual (Active Tab Screenshot terkompresi WebP 0.7, max 1280px)   │
+└──────────────────────────────────────────┬─────────────────────────────────────────────┘
+                                           │
+                                           ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│            COMPOUND MULTI-AGENT SYSTEM (CMAS) — META MUSE SPARK OPEN                   │
+│                                                                                        │
+│  👁️ AGEN 1: PERCEPTION & FORM PROFILER (Multimodal Vision)                             │
+│     • Model: Muse Spark Open (reasoning_effort: medium / 32 tokens)                    │
+│     • Mengidentifikasi nama formulir resmi, instansi penyelenggara, target outcome,   │
+│       kategori form, tingkat kesulitan, estimasi waktu, & prasyarat dokumen.           │
+│                                           │                                            │
+│                                           ▼ Identitas & Domain                         │
+│  🌐 AGEN 2: REGULATION RESEARCHER (Native Tool Grounding)                              │
+│     • Tool: Search Grounding & RAG Juknis Resmi (.go.id)                               │
+│     • Zero-PII Query: Hanya nama form + instansi (tanpa data pribadi user)             │
+│     • Menarik tanggal penutupan (deadline), juknis resmi, & jebakan diskualifikasi.   │
+│                                           │                                            │
+│                                           ▼ Aturan Sah & Konteks Juknis               │
+│  🧠 AGEN 3: DECISION & SYNTHESIS (Dynamic High Reasoning Effort)                       │
+│     • Dynamic Reasoning: low (32) untuk form ringkas, high (256) jika ada juknis resmi │
+│     • Memetakan struktur DOM ke Multi-Vault AES-256 (personal.nik, personal.fullName) │
+│     • Menyusun Roadmap pengisian terstruktur & Pre-Submit Traps Checklist.             │
+└──────────────────────────────────────────┬─────────────────────────────────────────────┘
+                                           │
+                                           ▼ Live Telemetry (agentTrace & agent_logs)
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  HASIL AKHIR DI SIDEPANEL:                                                            │
+│  • Form Overview Card (Target outcome, badge regulasi, estimasi waktu pengerjaan)     │
+│  • Tombol "👉 Panduan Kolom demi Kolom" (Terhubung ke Spotlight Beacon di formulir)   │
+│  • Tombol "⚡ 1-Click Auto Fill" (Pengisian instan dengan jaminan Undo 100%)          │
+│  • L2 Smart Cache: SHA256(domain + fieldCount + sortedIds) -> Hit instan <600ms!      │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
 
 ---
 
