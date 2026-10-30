@@ -3,12 +3,14 @@
 // Injeksi Closed Shadow DOM, Field Detection, dan Accessibility Controller
 // ============================================================================
 
+import { agentLog } from "./lib/agentLogger";
+
 (() => {
   // Cegah injeksi ganda
   if ((window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__) return;
   (window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__ = true;
 
-  console.log("[Savvy.AI] Content Script activated.");
+  agentLog.perception("Content Script activated. Closed Shadow DOM host initialized on page.");
 
   // 1. Injeksi Closed Shadow DOM untuk Beacon Spotlight & A11y Overlays
   let hostContainer = document.getElementById("savvy-root");
@@ -126,12 +128,20 @@
       spotlightEl.style.width = `${rect.width + 8}px`;
       spotlightEl.style.height = `${rect.height + 8}px`;
 
+      const label = findElementLabel(target);
+      agentLog.perception(`🎯 Field focused: '${target.id || target.getAttribute("name") || "input"}' (${label})`, {
+        fieldId: target.id || "",
+        tagName: target.tagName,
+        inputType: (target as HTMLInputElement).type || "text",
+        hasValue: !!(target as HTMLInputElement).value,
+      });
+
       // Kirim metadata field ke background & sidepanel
       chrome.runtime.sendMessage({
         type: "FIELD_FOCUSED",
         fieldId: target.id || "",
         fieldName: target.getAttribute("name") || "",
-        label: findElementLabel(target),
+        label,
         tagName: target.tagName,
         inputType: (target as HTMLInputElement).type || "text",
         value: (target as HTMLInputElement).value || "",
@@ -142,6 +152,63 @@
   document.addEventListener("focusout", () => {
     // Spotlight tetap aktif sejenak untuk memandu mata
   });
+
+  // 4b. MutationObserver & SPA Route Change Detection (multi_agents.md Section 8)
+  let domChangeTimer: any = null;
+  let lastFieldSignature = "";
+
+  function computeFieldSignature(): string {
+    const inputs = Array.from(document.querySelectorAll("input, select, textarea")) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[];
+    const visibleFields = inputs
+      .filter((el) => el.type !== "hidden" && el.type !== "submit" && el.offsetParent !== null)
+      .map((el) => {
+        const ph = "placeholder" in el ? (el as HTMLInputElement).placeholder : "";
+        return `${el.name || el.id || ph}:${el.type || el.tagName.toLowerCase()}`;
+      });
+    return visibleFields.join("|");
+  }
+
+  function onDomMutated() {
+    clearTimeout(domChangeTimer);
+    domChangeTimer = setTimeout(() => {
+      const currentSignature = computeFieldSignature();
+      if (currentSignature !== lastFieldSignature) {
+        lastFieldSignature = currentSignature;
+        const count = currentSignature ? currentSignature.split("|").length : 0;
+        agentLog.perception(`🕵️ Dynamic DOM Mutation detected (${count} visible fields)`, {
+          fieldCount: count,
+          signature: currentSignature.substring(0, 80) + (currentSignature.length > 80 ? "..." : ""),
+        });
+        // Broadcast dynamic field mutation to side panel
+        chrome.runtime.sendMessage({
+          type: "FORM_DOM_MUTATED",
+          signature: currentSignature,
+          fieldCount: count,
+        }).catch(() => {});
+      }
+    }, 400); // 400ms debounce
+  }
+
+  const domObserver = new MutationObserver((mutations) => {
+    // Ignore mutations on savvy root container to prevent infinite feedback loops
+    const hasExternalMutation = mutations.some((m) => {
+      return m.target !== hostContainer && !hostContainer.contains(m.target);
+    });
+    if (hasExternalMutation) {
+      onDomMutated();
+    }
+  });
+
+  domObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["hidden", "disabled", "aria-hidden", "style", "class"],
+  });
+
+  // SPA Route Change Listener
+  window.addEventListener("popstate", onDomMutated);
+  window.addEventListener("hashchange", onDomMutated);
 
   // 5. Message Listener dari Side Panel
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -157,6 +224,7 @@
         target.dispatchEvent(new Event("input", { bubbles: true }));
         target.dispatchEvent(new Event("change", { bubbles: true }));
         target.dispatchEvent(new Event("blur", { bubbles: true }));
+        agentLog.action(`⚡ Injected value into field '${fieldId || fieldName}'`, { targetTag: target.tagName });
         sendResponse({ success: true });
         return true;
       }
@@ -166,6 +234,7 @@
     if (message.type === "SET_A11Y_FEATURE") {
       const { feature, enabled } = message;
       applyA11yFeature(feature, enabled);
+      agentLog.action(`👓 A11y feature '${feature}' set to: ${enabled ? "ON" : "OFF"}`);
       sendResponse({ success: true, feature, enabled });
     }
 
@@ -185,12 +254,97 @@
           type: el.type || el.tagName.toLowerCase(),
         }));
 
+      agentLog.perception(`🔍 Scanning DOM: Discovered ${fields.length} active interactive fields on page`, {
+        count: fields.length,
+        fieldKeys: fields.map((f) => f.name || f.id || f.label).slice(0, 8),
+      });
       sendResponse({ fields, count: fields.length });
     }
 
     if (message.type === "START_SNIP_SELECTION") {
+      agentLog.action("✂️ Starting Visual Snip selection mode on screen for 'Explain This'");
       startSnipMode();
       sendResponse({ success: true, mode: "active" });
+    }
+
+    if (message.type === "SHOW_FIELD_SPOTLIGHT") {
+      const activeEl = document.activeElement as HTMLElement;
+      let target: HTMLElement | null = activeEl;
+      if (!target || target.tagName === "BODY") {
+        target = document.querySelector("input:not([type=hidden]), textarea, select") as HTMLElement;
+      }
+      if (target) {
+        target.focus();
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        const rect = target.getBoundingClientRect();
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+        spotlightEl.style.display = "block";
+        spotlightEl.style.top = `${rect.top + scrollTop - 4}px`;
+        spotlightEl.style.left = `${rect.left + scrollLeft - 4}px`;
+        spotlightEl.style.width = `${rect.width + 8}px`;
+        spotlightEl.style.height = `${rect.height + 8}px`;
+        agentLog.action(`💡 Spotlight Beacon navigated to field '${target.id || target.getAttribute("name") || "input"}'`);
+        sendResponse({ success: true });
+        return true;
+      }
+      sendResponse({ success: false, reason: "No target field found" });
+    }
+
+    if (message.type === "BATCH_AUTOFILL") {
+      const payload = message.payload || {};
+      const inputs = Array.from(document.querySelectorAll("input, textarea, select")) as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)[];
+      
+      // Store backup for 100% safe undo
+      (window as any).__SAVVY_UNDO_BACKUP__ = inputs.map((el) => ({
+        el,
+        prevVal: el.value,
+      }));
+
+      let injectedCount = 0;
+      inputs.forEach((input) => {
+        const nameAttr = (input.name || input.id || "").toLowerCase();
+        let valToInject = "";
+        if (nameAttr.includes("nik") || nameAttr.includes("ktp")) valToInject = payload.nik || "";
+        else if (nameAttr.includes("nama") || nameAttr.includes("name")) valToInject = payload.nama || "";
+        else if (nameAttr.includes("lahir") || nameAttr.includes("birth") || nameAttr.includes("tgl")) valToInject = payload.tanggal_lahir || "";
+        else if (nameAttr.includes("alamat") || nameAttr.includes("address")) valToInject = payload.alamat || "";
+        else if (nameAttr.includes("email") || nameAttr.includes("mail")) valToInject = payload.email || "";
+        else if (nameAttr.includes("hp") || nameAttr.includes("phone") || nameAttr.includes("telp")) valToInject = payload.no_hp || "";
+
+        if (valToInject) {
+          input.value = valToInject;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+          injectedCount++;
+        }
+      });
+      agentLog.action(`⚡ Batch Autofill executed: ${injectedCount} fields populated safely with reversibility snapshot.`, {
+        injectedCount,
+        keys: Object.keys(payload),
+      });
+      sendResponse({ success: true, count: injectedCount });
+      return true;
+    }
+
+    if (message.type === "UNDO_AUTOFILL") {
+      const backup = (window as any).__SAVVY_UNDO_BACKUP__;
+      if (backup && Array.isArray(backup)) {
+        backup.forEach(({ el, prevVal }) => {
+          if (el) {
+            el.value = prevVal;
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+        });
+        const restoredCount = backup.length;
+        delete (window as any).__SAVVY_UNDO_BACKUP__;
+        agentLog.action(`↩️ Undo Autofill executed: Restored previous values across ${restoredCount} fields.`);
+        sendResponse({ success: true, undone: true });
+        return true;
+      }
+      sendResponse({ success: false, reason: "No backup state found" });
     }
 
     return true;

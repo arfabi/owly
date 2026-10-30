@@ -15,6 +15,8 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { agentLog } from "../lib/agentLogger";
+
 export function AccessibilityHubTab() {
   const { t } = useLanguage();
   const a11y = t.a11y;
@@ -37,13 +39,31 @@ export function AccessibilityHubTab() {
   });
 
   const toggleTool = (id: string) => {
-    setActiveTools((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setActiveTools((prev) => {
+      const nextVal = !prev[id];
+      agentLog.action(`👓 A11y feature '${id}' set to: ${nextVal ? "ENABLED" : "DISABLED"}`);
+
+      // Dispatch to content script
+      if (typeof chrome !== "undefined" && chrome.tabs?.query) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              type: "SET_A11Y_FEATURE",
+              feature: id,
+              enabled: nextVal,
+            });
+          }
+        });
+      }
+      return {
+        ...prev,
+        [id]: nextVal,
+      };
+    });
   };
 
   const resetAll = () => {
+    agentLog.action("👓 A11y features reset to default.");
     setActiveTools({
       spotlight: false,
       tts: false,

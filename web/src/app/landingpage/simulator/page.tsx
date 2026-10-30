@@ -354,13 +354,15 @@ export default function SimulatorPage() {
           </Link>
           <div className="h-4 w-[1px] bg-slate-800" />
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
-              S
-            </div>
+            <img
+              src="/logo.png"
+              alt="Savvy.AI Logo"
+              className="w-6 h-6 object-contain drop-shadow-xs"
+            />
             <span className="font-extrabold text-sm tracking-tight text-white">
-              Savvy<span className="text-blue-500">.AI</span>
+              Savvy<span className="text-[#398CF5]">.AI</span>
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20">
+            <span className="px-2 py-0.5 rounded-full bg-[#398CF5]/10 text-[#398CF5] text-[10px] font-bold border border-[#398CF5]/20">
               Interactive Simulator
             </span>
           </div>
@@ -671,12 +673,14 @@ export default function SimulatorPage() {
         <div className="bg-white border-b border-slate-200 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
-                S
-              </div>
+              <img
+                src="/logo.png"
+                alt="Savvy.AI"
+                className="w-7 h-7 object-contain drop-shadow-xs"
+              />
               <div>
                 <span className="font-extrabold text-xs text-slate-900 tracking-tight">
-                  Savvy<span className="text-blue-600">.AI</span>
+                  Savvy<span className="text-[#398CF5]">.AI</span>
                 </span>
                 <span className="text-[10px] text-slate-400 block -mt-0.5">
                   Meta Muse Spark 1.3

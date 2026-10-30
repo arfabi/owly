@@ -22,7 +22,7 @@ export interface ExtractedDocumentData {
  */
 export async function extractDocumentWithMask(
   imageSource: string, // Data URI or URL
-  apiBaseUrl: string = "https://savvy-plum.vercel.app" // or current domain
+  apiBaseUrl: string = "https://savvy-companion.vercel.app"
 ): Promise<ExtractedDocumentData> {
   // Step 1: Client-Side Biometric Face Blackout Mask
   const maskedImageDataUrl = await applyBlackoutMask(imageSource, KTP_DEFAULT_MASKS);

@@ -10,7 +10,8 @@ export interface ExtensionTranslations {
     btnUnlock: string;
   };
   tabs: {
-    coach: string;
+    assistant: string;
+    guide: string;
     vault: string;
     audit: string;
     a11y: string;
@@ -108,10 +109,11 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
       btnUnlock: "Buka Vault",
     },
     tabs: {
-      coach: "Field Coach",
-      vault: "Vault & Essay",
-      audit: "Pre-Audit",
-      a11y: "A11y Hub (14)",
+      assistant: "AI Assistant",
+      guide: "Forms Guide",
+      vault: "AutoFill",
+      audit: "Audit Form",
+      a11y: "A11y Hub",
     },
     coach: {
       activeFieldTitle: "Nomor Induk Kependudukan (NIK)",
@@ -212,10 +214,11 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
       btnUnlock: "Unlock Vault",
     },
     tabs: {
-      coach: "Field Coach",
-      vault: "Vault & Essay",
-      audit: "Pre-Audit",
-      a11y: "A11y Hub (14)",
+      assistant: "AI Assistant",
+      guide: "Forms Guide",
+      vault: "AutoFill",
+      audit: "Audit Form",
+      a11y: "A11y Hub",
     },
     coach: {
       activeFieldTitle: "National Identification Number (NIK)",

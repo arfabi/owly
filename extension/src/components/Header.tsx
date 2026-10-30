@@ -21,13 +21,20 @@ export function Header({
     <div className="bg-white border-b border-slate-200 p-3.5 space-y-2.5">
       {/* Top Bar: Brand, Language, Auth, Vault Lock */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white text-xs shadow-xs">
-            S
-          </div>
+        <div className="flex items-center gap-2.5">
+          <img
+            src="logo.png"
+            alt="Savvy.AI Logo"
+            className="w-8 h-8 object-contain drop-shadow-xs"
+          />
           <div>
-            <div className="font-extrabold text-sm leading-none text-slate-900 tracking-tight">
-              Savvy<span className="text-blue-600">.AI</span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-sm leading-none text-savvy-navy tracking-tight">
+                Savvy<span className="text-savvy-blue">.AI</span>
+              </span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[8.5px] font-extrabold bg-savvy-soft-green text-savvy-green border border-savvy-green/30 tracking-wider">
+                ON
+              </span>
             </div>
             <div className="text-[10px] text-slate-500 font-medium">
               Meta Muse Spark 1.3

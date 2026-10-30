@@ -3,12 +3,48 @@
 // Mengelola Side Panel Lifecycle, Tab Context, & Bridge Messaging
 // ============================================================================
 
+import { agentLog } from "./lib/agentLogger";
+
 // 1. Konfigurasi Side Panel agar terbuka otomatis saat toolbar icon diklik
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("[Savvy.AI Background] Installed successfully.");
+  agentLog.planner("Background Service Worker installed & initialized.", undefined, false);
   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((err) => {
       console.warn("[Savvy.AI Background] sidePanel.setPanelBehavior error:", err);
+    });
+  }
+});
+
+// Icon definitions for ON (active) and OFF (inactive) states
+const ON_ICONS = {
+  16: "icons/icon-on-16.png",
+  32: "icons/icon-on-32.png",
+  48: "icons/icon-on-48.png",
+  128: "icons/icon-on-128.png",
+};
+
+const OFF_ICONS = {
+  16: "icons/icon-off-16.png",
+  32: "icons/icon-off-32.png",
+  48: "icons/icon-off-48.png",
+  128: "icons/icon-off-128.png",
+};
+
+// Track active side panel connections across windows
+let activeSidePanelConnections = 0;
+
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === "savvy-sidepanel") {
+    activeSidePanelConnections++;
+    agentLog.planner("Side Panel session connected (Active icon ON).", { connections: activeSidePanelConnections }, false);
+    chrome.action.setIcon({ path: ON_ICONS }).catch(() => {});
+
+    port.onDisconnect.addListener(() => {
+      activeSidePanelConnections = Math.max(0, activeSidePanelConnections - 1);
+      agentLog.planner("Side Panel session disconnected.", { remaining: activeSidePanelConnections }, false);
+      if (activeSidePanelConnections === 0) {
+        chrome.action.setIcon({ path: OFF_ICONS }).catch(() => {});
+      }
     });
   }
 });
@@ -24,8 +60,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       tab.url.includes("mock-portal");
 
     if (isPublicPortal) {
+      agentLog.perception(`Public bureaucracy portal detected: ${tab.url}`, { tabId }, false);
       chrome.action.setBadgeText({ tabId, text: "AI" });
-      chrome.action.setBadgeBackgroundColor({ tabId, color: "#2563EB" });
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#398CF5" });
     } else {
       chrome.action.setBadgeText({ tabId, text: "" });
     }

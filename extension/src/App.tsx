@@ -2,27 +2,64 @@ import React, { useState, useEffect } from "react";
 import { useLanguage } from "./lib/i18n/LanguageContext";
 import { Header } from "./components/Header";
 import { AuthModal } from "./components/AuthModal";
-import { CoachTab } from "./components/CoachTab";
+import { AiAssistantTab } from "./components/AiAssistantTab";
+import { FormsGuideTab } from "./components/FormsGuideTab";
 import { VaultTab } from "./components/VaultTab";
 import { AuditorTab } from "./components/AuditorTab";
 import { AccessibilityHubTab } from "./components/AccessibilityHubTab";
 import {
-  Compass,
-  Lock,
-  ShieldCheck,
-  Sliders,
-  Sparkles,
   Bot,
+  FileText,
   Zap,
+  ShieldCheck,
+  X,
+  Compass,
 } from "lucide-react";
+
+import { agentLog, logAgent, AgentDomain } from "./lib/agentLogger";
 
 export function App() {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<"coach" | "vault" | "audit" | "a11y">("coach");
+  const [activeTab, setActiveTab] = useState<"assistant" | "guide" | "vault" | "audit">("assistant");
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+  const [isFormAnalyzed, setIsFormAnalyzed] = useState(false);
   const [activePortalTitle, setActivePortalTitle] = useState("Portal LPDP 2026");
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [a11yModalOpen, setA11yModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
+
+  // Connect to background script & log initial session
+  useEffect(() => {
+    agentLog.planner("Side Panel UI initialized and active.");
+
+    // Mirror content script logs into side panel console
+    const messageListener = (msg: any) => {
+      if (msg?.type === "AGENT_LOG_EVENT" && msg?.event) {
+        const { domain, message, data } = msg.event;
+        logAgent(domain as AgentDomain, `[Page ➔ Panel] ${message}`, data, false);
+      }
+    };
+
+    if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+      chrome.runtime.onMessage.addListener(messageListener);
+    }
+
+    if (typeof chrome !== "undefined" && chrome.runtime?.connect) {
+      try {
+        const port = chrome.runtime.connect({ name: "savvy-sidepanel" });
+        return () => {
+          try {
+            port.disconnect();
+          } catch (e) {}
+          if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
+            chrome.runtime.onMessage.removeListener(messageListener);
+          }
+        };
+      } catch (err) {
+        console.warn("[Savvy.AI] Failed to connect sidepanel port:", err);
+      }
+    }
+  }, []);
 
   // Sync active tab URL & Title in Chrome Extension context
   useEffect(() => {
@@ -37,10 +74,10 @@ export function App() {
   }, []);
 
   const tabs = [
-    { id: "coach", label: t.tabs.coach, icon: Compass },
-    { id: "vault", label: t.tabs.vault, icon: Lock },
+    { id: "assistant", label: t.tabs.assistant, icon: Bot },
+    { id: "guide", label: t.tabs.guide, icon: FileText },
+    { id: "vault", label: t.tabs.vault, icon: Zap },
     { id: "audit", label: t.tabs.audit, icon: ShieldCheck },
-    { id: "a11y", label: t.tabs.a11y, icon: Sliders },
   ] as const;
 
   return (
@@ -61,49 +98,93 @@ export function App() {
         onLogout={() => setCurrentUser(null)}
       />
 
-      {/* 4 Core Navigation Tabs matching PRD */}
-      <div className="grid grid-cols-4 bg-white border-b border-slate-200 text-xs font-bold text-center shrink-0">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`py-2.5 px-1 flex flex-col items-center justify-center gap-1 transition-all border-b-2 ${
-                isActive
-                  ? "border-blue-600 text-blue-600 bg-blue-50/40"
-                  : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span className="text-[10px] truncate max-w-[80px]">{tab.label}</span>
-            </button>
-          );
-        })}
+      {/* Clean Capsule Top Navigation Tabs */}
+      <div className="bg-white border-b border-slate-200 px-3 py-2 shrink-0">
+        <div className="grid grid-cols-4 bg-slate-100/90 p-1 rounded-xl gap-1 text-center font-bold text-xs">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  agentLog.planner(`Switched active tab to: ${tab.id.toUpperCase()} (${tab.label})`);
+                  setActiveTab(tab.id);
+                }}
+                className={`py-1.5 px-1 rounded-lg flex items-center justify-center gap-1 transition-all ${
+                  isActive
+                    ? "bg-white text-savvy-blue shadow-2xs font-extrabold"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <span className="text-[11px] truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Main Scrollable Tab Body */}
-      <div className="flex-1 overflow-y-auto">
-        {activeTab === "coach" && <CoachTab isVaultUnlocked={isVaultUnlocked} />}
+      {/* Main Tab Content Body */}
+      <div className="flex-1 overflow-y-auto relative">
+        {activeTab === "assistant" && (
+          <AiAssistantTab
+            isVaultUnlocked={isVaultUnlocked}
+            isFormAnalyzed={isFormAnalyzed}
+            onAnalyzeForm={() => setIsFormAnalyzed(true)}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+            onOpenAccessibilityHub={() => setA11yModalOpen(true)}
+          />
+        )}
+        {activeTab === "guide" && (
+          <FormsGuideTab
+            isVaultUnlocked={isVaultUnlocked}
+            isFormAnalyzed={isFormAnalyzed}
+            onAnalyzeForm={() => setIsFormAnalyzed(true)}
+          />
+        )}
         {activeTab === "vault" && (
           <VaultTab
             isVaultUnlocked={isVaultUnlocked}
             setIsVaultUnlocked={setIsVaultUnlocked}
+            isFormAnalyzed={isFormAnalyzed}
+            onAnalyzeForm={() => setIsFormAnalyzed(true)}
           />
         )}
         {activeTab === "audit" && <AuditorTab />}
-        {activeTab === "a11y" && <AccessibilityHubTab />}
+
+        {/* Accessibility Hub Slide-Over Modal */}
+        {a11yModalOpen && (
+          <div className="absolute inset-0 bg-white z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
+            <div className="p-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-savvy-blue" />
+                <h3 className="font-extrabold text-xs text-slate-900">
+                  Accessibility HUB (14 Tools)
+                </h3>
+              </div>
+              <button
+                onClick={() => setA11yModalOpen(false)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <AccessibilityHubTab />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Status Ribbon (Manifest V3 + Privacy Guarantee) */}
       <div className="bg-white border-t border-slate-200 px-3 py-2 flex items-center justify-between text-[10px] text-slate-400 shrink-0">
         <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-savvy-green animate-pulse" />
           <span className="font-semibold text-slate-600">Savvy Side Panel MV3</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-blue-600 font-medium">
+          <span className="flex items-center gap-1 text-savvy-blue font-bold">
             <Bot className="w-3 h-3" />
             <span>Muse Spark 1.3</span>
           </span>

@@ -62,12 +62,14 @@ export default function Home() {
       {/* Floating Pill Navbar with LanguageSwitcher */}
       <header className="sticky top-5 z-50 max-w-5xl mx-auto px-4">
         <nav className="magic-pill rounded-full px-5 py-2.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-sm shadow-blue-500/20">
-              S
-            </div>
-            <span className="font-extrabold text-lg tracking-tight text-slate-900">
-              Savvy<span className="text-blue-600">.AI</span>
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.png"
+              alt="Savvy.AI Logo"
+              className="w-8 h-8 object-contain drop-shadow-xs"
+            />
+            <span className="font-extrabold text-lg tracking-tight text-savvy-navy">
+              Savvy<span className="text-savvy-blue">.AI</span>
             </span>
           </div>
 
@@ -122,10 +124,10 @@ export default function Home() {
           <span>{t.hero.hackathonBadge}</span>
         </div>
 
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-slate-950 leading-[1.12] mb-6">
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-savvy-navy leading-[1.12] mb-6">
           {t.hero.titleLine1}
           <br />
-          <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent">
+          <span className="text-savvy-gradient font-black">
             {t.hero.titleHighlight}
           </span>
         </h1>
@@ -234,10 +236,12 @@ export default function Home() {
                 {/* Agent Header */}
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                      S
-                    </div>
-                    <span className="text-xs font-bold text-slate-900">{t.browserMockup.fieldCoachHeader}</span>
+                    <img
+                      src="/logo.png"
+                      alt="Savvy.AI"
+                      className="w-6 h-6 object-contain drop-shadow-xs"
+                    />
+                    <span className="text-xs font-bold text-savvy-navy">{t.browserMockup.fieldCoachHeader}</span>
                   </div>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                     {t.browserMockup.officialBadge}
