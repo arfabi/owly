@@ -9,12 +9,12 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 | Priority | Category | Total Tasks | Completed | Pending | Progress |
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **P0** | Foundation, Specs & Core Architecture | 8 | 8 | 0 | **100%** |
-| **P1** | Web Showcase & MV3 Extension Client | 10 | 8 | 2 | **80%** |
-| **P2** | Backend API Gateway & Baseten Inference API (Muse Spark Open) | 8 | 0 | 8 | **0%** |
-| **P3** | Real On-Device AI Models & Voice Engine | 6 | 0 | 6 | **0%** |
+| **P1** | Web Showcase, MV3 Extension Client & Meta Auth | 11 | 8 | 3 | **73%** |
+| **P2** | Backend API Gateway & Baseten Muse Spark Open | 8 | 0 | 8 | **0%** |
+| **P3** | Real On-Device AI Models, Vault & Voice Engine | 6 | 0 | 6 | **0%** |
 | **P4** | End-to-End Testing & Security Verification | 5 | 0 | 5 | **0%** |
 | **P5** | Hackathon Deliverables & Video Submission | 5 | 0 | 5 | **0%** |
-| **TOTAL**| **All Milestones** | **42** | **16** | **26** | **38%** |
+| **TOTAL**| **All Milestones** | **43** | **16** | **27** | **37%** |
 
 ---
 
@@ -22,28 +22,28 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 *Foundational product requirements, unified design language, localization dictionaries, and data schemas.*
 
 - [x] **P0.1: Product Requirements Document (PRD)**
-  - Path: `.agents/prd.md`
+  - Path: [prd.md](file:///d:/webdev/laragon/www/savvy/.agents/prd.md)
   - Zero-portal integration rule, 3 solution pillars (Understand, Fill, Audit), 14 deterministic A11y tools, dual-trigger autofill (single vs. batch) with safe undo, zero-pixel photo compliance.
 - [x] **P0.2: Compound Multi-Agent Architecture Blueprint**
-  - Path: `.agents/multi_agents.md` & `.agents/architecture.md`
-  - Single-hit orchestrator schema, ReAct prompt engineering for Meta Muse Spark 1.3, RAG citation schemas.
+  - Path: [multi_agents.md](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) & [architecture.md](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md)
+  - Single-hit orchestrator schema, ReAct prompt engineering for Meta Muse Spark Open (`meta-models/muse-spark-open-1026`) via Baseten Inference API, RAG citation schemas.
 - [x] **P0.3: User Journey & Friction Mapping (3-Y Framework)**
-  - Path: `.agents/user_journey.md`
+  - Path: [user_journey.md](file:///d:/webdev/laragon/www/savvy/.agents/user_journey.md)
   - Persona mapping (LPDP scholars, Schengen visa, CASN, neurodivergent applicants) addressing Ambiguity, Complexity, and Anxiety.
 - [x] **P0.4: Unified Design System (SkyAgent Magic UI Aesthetic)**
-  - Path: `.agents/design.md`
+  - Path: [design.md](file:///d:/webdev/laragon/www/savvy/.agents/design.md)
   - Light theme palette (`#FFFFFF`, slate typography, `#2563EB` royal blue accent, floating capsule pill navbar, subtle dot grid, Lucide icons, Geist typography).
 - [x] **P0.5: Modular Localization Dictionary (i18n)**
   - Paths: `web/src/lib/i18n/translations.ts` & `extension/src/lib/i18n/translations.ts`
   - Zero hardcoded strings rule. Full coverage for Indonesian (`id`) and English (`en`), extensible to `zh`, `es`, `ar`.
-- [x] **P0.6: Production PostgreSQL Database DDL**
+- [x] **P0.6: Production PostgreSQL Database DDL (Supabase + Meta Auth)**
   - Path: `supabase/schema.sql`
-  - 5 core tables (`savvy_sessions`, `coach_cache`, `vector_stores`, `feedback_reports`, `user_preferences`) with RLS policies, indexing, and auto-triggers.
+  - Core tables: `profiles` (Meta/Facebook OAuth, 50k MAU free tier), `chat_sessions` (dengan `compacted_summary`), `chat_messages` (PII-sanitized), `user_vault` (WebCrypto AES-GCM `ciphertext`), `coach_cache`, dan `juknis_chunks`.
 - [x] **P0.7: Monorepo Clean Git Ignore Rules**
   - Paths: `.gitignore` (root) & `extension/.gitignore`
   - Complete exclusion of `node_modules/`, `dist/`, `.next/`, `*.log`, and sensitive `.env*` files.
 - [x] **P0.8: Technical Research & AI Stack Finalization**
-  - Free $150 Baseten Inference API (Muse Spark Open) credits claimed; architecture streamlined exclusively on Baseten Inference API (Muse Spark Open) without GPU middleware dependencies (no Baseten).
+  - Baseten Inference API setup verified with active live tests in `playground/` (reasoning effort, tool calling, multimodal vision, conversation chain).
 
 ---
 
@@ -76,60 +76,68 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
   - Automatic persistence of language preference and unlocked state to `chrome.storage.local`.
 - [ ] **P1.9: Connect Extension Side Panel to Live Backend API**
   - Connect `extension/src/components/CoachTab.tsx` and `AuditorTab.tsx` to live backend endpoints instead of static fallback data.
-- [ ] **P1.10: Content Script Visual Snip & Masking Overlay ("Explain This")**
-  - Implement canvas/DOM cropping with automatic client-side PII redacting (masking text/numbers with black bars) before sending snip to vision model.
+- [ ] **P1.10: Content Script Visual Snip & DOM Blackout Mask ("Explain This")**
+  - Path: [ocr.md](file:///d:/webdev/laragon/www/savvy/.agents/ocr.md)
+  - Implement canvas/DOM cropping with automatic client-side PII black-out masking (menutup foto wajah dan kotak input sensitif dengan blok hitam) sebelum dikirim ke Muse Spark Open Vision.
+- [ ] **P1.11: Extension Meta Social Auth & PII Chat Guard**
+  - Path: `extension/src/components/AuthModal.tsx` & `extension/src/lib/privacy/censor.ts`
+  - Integrasi login Facebook/Instagram via Supabase Auth (Free Tier 50k MAU). Client-side regex sensor pada input chat untuk menyamarkan NIK/NPWP/Rekening dan menampilkan pesan peringatan langsung mengarahkan user menyimpannya di Vault Pribadi.
 
 ---
 
-## ⚡ P2: Backend API Gateway & Baseten Inference API (Muse Spark Open) Integration
-*Serverless Node.js endpoints bridging user requests to Meta Muse Spark 1.3, Juknis RAG Store, and Supabase.*
+## ⚡ P2: Backend API Gateway & Baseten Inference API Integration
+*Serverless Node.js endpoints bridging user requests to Muse Spark Open on Baseten, Juknis RAG Store, and Supabase.*
 
 - [ ] **P2.1: Backend Project Setup & Environment Configuration**
   - Path: `backend/`
-  - Dependencies: `@supabase/supabase-js`, `dotenv`, `cors`, `zod`, `sharp`, `form-data`.
-  - Configured `.env` matching `.env.example` with `META_MODEL_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+  - Dependencies: `@supabase/supabase-js`, `dotenv`, `cors`, `zod`, `sharp`, `form-data`, `openai`.
+  - Configured `.env` dengan `BASETEN_API_KEY`, `BASETEN_BASE_URL=https://inference.baseten.co/v1`, `MUSE_SPARK_MODEL_NAME=meta-models/muse-spark-open-1026`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 - [ ] **P2.2: Field Coach RAG Endpoint (`/api/coach/field`)**
   - Input: `{ portal_id, field_id, field_name, label_text, context_text }`
-  - Flow: Query `coach_cache` in Supabase; if miss, invoke Juknis RAG Store (`file_search` tool) with Juknis LPDP/Visa documents. Format response with official rule, pitfall, and page citation.
-- [ ] **P2.3: General Assistant & Voice Chat Endpoint (`/api/chat`)**
+  - Flow: Query `coach_cache` in Supabase; if miss, invoke Juknis RAG chunks (`juknis_chunks`) via semantic keyword/tag matching. Format response with official rule, pitfall, and page citation.
+- [ ] **P2.3: General Assistant Chat & Compacting Engine (`/api/chat`)**
   - Input: `{ session_id, message, form_context, language }`
-  - Flow: ReAct streaming agent using Meta Muse Spark 1.3 with tool definitions (`file_search`, `set_accessibility_feature`, `recommend_vault_field`).
+  - Flow: 
+    1. Filter & redact PII teks (NIK/NPWP).
+    2. Ambil `compacted_summary` dari sesi + 10 pesan percakapan terakhir (sliding window).
+    3. Eksekusi streaming inferensi via Baseten `meta-models/muse-spark-open-1026`.
+    4. Jika pesan aktif > 10, trigger background compacting via Muse Spark Open untuk memperbarui `chat_sessions.compacted_summary`.
 - [ ] **P2.4: Multimodal Snip Explainer Endpoint (`/api/explain`)**
   - Input: `{ image_base64, context_label, portal_url }`
-  - Flow: Meta Muse Spark Vision multimodal reasoning. Jargon Buster + plain language explanation + document specimen reference.
+  - Flow: Muse Spark Open Multimodal Vision (`image_url` data URI). Jargon Buster + plain language explanation + document specimen reference.
 - [ ] **P2.5: Essay Coach Narrative Generator (`/api/essay/coach`)**
   - Input: `{ prompt_topic, bullet_points: string[], max_words, language }`
-  - Flow: Structured prompt to Muse Spark enforcing strict factual adherence (zero hallucinated facts) + academic flow transformation.
+  - Flow: Structured prompt to Muse Spark Open dengan `reasoning_effort: "high"` untuk penalaran terstruktur tanpa halusinasi fakta.
 - [ ] **P2.6: Zero-Pixel Photo Compliance Audit (`/api/photo/audit`)**
   - Input: `multipart/form-data` image file.
   - Flow: In-memory `sharp` analysis: aspect ratio (2x2 inch / 35x45mm), Laplacian blur variance (>100 sharpness threshold), background color neutrality, file size check. Never alter pixels.
 - [ ] **P2.7: Audio Transcription Gateway (`/api/voice/transcribe`)**
-  - Input: `audio/wav` or `audio/webm` blob.
-  - Flow: Proxy to `Muse Voice Transcribe` API; return clean transcribed string with timestamp and detected language.
-- [ ] **P2.8: Regulatory Vector Store Ingestion Script**
-  - Path: `backend/scripts/seed_vector_stores.ts`
-  - Ingest official PDF guidelines (LPDP 2026 Booklet, Schengen Visa Application Handbook, OSS User Guide) into Juknis RAG Store via API.
+  - Input: `audio/wav` or `audio/webm` blob / data URI.
+  - Flow: Endpoint transkripsi / fallback ke browser Web Speech STT bawaan.
+- [ ] **P2.8: Regulatory Juknis Store Ingestion Script**
+  - Path: `backend/scripts/seed_juknis_chunks.ts`
+  - Ingest official PDF guidelines (LPDP 2026 Booklet, Schengen Visa Application Handbook, OSS User Guide) ke dalam tabel `juknis_chunks` Supabase.
 
 ---
 
-## 🔒 P3: Real On-Device AI Models & Voice Engine
+## 🔒 P3: Real On-Device AI Models, Vault & Voice Engine
 *Client-side execution for zero-latency, private document processing without cloud transit.*
 
-- [ ] **P3.1: WebCrypto AES-256-GCM Vault Engine**
+- [ ] **P3.1: WebCrypto AES-256-GCM Vault Engine & Cloud Ciphertext Sync**
   - Path: `extension/src/lib/crypto/vault.ts` & `frontend/src/lib/crypto/vault.ts`
-  - PBKDF2 key derivation from user Master Password, AES-256-GCM encryption/decryption of Vault records in `chrome.storage.local`.
-- [ ] **P3.2: Multimodal Document Vision Extractor (Muse Spark Open)**
-  - Path: `extension/src/lib/ai/doc_extractor.ts`
-  - Implement consent modal (UU PDP compliance) and send document image in-RAM as Base64 to Muse Spark Open (Meta) for zero-storage extraction into encrypted Vault.
+  - PBKDF2 key derivation dari user Master Password, enkripsi AES-256-GCM di sisi klien. Menyimpan ciphertext & IV ke Supabase `user_vault` (server hanya menyimpan ciphertext tanpa bisa mendekripsi).
+- [ ] **P3.2: Multimodal Document Vision Extractor (Muse Spark Open via Baseten)**
+  - Path: `extension/src/lib/ai/doc_extractor.ts` & [ocr.md](file:///d:/webdev/laragon/www/savvy/.agents/ocr.md)
+  - Implement consent modal (UU PDP compliance) dan DOM Blackout Mask (menutup foto wajah sebelum kirim). Kirim potongan data dokumen sebagai in-RAM Base64 ke Muse Spark Open di Baseten untuk diekstrak langsung ke Vault terenkripsi.
 - [ ] **P3.3: Client-Side Silero VAD Voice Detection**
   - Path: `extension/src/lib/voice/vad.ts`
   - Run lightweight Silero VAD (1 MB ONNX) on microphone stream to automatically trigger speech-to-text without pressing buttons.
 - [ ] **P3.4: Native Browser/OS TTS Engine (Web Speech API)**
   - Path: `extension/src/lib/voice/tts.ts`
-  - Implement zero-latency, zero-cost native Browser/OS speech synthesis via `window.speechSynthesis` with voice selection (id-ID, en-US) and pitch/rate controls.
-- [ ] **P3.5: Client-Side DOM Masking Engine (Privacy Shield)**
+  - Zero-latency, zero-cost native Browser/OS speech synthesis via `window.speechSynthesis` dengan voice selection (id-ID, en-US) dan kontrol nada/kecepatan.
+- [ ] **P3.5: Client-Side DOM Blackout Masking Engine (Privacy Shield)**
   - Path: `extension/src/lib/privacy/masking.ts`
-  - Automatic detection of sensitive input fields (password, credit card, NIK values) and black-bar overlay before sending any screenshots to the backend.
+  - Otomatis merender layer canvas hitam pekat di atas field data pribadi pengguna dan foto biometrik sebelum screenshot dikirim ke API.
 - [ ] **P3.6: Pre-Submit Regex & Consistency FSM Validator**
   - Path: `extension/src/lib/audit/rules.ts`
   - Instantaneous (<50ms) regex verification for NIK (16 digits), passport number, dates, emails, and postal codes before LLM inference.
@@ -142,13 +150,13 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 - [ ] **P4.1: Test Suite for LPDP 2026 Portal Simulation**
   - Verify complete applicant journey: Focus on NIK -> Field Coach card -> Single autofill -> Essay coach -> Photo audit -> Pre-submit green light.
 - [ ] **P4.2: Zero Cloud Transit & Security Audit**
-  - Inspect network tab during all operations to guarantee zero raw PII (unmasked NIK/passwords) is ever transmitted to cloud APIs or Supabase.
+  - Inspect network tab during all operations to guarantee zero raw PII (unmasked NIK/passwords/biometrics) is ever transmitted to cloud APIs or Supabase.
 - [ ] **P4.3: Accessibility WCAG 2.2 AAA Audit**
   - Automated testing with axe-core / Lighthouse verifying keyboard navigation (`Tab` / `Shift+Tab`), ARIA roles, color contrast ratios, and screen-reader friendliness.
 - [ ] **P4.4: Cross-Browser & Resolution Testing**
   - Test Chrome Extension Side Panel on standard 1080p, 1440p, and 4K displays; test Web Showcase on mobile, tablet, and desktop viewports.
 - [ ] **P4.5: Latency & Cost Benchmark**
-  - Benchmark Field Coach cache hits (<10ms), RAG queries (<1.8s), local OCR (<600ms), and confirm $0 token waste for 14 accessibility tools.
+  - Benchmark Field Coach cache hits (<10ms), Baseten Muse Spark responses (<1.8s), sliding window token usage (<1.2k tokens), and confirm $0 token waste for 14 accessibility tools.
 
 ---
 
@@ -161,11 +169,11 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
     2. Pillar 1: Understand (45s): Field Coach RAG, official citations, voicebot.
     3. Pillar 2: Fill (45s): Encrypted Vault, 1-click autofill with Safe Undo, Essay Coach.
     4. Pillar 3: Audit (45s): Traffic light auditor, zero-pixel photo compliance, consistency check.
-    5. Tech Stack & Meta AI Architecture (30s): Muse Spark, Vector Store, Muse Voice.
+    5. Tech Stack & Meta AI Architecture (30s): Muse Spark Open on Baseten, Web Speech API, DOM Blackout Mask.
 - [ ] **P5.2: Public GitHub Repository Optimization**
   - Polish `README.md` with visual architecture diagrams, installation instructions, environment setup, and demo GIF animations.
-- [ ] **P5.3: Meta AI Dev Credits & API Usage Proof**
-  - Document Baseten Inference API (Muse Spark Open) endpoint calls, token usage logs (`docs/muse-code-log.md`), and compliance with hackathon rules.
+- [ ] **P5.3: Meta AI Dev Credits & Baseten Inference Proof**
+  - Document Baseten Inference API endpoint calls, token usage logs (`docs/muse-code-log.md`), and compliance with hackathon rules.
 - [ ] **P5.4: Pitch Deck / Slide Deck (PDF)**
   - 10-slide pitch: Problem, Solution, Target Personas, Tech Stack, Competitive Advantage (Zero-Integration + Zero-Knowledge), Roadmap.
 - [ ] **P5.5: Final Submission Form on Devpost / Hackathon Portal**
