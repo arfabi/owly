@@ -9,12 +9,12 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 | Priority | Category | Total Tasks | Completed | Pending | Progress |
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **P0** | Foundation, Specs & Core Architecture | 8 | 8 | 0 | **100%** |
-| **P1** | Web Showcase, MV3 Extension Client & Meta Auth | 11 | 8 | 3 | **73%** |
+| **P1** | Web Showcase, MV3 Extension Client & Meta Auth | 11 | 9 | 2 | **82%** |
 | **P2** | Backend API Gateway & Baseten Muse Spark Open | 8 | 3 | 5 | **38%** |
 | **P3** | Real On-Device AI Models, Vault & Voice Engine | 6 | 0 | 6 | **0%** |
 | **P4** | End-to-End Testing & Security Verification | 5 | 0 | 5 | **0%** |
 | **P5** | Hackathon Deliverables & Video Submission | 5 | 0 | 5 | **0%** |
-| **TOTAL**| **All Milestones** | **43** | **19** | **24** | **44%** |
+| **TOTAL**| **All Milestones** | **43** | **20** | **23** | **47%** |
 
 ---
 
@@ -74,8 +74,9 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 - [x] **P1.8: Local Storage & State Synchronization**
   - Path: `extension/src/lib/i18n/LanguageContext.tsx`
   - Automatic persistence of language preference and unlocked state to `chrome.storage.local`.
-- [ ] **P1.9: Connect Extension Side Panel to Live Backend API**
-  - Connect `extension/src/components/CoachTab.tsx` and `AuditorTab.tsx` to live backend endpoints instead of static fallback data.
+- [x] **P1.9: Connect Web Simulator & Extension to Live Backend API**
+  - Path: `web/src/app/landingpage/simulator/page.tsx` & `extension/src/components/CoachTab.tsx`
+  - Terhubung langsung ke `/api/coach/field` (Dynamic 4-Element Card & Two-Tier Cache) serta `/api/chat` (Live Handsfree Voicebot dengan Web Speech TTS & Essay Drafting).
 - [ ] **P1.10: Content Script Visual Snip & DOM Blackout Mask ("Explain This")**
   - Path: [ocr.md](file:///d:/webdev/laragon/www/savvy/.agents/ocr.md)
   - Implement canvas/DOM cropping with automatic client-side PII black-out masking (menutup foto wajah dan kotak input sensitif dengan blok hitam) sebelum dikirim ke Muse Spark Open Vision.

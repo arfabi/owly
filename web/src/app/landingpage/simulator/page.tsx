@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   RotateCcw,
   Sparkles,
+  Loader2,
   FileCheck2,
   Copy,
   Check,
@@ -48,11 +49,33 @@ export default function SimulatorPage() {
   const [nama, setNama] = useState("");
   const [tglLahir, setTglLahir] = useState("");
   const [essay, setEssay] = useState("");
-  const [activeField, setActiveField] = useState<"nik" | "nama" | "tgl" | "photo" | "essay">("nik");
+  const [toefl, setToefl] = useState("");
+  const [activeField, setActiveField] = useState<"nik" | "nama" | "tgl" | "toefl" | "photo" | "essay">("nik");
   const [auditResult, setAuditResult] = useState<{
     status: "idle" | "green" | "yellow" | "red";
     message: string;
   }>({ status: "idle", message: "" });
+
+  // Dynamic Live API States
+  const [coachCard, setCoachCard] = useState<{
+    meaning: string;
+    how_to_fill: string;
+    example: string;
+    pitfalls: string;
+    confirmation_ref: string;
+    source_type: string;
+    cached?: boolean;
+  }>({
+    meaning: "Nomor identitas kependudukan tunggal 16 digit yang diterbitkan oleh Dinas Dukcapil.",
+    how_to_fill: "Ketik 16 digit angka tanpa spasi atau tanda strip. Wajib sesuai fisik e-KTP terbaru.",
+    example: "3271041908980002",
+    pitfalls: "Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili.",
+    confirmation_ref: "Buku Panduan LPDP 2026, Bab IV, Hlm. 14",
+    source_type: "official"
+  });
+  const [isCoachLoading, setIsCoachLoading] = useState(false);
+  const [voiceReplyText, setVoiceReplyText] = useState("");
+  const [isEssayLoading, setIsEssayLoading] = useState(false);
 
   // Extension Side Panel State (Right Panel)
   const [activeTab, setActiveTab] = useState<"coach" | "vault" | "audit" | "a11y">("coach");
@@ -69,6 +92,47 @@ export default function SimulatorPage() {
   // Coach Tab States
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [snipActive, setSnipActive] = useState(false);
+
+  // Efek Panggilan API Cerdas /api/coach/field saat kolom aktif berubah
+  React.useEffect(() => {
+    if (activeField === "photo") return;
+
+    const fieldKeyMap: Record<string, { key: string; name: string }> = {
+      nik: { key: "nik", name: "Nomor Induk Kependudukan (NIK)" },
+      nama: { key: "nama", name: "Nama Lengkap Sesuai KTP & Ijazah" },
+      tgl: { key: "tglLahir", name: "Tanggal Lahir" },
+      toefl: { key: "toefl", name: "Sertifikat Kemampuan Bahasa Inggris (TOEFL/IELTS)" },
+      essay: { key: "essay", name: "Esai Komitmen Kembali ke Indonesia & Rencana Kontribusi" }
+    };
+
+    const current = fieldKeyMap[activeField] || { key: activeField, name: activeField };
+
+    async function fetchCoach() {
+      setIsCoachLoading(true);
+      try {
+        const res = await fetch("/api/coach/field", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            portalDomain: "beasiswalpdp.kemenkeu.go.id",
+            fieldKey: current.key,
+            fieldName: current.name,
+            language: language === "en" ? "en" : "id"
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCoachCard(data);
+        }
+      } catch (err) {
+        console.error("Gagal memuat Field Coach live:", err);
+      } finally {
+        setIsCoachLoading(false);
+      }
+    }
+
+    fetchCoach();
+  }, [activeField, language]);
 
   // Vault Tab States
   const [ocrStatus, setOcrStatus] = useState<"idle" | "processing" | "done">("idle");
@@ -153,15 +217,61 @@ export default function SimulatorPage() {
     setShowUndoBar(false);
   };
 
-  const handleVoiceToggle = () => {
-    if (voiceStatus === "idle") {
-      setVoiceStatus("listening");
-      setTimeout(() => setVoiceStatus("thinking"), 1500);
-      setTimeout(() => setVoiceStatus("speaking"), 3000);
-      setTimeout(() => setVoiceStatus("idle"), 5500);
-    } else {
+  const handleVoiceToggle = async () => {
+    if (voiceStatus !== "idle") {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
       setVoiceStatus("idle");
+      return;
     }
+
+    setVoiceStatus("listening");
+    const fieldKeyMap: Record<string, string> = {
+      nik: "Nomor Induk Kependudukan (NIK)",
+      nama: "Nama Lengkap",
+      tgl: "Tanggal Lahir",
+      toefl: "Sertifikat TOEFL atau IELTS",
+      essay: "Esai Komitmen Kontribusi"
+    };
+    const currentFieldName = fieldKeyMap[activeField] || "kolom formulir ini";
+    const userPrompt = `Jelaskan secara singkat aturan resmi untuk ${currentFieldName} di LPDP 2026.`;
+
+    setTimeout(async () => {
+      setVoiceStatus("thinking");
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: userPrompt,
+            portalDomain: "beasiswalpdp.kemenkeu.go.id"
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const reply = data.reply || "";
+          setVoiceReplyText(reply);
+          setVoiceStatus("speaking");
+
+          if (typeof window !== "undefined" && "speechSynthesis" in window) {
+            const utterance = new SpeechSynthesisUtterance(reply.substring(0, 180));
+            utterance.lang = language === "en" ? "en-US" : "id-ID";
+            utterance.rate = 1.05;
+            utterance.onend = () => setVoiceStatus("idle");
+            utterance.onerror = () => setVoiceStatus("idle");
+            window.speechSynthesis.speak(utterance);
+          } else {
+            setTimeout(() => setVoiceStatus("idle"), 5000);
+          }
+        } else {
+          setVoiceStatus("idle");
+        }
+      } catch (err) {
+        console.error("Voice chat error:", err);
+        setVoiceStatus("idle");
+      }
+    }, 800);
   };
 
   const handleSimulateOcr = () => {
@@ -172,12 +282,26 @@ export default function SimulatorPage() {
     }, 1200);
   };
 
-  const handleGenerateEssay = () => {
-    setEssayDraft(
-      language === "en"
-        ? "Upon completing my Master of Public Policy, my strategic plan is to serve at Bappenas to lead green economy downstreaming initiatives."
-        : "Pasca menyelesaikan studi Magister Kebijakan Publik, rencana strategis saya adalah kembali mengabdi di Bappenas untuk memimpin riset ekonomi hijau terapan."
-    );
+  const handleGenerateEssay = async () => {
+    setIsEssayLoading(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: "Susun 1 paragraf draf esai komitmen kontribusi LPDP yang padat, terstruktur, akademik dan formal dari 3 poin ini: 1) Lulusan teknik elektro dengan minat energi baru terbarukan, 2) Riset baterai surya untuk daerah tertinggal, 3) Rencana pasca studi mengabdi di BRIN atau Bappenas.",
+          portalDomain: "beasiswalpdp.kemenkeu.go.id"
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEssayDraft(data.reply || "");
+      }
+    } catch (err) {
+      console.error("Gagal generate esai live:", err);
+    } finally {
+      setIsEssayLoading(false);
+    }
   };
 
   const handleCopyEssay = () => {
@@ -406,6 +530,38 @@ export default function SimulatorPage() {
                     />
                   </div>
 
+                  {/* Field Kemampuan Bahasa Inggris (TOEFL / IELTS) */}
+                  <div
+                    className={`p-3.5 rounded-xl transition-all cursor-pointer ${
+                      activeField === "toefl"
+                        ? "bg-blue-50/50 border-2 border-blue-500 shadow-xs"
+                        : "border border-slate-200 hover:border-slate-300"
+                    }`}
+                    onClick={() => {
+                      setActiveField("toefl");
+                      setActiveTab("coach");
+                    }}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs font-bold text-slate-800">
+                        Sertifikat Bahasa Inggris (TOEFL/IELTS) <span className="text-red-500">*</span>
+                      </label>
+                      {activeField === "toefl" && (
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                          Spotlight Aktif
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={toefl}
+                      onChange={(e) => setToefl(e.target.value)}
+                      placeholder="Contoh: IELTS 7.0 atau TOEFL iBT 95"
+                      className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
                   {/* Field Upload Pasfoto */}
                   <div
                     className={`p-3.5 rounded-xl transition-all cursor-pointer ${
@@ -597,25 +753,40 @@ export default function SimulatorPage() {
                 <div>
                   <div className="text-blue-800 font-bold text-xs flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                    <span>Nomor Induk Kependudukan (NIK)</span>
+                    <span>
+                      {activeField === "nik" && "Nomor Induk Kependudukan (NIK)"}
+                      {activeField === "nama" && "Nama Lengkap (KTP & Ijazah)"}
+                      {activeField === "tgl" && "Tanggal Lahir"}
+                      {activeField === "toefl" && "Sertifikat Bahasa Inggris (TOEFL/IELTS)"}
+                      {activeField === "photo" && "Pasfoto Biometrik 2x2 Inci"}
+                      {activeField === "essay" && "Esai Komitmen Kontribusi"}
+                    </span>
                   </div>
                   <div className="text-[10px] text-slate-500 mt-0.5">
                     Kolom aktif yang sedang disorot Spotlight
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200 shrink-0">
-                  🟢 Resmi • Hlm. 14
+                  {coachCard.source_type === "official" ? "🟢 Resmi LPDP" : "💡 Panduan AI"}
                 </span>
               </div>
 
-              {/* 4-Element Card */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs space-y-2.5">
+              {/* 4-Element Card (Live Baseten / Two-Tier Cache) */}
+              <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs space-y-2.5 relative">
+                {isCoachLoading && (
+                  <div className="absolute inset-0 bg-white/85 backdrop-blur-2xs rounded-xl flex items-center justify-center z-10">
+                    <div className="flex items-center gap-2 text-blue-600 font-bold text-xs">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      <span>Muse Spark menalar juknis...</span>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                     Arti Istilah:
                   </span>
                   <p className="text-slate-800 font-medium mt-0.5 leading-snug">
-                    Nomor identitas kependudukan tunggal 16 digit yang diterbitkan oleh Dinas Dukcapil.
+                    {coachCard.meaning}
                   </p>
                 </div>
 
@@ -624,7 +795,7 @@ export default function SimulatorPage() {
                     Cara Mengisi:
                   </span>
                   <p className="text-slate-700 mt-0.5 leading-snug">
-                    Ketik 16 digit angka tanpa spasi atau tanda strip. Wajib sesuai fisik e-KTP terbaru.
+                    {coachCard.how_to_fill}
                   </p>
                 </div>
 
@@ -633,7 +804,7 @@ export default function SimulatorPage() {
                     Contoh Valid:
                   </span>
                   <code className="text-blue-700 font-mono font-bold text-xs mt-0.5 block">
-                    3271041908980002
+                    {coachCard.example}
                   </code>
                 </div>
 
@@ -642,13 +813,17 @@ export default function SimulatorPage() {
                     Jebakan Umum (Pitfall):
                   </span>
                   <p className="text-[11px] text-amber-900 mt-0.5 leading-snug">
-                    Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili.
+                    {coachCard.pitfalls}
                   </p>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-                  <span>Juknis LPDP 2026 Bab IV</span>
-                  <span className="text-blue-600 font-semibold">Meta Vector Store</span>
+                  <span className="truncate max-w-[210px]" title={coachCard.confirmation_ref}>
+                    {coachCard.confirmation_ref}
+                  </span>
+                  <span className="text-blue-600 font-semibold shrink-0">
+                    {coachCard.cached ? "L1/L2 Cache (0ms)" : "Baseten Muse Spark"}
+                  </span>
                 </div>
               </div>
 
@@ -672,7 +847,7 @@ export default function SimulatorPage() {
                 ) : (
                   <>
                     <Lock className="w-3.5 h-3.5" />
-                    <span>Isi Kolom Ini dari Vault (327104...)</span>
+                    <span>Isi Kolom Ini dari Vault</span>
                   </>
                 )}
               </button>
@@ -682,9 +857,9 @@ export default function SimulatorPage() {
                 <div className="flex items-center justify-between font-bold text-xs text-slate-800">
                   <div className="flex items-center gap-1.5">
                     <Volume2 className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Handsfree Voicebot (Muse Voice)</span>
+                    <span>Handsfree Voicebot (Web Speech)</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium">Silero VAD</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Native TTS</span>
                 </div>
 
                 {/* Waveform */}
@@ -708,10 +883,16 @@ export default function SimulatorPage() {
                   </div>
                   <div className="text-[10px] font-semibold text-slate-600">
                     {voiceStatus === "listening" && "Mendengarkan ucapan Anda..."}
-                    {voiceStatus === "thinking" && "Muse Spark sedang menalar..."}
-                    {voiceStatus === "speaking" && "Menjelaskan aturan NIK..."}
-                    {voiceStatus === "idle" && "Klik untuk simulasi suara handsfree"}
+                    {voiceStatus === "thinking" && "Muse Spark sedang menalar juknis di Baseten..."}
+                    {voiceStatus === "speaking" && "Menjelaskan aturan suara..."}
+                    {voiceStatus === "idle" && "Klik tombol di bawah untuk bertanya pada Savvy"}
                   </div>
+                  {voiceReplyText && (
+                    <div className="mt-2 p-2 bg-blue-50/80 border border-blue-200/80 rounded-lg text-[11px] text-blue-900 text-left leading-snug">
+                      <strong className="text-blue-700 block text-[10px] mb-0.5">Savvy Voice:</strong>
+                      {voiceReplyText}
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -865,10 +1046,20 @@ export default function SimulatorPage() {
                 </div>
                 <button
                   onClick={handleGenerateEssay}
-                  className="w-full py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                  disabled={isEssayLoading}
+                  className="w-full py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs disabled:opacity-75"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Rancang Draf Narasi Esai</span>
+                  {isEssayLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Muse Spark Merumuskan Esai...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Rancang Draf Narasi Esai (Live AI)</span>
+                    </>
+                  )}
                 </button>
 
                 {essayDraft && (
