@@ -211,7 +211,7 @@ Badge jadi 🟢 Official karena ada sitasi file resmi, bukan AI ngarang.
 Best practice Savvy:
 - Juknis resmi publik -> file_search
 - Aturan terbaru / berita -> web_search
-- KTP/KK user -> JANGAN masuk vector store manapun, tetap di Vault on-device (18MB MobileSAM)
+- KTP/KK user -> JANGAN masuk vector store manapun, tetap di Vault lokal terenkripsi (WebCrypto AES-256)
 
 ## 6. Biaya & Token
 

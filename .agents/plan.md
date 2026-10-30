@@ -34,7 +34,7 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
   - Path: `.agents/design.md`
   - Light theme palette (`#FFFFFF`, slate typography, `#2563EB` royal blue accent, floating capsule pill navbar, subtle dot grid, Lucide icons, Geist typography).
 - [x] **P0.5: Modular Localization Dictionary (i18n)**
-  - Paths: `frontend/src/lib/i18n/translations.ts` & `extension/src/lib/i18n/translations.ts`
+  - Paths: `web/src/lib/i18n/translations.ts` & `extension/src/lib/i18n/translations.ts`
   - Zero hardcoded strings rule. Full coverage for Indonesian (`id`) and English (`en`), extensible to `zh`, `es`, `ar`.
 - [x] **P0.6: Production PostgreSQL Database DDL**
   - Path: `supabase/schema.sql`
@@ -51,13 +51,13 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 *Public-facing landing page, interactive mock portal, web simulator, and actual Chrome Extension MV3 side panel code.*
 
 - [x] **P1.1: Next.js Web Showcase Landing Page**
-  - Path: `frontend/src/app/page.tsx`
+  - Path: `web/src/app/landingpage/page.tsx`
   - SkyAgent light aesthetic, floating capsule navbar with LanguageSwitcher, hero browser frame, 3-pillar Bento Grid, public portal marquee, 14 A11y cards, and step-by-step guides.
 - [x] **P1.2: Interactive LPDP 2026 Mock Portal**
-  - Path: `frontend/src/app/mock-portal/page.tsx`
+  - Path: `web/src/app/landingpage/mock-portal/page.tsx`
   - Standalone testing ground for public form applicants with real-time field validation, NIK 16-digit regex check, photo upload, and pre-submit auditing.
 - [x] **P1.3: Interactive In-Browser Extension Simulator**
-  - Path: `frontend/src/app/simulator/page.tsx`
+  - Path: `web/src/app/landingpage/simulator/page.tsx`
   - Web-based simulator for judges and evaluators without installing extension. Dual mode (Docked Browser Portal vs. Side Panel Standalone), 4 reactive tabs, 14 A11y toggles.
 - [x] **P1.4: Chrome Extension MV3 Manifest & Build Configuration**
   - Paths: `extension/public/manifest.json`, `extension/vite.config.ts`, `extension/sidepanel.html`
@@ -118,15 +118,15 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 - [ ] **P3.1: WebCrypto AES-256-GCM Vault Engine**
   - Path: `extension/src/lib/crypto/vault.ts` & `frontend/src/lib/crypto/vault.ts`
   - PBKDF2 key derivation from user Master Password, AES-256-GCM encryption/decryption of Vault records in `chrome.storage.local`.
-- [ ] **P3.2: On-Device ID Document Scan & OCR (MobileSAM + RapidOCR)**
-  - Path: `extension/src/lib/ai/ocr_scanner.ts`
-  - Integrate ONNX Runtime Web (`onnxruntime-web`) to run quantized MobileSAM (document boundary detection) + RapidOCR (extracting NIK, Name, DOB directly on device).
+- [ ] **P3.2: Multimodal Document Vision Extractor (Muse Spark Open)**
+  - Path: `extension/src/lib/ai/doc_extractor.ts`
+  - Implement consent modal (UU PDP compliance) and send document image in-RAM as Base64 to Muse Spark Open (Meta) for zero-storage extraction into encrypted Vault.
 - [ ] **P3.3: Client-Side Silero VAD Voice Detection**
   - Path: `extension/src/lib/voice/vad.ts`
   - Run lightweight Silero VAD (1 MB ONNX) on microphone stream to automatically trigger speech-to-text without pressing buttons.
-- [ ] **P3.4: Dual TTS Engine (ElevenLabs Proxy + Web Speech Fallback)**
+- [ ] **P3.4: Native Browser/OS TTS Engine (Web Speech API)**
   - Path: `extension/src/lib/voice/tts.ts`
-  - Stream ElevenLabs HD audio for seamless demo presentation with automatic graceful degradation to native Browser `window.speechSynthesis`.
+  - Implement zero-latency, zero-cost native Browser/OS speech synthesis via `window.speechSynthesis` with voice selection (id-ID, en-US) and pitch/rate controls.
 - [ ] **P3.5: Client-Side DOM Masking Engine (Privacy Shield)**
   - Path: `extension/src/lib/privacy/masking.ts`
   - Automatic detection of sensitive input fields (password, credit card, NIK values) and black-bar overlay before sending any screenshots to the backend.

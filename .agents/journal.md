@@ -16,23 +16,22 @@ Today's core focus was drafting a comprehensive roadmap and architecture, conduc
    - Adopted strict international regulatory compliance: official visa/passport guidelines (US Dept of State & ICAO 9303) strictly prohibit digital retouching or generative alteration of biometric photos. Accordingly, image editing features have been replaced with a deterministic **Photo Compliance Audit** tool and a quick link to external utilities.
 
 2. **Finalizing Extension Features:**
-   - **Pilar Understand:** Technical guidelines RAG Chatbot via Meta Vector Store (`file_search`), Handsfree Voicebot (Silero VAD + Muse Voice Transcribe + ElevenLabs/Web Speech fallback), Lipsync Avatar, Explain This (Multimodal Snip), and Accessibility HUB (ADHD focus bar, OpenDyslexic).
-   - **Pilar Fill:** Multiple independent Vaults with AES-256-GCM encryption + Master Password (PBKDF2-SHA256), Lock/Unlock functionality, ID card scan extraction into Vault (MobileSAM Q4 + RapidOCR ONNX), and **Essay Coach** (3 bullet points → formal narrative draft without hallucinated facts).
+   - **Pilar Understand:** Technical guidelines RAG Chatbot via Meta Vector Store (`file_search`), Handsfree Voicebot (Silero VAD + Muse Voice Transcribe + Browser/OS Native Web Speech API), Lipsync Avatar, Explain This (Multimodal Snip), and Accessibility HUB (ADHD focus bar, OpenDyslexic).
+   - **Pilar Fill:** Multiple independent Vaults with AES-256-GCM encryption + Master Password (PBKDF2-SHA256), Lock/Unlock functionality, ID card scan extraction into Vault via Muse Spark Open Multimodal Vision (in-RAM only, UU PDP consent), and **Essay Coach** (3 bullet points → formal narrative draft without hallucinated facts).
    - **Pilar Audit:** Pre-Submit Traffic Light Auditor (Red/Yellow/Green), **Consistency Checker Agent** (cross-field validation), and Photo Compliance Audit (`sharp` in-memory).
    - **Robust Element Resolution & Caching:** Multi-layer locator engine (5 layers: Semantic A11y, Stable Attributes, Section Path, Geometric DOM, Fuzzy Search) and shared cache by field signature with single-flight request deduplication.
 
-3. **Selecting an Optimal, Reliable Meta AI Stack (No Baseten):**
-   - **On-Device Extension (~19 MB total):**
-     - Segmentation: `MobileSAM Q4 ONNX` (10 MB)
-     - Document OCR: `MobileSAM Q4 + RapidOCR ONNX` (18 MB combined total)
-     - Audio & Voice: `Silero VAD` (1 MB local) + Web Speech API (native zero-latency TTS fallback)
+3. **Selecting an Optimal, Pure Meta AI Stack:**
+   - **On-Device Extension:**
+     - Security: `WebCrypto API` (AES-256-GCM + PBKDF2 Master Password)
+     - Audio & Voice: `Silero VAD` (1 MB local) + Web Speech API (native zero-latency Browser/OS TTS)
    - **Cloud AI Inference (100% via Meta Model API):**
      - Primary Brain: `Muse Spark Open` (ReAct orchestrator, Field Coach, Essay Coach, Consistency Checker, Vision Multimodal)
      - Document Retrieval: `Muse Vector Store` (`file_search` tool)
      - Primary STT: `Muse Voice Transcribe`
      - Visual Segmentation Fallback: `SAM 3.1 Open 0.87B`
      - Agentic Engineering Log: `Muse Code` (`docs/muse-code-log.md`)
-   - **Audio Presentation:** ElevenLabs Free API (10,000 characters) for HD demo audio proxy, backed by native Browser Web Speech API fallback.
+   - **Audio Presentation:** Native Browser/OS Web Speech API (`window.speechSynthesis`) for zero-latency, zero-cost, and 100% on-device speech synthesis.
    - **Gateway & Database:** Vercel Node.js Serverless + Supabase (PostgreSQL, Auth, RLS).
 
 4. **Account Registration & Claiming Free Credits:**

@@ -827,10 +827,10 @@ export default function SimulatorPage() {
                 <div className="text-left">
                   <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
                     <Upload className="w-3.5 h-3.5 text-blue-600" />
-                    <span>On-Device KTP OCR</span>
+                    <span>Multimodal KTP Extractor</span>
                   </div>
                   <p className="text-[10px] text-slate-500">
-                    MobileSAM Q4 + RapidOCR lokal (~18 MB)
+                    Muse Spark Open in-RAM (Zero Retention)
                   </p>
                 </div>
                 <button

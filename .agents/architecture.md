@@ -19,7 +19,7 @@ Savvy.AI dibangun di atas prinsip **Zero-Integration / Zero-SDK**, di mana asist
 Arsitektur sistem memisahkan secara tegas antara:
 1. **Deterministic Guardrails (Lokal/Klien):** Validasi regex, enkripsi AES-256-GCM, FSM navigasi, OCR lokal, dan audit pasfoto (sharp) yang tidak diserahkan pada halusinasi model AI.
 2. **Agentic Reasoning & RAG (Meta Model API):** Penalaran konteks instruksi birokrasi, retrieval juknis resmi, sintesis draf esai, dan konsistensi data silang menggunakan ekosistem Meta AI resmi.
-3. **Audio Presentation Layer (Hybrid):** Transkripsi STT berbasis **Muse Voice Transcribe** via Meta Model API, dan output suara asisten berbasis **ElevenLabs HD Proxy** (Free Tier 10.000 karakter untuk demo) dengan *graceful fallback* ke **Browser Native Web Speech API**.
+3. **Audio Presentation Layer:** Transkripsi STT berbasis **Muse Voice Transcribe** via Meta Model API, dan output suara asisten berbasis **Browser/OS Native Web Speech API** (`window.speechSynthesis`, zero-latency, 100% lokal, tanpa dependensi server).
 
 ---
 
@@ -38,40 +38,41 @@ Arsitektur sistem memisahkan secara tegas antara:
  │   │               CONTENT SCRIPT                 │        │                 SIDE PANEL UI (React 18)                  │   │
  │   │  • Closed Shadow DOM (Beacon Spotlight)      │        │  • Field Coach Card (4 Elemen + Badge Bukti)              │   │
  │   │  • Animated Virtual Cursor                   │  IPC   │  • Handsfree Voicebot (Avatar Lipsync & VAD)              │   │
- │   │  • 5-Layer Resilient Semantic Locator Engine ├───────►│  • Multiple Vault Manager (Master Password)              │   │
- │   │  • Local PII Scrubber (NIK, Paspor, Telp)    │        │  • Upload ID to Vault (OCR Preview)                       │   │
- │   │  • DOM Masking Canvas (Blackout isian data)  │        │  • Essay Coach & Traffic Light Drawer                     │   │
- │   └──────────────────────────────────────────────┘        └─────────────────────────────┬─────────────────────────────┘   │
- │                                                                                         │                                 │
- │   ┌─────────────────────────────────────────────────────────────────────────────────────┴─────────────────────────────┐   │
- │   │                                         BACKGROUND SERVICE WORKER                                                 │   │
- │   │  • Session & Tab Life Cycle Management        • WebCrypto AES-256-GCM Multiple Vault (PBKDF2-SHA256)              │   │
- │   │  • Local On-Device AI Stack (~19 MB):                                                                             │   │
- │   │    - MobileSAM Q4 ONNX (10 MB) — Visual Boundary     - RapidOCR ONNX (8 MB) — OCR KTP Lokal                       │   │
- │   │    - Silero VAD (1 MB) — Deteksi Jeda Hening         - Web Speech API — Deterministic Native TTS Fallback        │   │
- │   └─────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────────┘   │
- └─────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────┘
-                                                                   │ HTTPS (Bearer JWT / Session ID)
-                                                                   ▼
+ │   │  • 5-Layer Resilient Semantic Locator Engine ├───────►│  • Web Speech API (`speechSynthesis` TTS Lokal)          │   │
+ │   │  • Local PII Scrubber (NIK, Paspor, Telp)    │        │  • Multiple Vault Manager (Master Password)              │   │
+ │   │  • DOM Masking Canvas (Blackout isian data)  │        │  • Upload ID to Vault (OCR Preview)                       │   │
+ │   │  └───────────────────────────────────────────┘        │  • Essay Coach & Traffic Light Drawer                     │   │
+ │   │                                                       └─────────────────────────────┬─────────────────────────────┘   │
+ │   │                                                                                     │                                 │
+ │   │   ┌─────────────────────────────────────────────────────────────────────────────────┴─────────────────────────────┐   │
+ │   │   │                                         BACKGROUND SERVICE WORKER                                                 │   │
+ │   │   │  • Session & Tab Life Cycle Management        • WebCrypto AES-256-GCM Multiple Vault (PBKDF2-SHA256)              │   │
+ │   │   │  • Local Client Stack:                                                                                            │   │
+ │   │   │    - Silero VAD (1 MB) — Deteksi Jeda Hening         - Web Speech API — Zero-Latency Native TTS Engine           │   │
+ │   │   │    - DOM Masking Canvas (Blackout PII)               - Pure Meta Model Architecture (No Non-Meta Models)         │   │
+ │   │   └─────────────────────────────────────────────────────────────┬─────────────────────────────────────────────────┘   │
+ │   └─────────────────────────────────────────────────────────────────┼─────────────────────────────────────────────────────┘
+                                                                       │ HTTPS (Bearer JWT / Session ID)
+                                                                       ▼
  ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
  │                                           BACKEND API GATEWAY (VERCEL SERVERLESS)                                         │
  │                                                                                                                           │
  │   ├── Session & Chain Manager: Pemeliharaan context window via Responses API (`current_chain_id`, `tab_id`)               │
  │   ├── Shared Cache Engine: In-memory single-flight deduplication + lookup `coach_cache` (<50 ms)                          │
- │   ├── Photo Compliance Engine: Audit pasfoto in-memory via `sharp` (Aspek rasio, Laplacian blur, proporsi kepala)        │
- │   └── Audio Proxy Gateway: Streaming ElevenLabs HD ke klien & penanganan kuota (HTTP 429 auto-fallback)                   │
- └───────────────────────────────┬─────────────────────────────────┬─────────────────────────────────┬───────────────────────┘
-                                 │                                 │                                 │
-                                 ▼                                 ▼                                 ▼
- ┌──────────────────────────────────────────────┐  ┌────────────────────────────────┐  ┌─────────────────────────────────────┐
- │             SUPABASE POSTGRESQL              │  │        ELEVENLABS API          │  │       META MODEL API (CLOUD)        │
- │                                              │  │                                │  │                                     │
- │  • savvy_sessions (Stateful Chain Tracking)  │  │  • Model: Multilingual v2 /    │  │  1. Muse Spark Open (Reasoning)     │
- │  • coach_cache (Normalized Signature Cache)  │  │    Eleven Flash v2.5           │  │  2. Muse Vector Store (file_search) │
- │  • vector_stores (Mapping Domain Portal)     │  │  • Free Tier: 10.000 karakter  │  │  3. Muse Voice Transcribe (STT)     │
- │  • feedback_reports (User Crowdsourced Bugs) │  │  • Streaming Audio MP3         │  │  4. SAM 3.1 Open (Visual Fallback)  │
- │  • Row-Level Security (RLS) & Anon Auth      │  │    (Khusus Demo HD Audio)      │  │  5. Muse Code (Engineering Log)     │
- └──────────────────────────────────────────────┘  └────────────────────────────────┘  └─────────────────────────────────────┘
+ │   └── Photo Compliance Engine: Audit pasfoto in-memory via `sharp` (Aspek rasio, Laplacian blur, proporsi kepala)        │
+ └───────────────────────────────┬───────────────────────────────────────────────────────────────────┬───────────────────────┘
+                                 │                                                                   │
+                                 ▼                                                                   ▼
+ ┌──────────────────────────────────────────────┐                   ┌─────────────────────────────────────────────────────────┐
+ │             SUPABASE POSTGRESQL              │                   │                 META MODEL API (CLOUD)                  │
+ │                                              │                   │                                                         │
+ │  • savvy_sessions (Stateful Chain Tracking)  │                   │  1. Muse Spark Open (Reasoning & Multi-Agent ReAct)     │
+ │  • coach_cache (Normalized Signature Cache)  │                   │  2. Muse Vector Store (file_search RAG Juknis)          │
+ │  • vector_stores (Mapping Domain Portal)     │                   │  3. Muse Voice Transcribe (STT Ucapan Warga)            │
+ │  • feedback_reports (User Crowdsourced Bugs) │                   │  4. SAM 3.1 Open (Cloud Visual Segmentation Fallback)   │
+ │  • Row-Level Security (RLS) & Anon Auth      │                   │  5. Muse Code (Engineering Architecture Log)            │
+ └──────────────────────────────────────────────┘                   └─────────────────────────────────────────────────────────┘
+```
 ```
 
 ---
@@ -83,19 +84,16 @@ Arsitektur sistem memisahkan secara tegas antara:
 | **Extension Client** | **WXT (Next-gen Web Extension)** | Vite + React 18 | Bundler MV3 modern dengan HMR, support Shadow DOM, dan TypeScript strict |
 | | **Tailwind CSS** | v3.4 | Utilitas styling Side Panel yang ringkas dan modern |
 | | **WebCrypto API** | Native Browser | Enkripsi `AES-256-GCM` + derivasi kunci `PBKDF2-SHA256` (≥ 600.000 iterasi) untuk Multiple Vault |
-| **On-Device AI (~19 MB)** | **MobileSAM Q4 ONNX** | 10 MB | Segmentasi visual dokumen/KTP di sisi klien tanpa kirim berkas ke server |
-| | **RapidOCR ONNX** | 8 MB | Ekstraksi teks KTP/ID Card lokal langsung ke formulir Vault |
-| | **Silero VAD** | 1 MB | Deteksi jeda suara & barge-in lokal untuk Handsfree Voicebot |
+| **Client Audio & VAD** | **Silero VAD** | 1 MB | Deteksi jeda suara & barge-in lokal untuk Handsfree Voicebot |
 | **Backend Gateway** | **Vercel Serverless (Node/TS)** | Node.js 20 LTS | Hosting gateway API serverless cepat, gratis, dan scale-to-zero |
 | | **Sharp** | v0.33+ | Pemrosesan citra deterministik C++ in-memory (Laplacian variance blur, rasio aspek biometrik) |
 | **Database & Cache** | **Supabase PostgreSQL** | v15 (Cloud) | Penyimpanan sesi stateful, cache respons field, dan Auth Anonim dengan RLS |
-| **Cloud AI Models** | **Muse Spark Open** | Meta Model API | Otak utama: ReAct orchestrator, Field Coach, Essay Coach, Consistency Checker, Multimodal Snip |
+| **Cloud AI Models** | **Muse Spark Open** | Meta Model API / Baseten | Otak utama: ReAct orchestrator, Field Coach, Essay Coach, Consistency Checker, Multimodal Vision Document Extractor (in-RAM only, UU PDP consent) |
 | | **Muse Vector Store** | Meta Model API | Cloud RAG juknis resmi portal dengan chunking semantik & sitasi bab/halaman persis |
 | | **Muse Voice Transcribe** | Meta Model API | Cloud STT mengubah audio ucapan warga menjadi teks interaktif |
 | | **SAM 3.1 Open (0.87B)** | Meta Model API | Cloud visual fallback untuk segmentasi dokumen resolusi tinggi |
 | | **Muse Code** | Meta Tooling | Dokumentasi rekayasa sistem agentic di `docs/muse-code-log.md` |
-| **Audio Presentation** | **ElevenLabs Free API** | 10.000 chars | Audio HD suara natural asisten untuk video demo (*stream via backend proxy*) |
-| | **Web Speech API** | Native Browser | *Deterministic Fallback*: Sintesis suara instan (<50ms) saat offline atau kuota ElevenLabs habis |
+| **Audio Presentation** | **Web Speech API** | Native Browser/OS | Sintesis suara instan (<50 ms) bawaan browser/sistem operasi (`window.speechSynthesis`) untuk bahasa Indonesia, Inggris, dll. Zero-cost, zero-latency, 100% lokal tanpa beban server. |
 
 ---
 
@@ -126,7 +124,7 @@ Seluruh pemodelan kecerdasan buatan dijalankan secara eksklusif melalui **Meta M
 ### 4.4 SAM 3.1 Open 0.87B (Visual Fallback)
 * **Peran:**
   * Fallback server-side untuk segmentasi dokumen, batas tepi formulir, atau pemindaian resolusi tinggi jika perangkat klien memiliki keterbatasan WebAssembly/RAM.
-* **Integrasi:** Dipanggil via backend saat payload visual melampaui kapasitas MobileSAM Q4 lokal.
+* **Integrasi:** Dipanggil via backend saat analisis visual membutuhkan resolusi tinggi.
 
 ### 4.5 Muse Code (Agentic Engineering)
 * **Peran:**
@@ -134,41 +132,36 @@ Seluruh pemodelan kecerdasan buatan dijalankan secara eksklusif melalui **Meta M
 
 ---
 
-## 5. Strategi Audio & Suara Asisten (ElevenLabs + Web Speech API)
+## 5. Strategi Audio & Suara Asisten (Browser/OS Native Web Speech API)
 
-Untuk menghasilkan pengalaman asisten yang memukau (*wow factor*) saat demonstrasi tanpa membebani server atau menabrak limit gratis Vercel:
+Untuk menghasilkan asisten suara yang responsif, zero-latency, dan tidak bergantung pada API berbayar pihak ketiga:
 
 ```
                           [ Asisten Selesai Menghasilkan Teks ]
                                             │
                                             ▼
-                    ┌───────────────────────────────────────────────┐
-                    │  Ekstensi Memanggil: POST /api/voice/tts      │
-                    └───────────────────────┬───────────────────────┘
+                     ┌──────────────────────────────────────────────┐
+                     │   Side Panel / Content Script Ekstensi       │
+                     │       Trigger `window.speechSynthesis`       │
+                     └──────────────────────┬───────────────────────┘
                                             │
-                        ┌───────────────────┴───────────────────┐
-                        │                                       │
-                        ▼                                       ▼
-             [ Cek Kuota ElevenLabs ]               [ Kuota Habis / Error 429 ]
-             • Status: HTTP 200                     • Status: HTTP 429 / Offline
-             • Model: Multilingual v2 / Flash       • Trigger: Fallback Otomatis
-                        │                                       │
-                        ▼                                       ▼
-            ┌──────────────────────┐               ┌───────────────────────────────┐
-            │ Stream Audio MP3 HD  │               │ Browser Web Speech API        │
-            │ (Vercel Proxy Ringan)│               │ (`window.speechSynthesis`)    │
-            └──────────────────────┘               │ - 0 Latensi (<50 ms)          │
-                                                   │ - 0 Beban Server              │
-                                                   │ - Bahasa Indonesia / English  │
-                                                   └───────────────────────────────┘
+                                            ▼
+                     ┌──────────────────────────────────────────────┐
+                     │   Browser/OS Native SpeechSynthesis Engine   │
+                     │   - Windows SAPI / macOS Speech / Android    │
+                     │   - Zero Latensi (<50 ms, langsung bunyi)    │
+                     │   - 100% Offline & Tanpa Kuota API           │
+                     │   - Dukungan Bawaan: id-ID, en-US, dll.      │
+                     └──────────────────────────────────────────────┘
 ```
 
-1. **ElevenLabs HD Proxy (`/api/voice/tts`):**
-   * Endpoint Vercel bertindak sebagai *streaming proxy* ringan (menyembunyikan `ELEVENLABS_API_KEY`).
-   * Memanfaatkan kuota gratis 10.000 karakter (~1.500 kata bicara) khusus untuk demonstrasi dan video submission.
-2. **Web Speech API Fallback:**
-   * Jika panggilan ElevenLabs gagal, kuota habis, atau pengguna dalam mode hemat kuota, klien otomatis beralih ke `speechSynthesis` lokal seketika.
-   * Suara asisten dijamin tidak pernah macet (*zero failure*).
+1. **Native On-Device Speech Synthesis (`window.speechSynthesis`):**
+   * Sintesis suara berjalan langsung di browser pengguna menggunakan mesin TTS bawaan sistem operasi (Windows Speech API, Apple AVFoundation, Google TTS).
+   * Mendukung penyesuaian laju bicara (`rate`), nada (`pitch`), dan pemilihan suara (`getVoices()`) sesuai bahasa pendaftar (Bahasa Indonesia `id-ID`, English `en-US`, dll).
+2. **Keunggulan Tanpa Server:**
+   * **Zero Cost & Zero Limit:** Tidak ada pembatasan kuota karakter bulanan.
+   * **Privasi Maksimal:** Suara dibangkitkan langsung di mesin lokal tanpa mengirimkan teks ke proxy cloud pihak ketiga.
+   * **Kesiapan Offline:** Tetap berfungsi saat jaringan internet mengalami fluktuasi.
 
 ---
 
@@ -233,8 +226,4 @@ Untuk menghemat kuota Meta Model API dan mencapai waktu respons instan:
   SUPABASE_URL=https://your-project.supabase.co
   SUPABASE_ANON_KEY=your_supabase_anon_key
   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-  # Audio Presentation Utility (Opsional untuk Demo HD)
-  ELEVENLABS_API_KEY=your_elevenlabs_api_key
-  ELEVENLABS_VOICE_ID=your_selected_voice_id
   ```

@@ -30,7 +30,7 @@ Savvy.AI beroperasi 100% di sisi klien untuk **warga dan pendaftar formulir** (*
 4. **Lansia & Pengguna Neurodivergent (*Accessibility & Handsfree*):**
    * *Contoh Target:* Warga senior, pengguna dengan disleksia, atau kondisi ADHD yang mudah lelah membaca teks rapat birokrasi.
    * *Karakteristik:* Mudah terdistraksi baris panjang, kesulitan menavigasi struktur web rumit.
-   * *Kebutuhan Kunci:* **Handsfree Voicebot** (Silero VAD + Muse Voice Transcribe + ElevenLabs / Web Speech fallback), **Beacon Spotlight** (Shadow DOM), dan **Accessibility HUB** (ADHD reading ruler, OpenDyslexic).
+   * *Kebutuhan Kunci:* **Handsfree Voicebot** (Silero VAD + Muse Voice Transcribe + Browser/OS Native Web Speech API), **Beacon Spotlight** (Shadow DOM), dan **Accessibility HUB** (ADHD reading ruler, OpenDyslexic).
 
 ---
 
@@ -93,8 +93,8 @@ Pengalaman buruk pendaftar dalam formulir digital berakar pada **The 3-Y Frictio
 * **Respon & Fitur Savvy.AI:**
   * **Multiple Vault (Password-Protected):** Akses profil terisolasi (*Pribadi*, *Pasangan*, *Pekerjaan*) terenkripsi lokal WebCrypto `AES-256-GCM` berbasis Master Password (tanpa seed phrase rumit).
   * **1-Click Autofill & Instant Undo:** Memetakan data identitas ke form seketika, dengan jaminan tombol Undo 100% mengembalikan kondisi awal.
-  * **Upload KTP to Vault (On-Device OCR):** Foto KTP diekstraksi langsung di browser via MobileSAM Q4 + RapidOCR ONNX (18 MB) tanpa kirim foto ke server.
-  * **Handsfree Voicebot:** Interaksi tanya jawab dan pendiktean handsfree didukung Silero VAD lokal + **Muse Voice Transcribe** (Meta Model API) + audio cerdas (ElevenLabs HD Demo / Web Speech fallback).
+  * **Upload KTP to Vault (Multimodal Vision):** Foto KTP diekstraksi secara temporer di RAM melalui **Muse Spark Open (Meta)** dengan persetujuan eksplisit pengguna (UU PDP consent). Gambar langsung dihapus setelah pemrosesan dan hanya teks terenkripsi yang disimpan ke Vault lokal.
+  * **Handsfree Voicebot:** Interaksi tanya jawab dan pendiktean handsfree didukung Silero VAD lokal + **Muse Voice Transcribe** (Meta Model API) + sintesis audio instan via Web Speech API bawaan browser/OS.
   * **Essay Coach (Smart Drafting):** Memasukkan 3 poin fakta kasar → disintesiskan menjadi draf narasi terstruktur yang formal, ringkas, dan selaras rubrik beasiswa tanpa mengarang fakta palsu.
 
 ---
@@ -135,15 +135,15 @@ Pengalaman buruk pendaftar dalam formulir digital berakar pada **The 3-Y Frictio
 | **Field Coach & Official Specimen** | Understand | **MVP (P0)** | Meta Vector Store (`file_search`) + Muse Spark Open |
 | **Beacon Spotlight & Virtual Cursor** | Understand | **MVP (P0)** | Closed Shadow DOM + Deterministic A11y Tree |
 | **Explain This (Multimodal Snip)** | Understand | **MVP (P0)** | Muse Spark Open (Vision) + Local DOM Masking |
-| **Handsfree Voicebot** | Understand | **MVP (P0)** | Muse Voice Transcribe (STT) + ElevenLabs / Web Speech (TTS) + Silero VAD |
+| **Handsfree Voicebot** | Understand | **MVP (P0)** | Muse Voice Transcribe (STT) + Browser/OS Web Speech API (TTS) + Silero VAD |
 | **Accessibility HUB** | Understand | **MVP (P0)** | Deterministik (ADHD Ruler, OpenDyslexic, High Contrast) |
 | **Multiple Vault (Password Protected)**| Fill | **MVP (P0)** | WebCrypto `AES-256-GCM` + `PBKDF2-SHA256` |
 | **1-Click Autofill & Safe Undo** | Fill | **MVP (P0)** | Resilient Semantic Locator + Native Event Dispatch |
-| **Upload KTP to Vault (OCR)** | Fill | **MVP (P0)** | On-device MobileSAM Q4 + RapidOCR ONNX (~18 MB) |
+| **Upload KTP to Vault (Multimodal)** | Fill | **MVP (P0)** | Muse Spark Open Multimodal Vision (in-RAM only, UU PDP consent) |
 | **Essay Coach (Smart Drafting)** | Fill | **MVP (P0)** | Muse Spark Open (3-Bullet Formal Synthesizer) |
 | **Traffic Light Pre-Submit Auditor** | Audit | **MVP (P0)** | Deterministic Regex & Syntax Checker |
 | **Audit Kepatuhan Foto (Zero-Pixel)** | Audit | **MVP (P0)** | In-memory `sharp` Deterministik (ICAO 9303 Compliant) |
 | **Consistency Checker Agent** | Audit | **MVP (P0)** | Muse Spark Open (Cross-Field Logical Validation) |
 | **Jump to Drawer (1-Click Fix)** | Audit | **MVP (P0)** | Interactive Drawer & Focus Spotlight |
-| **Multi-Language Support (ID & EN)** | Cross | **MVP (P0)** | Muse Voice Transcribe + ElevenLabs / Web Speech API |
+| **Multi-Language Support (ID & EN)** | Cross | **MVP (P0)** | Muse Voice Transcribe + Browser/OS Web Speech API |
 | **Multi-Document Cross-Verification**| Audit | **Next Roadmap (v2)**| Ekstraksi PDF multi-halaman & pencocokan silang ijazah |

@@ -20,16 +20,16 @@ Savvy.AI mengombinasikan siklus agen ReAct (*Think → Act → Observe*) berbasi
 | Pilar | Pertanyaan Pengguna | Inti Solusi | Implementasi Spesifik |
 |---|---|---|---|
 | **Understand** | *"Kolom ini maksudnya apa dan apa aturannya?"* | Contextual Guidance & Accessibility | • **Field Coach** & **Chatbot/Voicebot** via Meta Vector Store (`file_search`)<br>• **Explain This** (Multimodal Snip)<br>• **Accessibility HUB** (14 Deterministic Tools: Reading Spotlight, TTS, Contrast, Dyslexic Font, dll.)<br>• **Beacon Spotlight** (Shadow DOM) |
-| **Fill** | *"Bagaimana mengisinya dengan benar, konsisten, dan cepat?"* | Secure Autofill & Smart Drafting | • **Multiple Vault (Password)** lokal AES-256-GCM<br>• **Upload to Vault** (OCR KTP lokal via MobileSAM Q4 + RapidOCR)<br>• **Essay Coach** (Brainstorming & Drafting narasi 3-bullet) |
+| **Fill** | *"Bagaimana mengisinya dengan benar, konsisten, dan cepat?"* | Secure Autofill & Smart Drafting | • **Multiple Vault (Password)** lokal AES-256-GCM<br>• **Upload to Vault** (Ekstraksi KTP via Muse Spark Open Multimodal Vision in-RAM)<br>• **Essay Coach** (Brainstorming & Drafting narasi 3-bullet) |
 | **Audit** | *"Apakah ada yang salah atau berpotensi ditolak?"* | Deterministic & Consistency Pre-Audit | • **Traffic Light Auditor** (Validasi format/regex)<br>• **Audit Kepatuhan Foto** (`sharp` deterministik tanpa sentuh piksel)<br>• **Consistency Checker Agent** (Kesesuaian data silang) |
 
 ### 1.1 Sasaran Hackathon
 - **Produk Siap Pakai:** Ekstensi Manifest V3 (Developer Mode) yang beroperasi mulus di mock portal (`frontend/public/mock-portal/`) dan formulir PDF.
 - **Pemanfaatan Nyata Meta AI & Model Stack:**
-  - **Muse Spark Open:** Penalaran multimodal, Field Coach, Essay Coach, dan orkestrasi ReAct loop.
+  - **Muse Spark Open:** Penalaran multimodal, Field Coach, Essay Coach, Vision Document Extractor, dan orkestrasi ReAct loop.
   - **Meta Vector Store (`file_search`):** Retrieval juknis resmi dengan sitasi dokumen halaman persis.
   - **Muse Voice Transcribe:** Transkripsi audio STT untuk interaksi handsfree warga.
-  - **SAM 3.1 Open 0.87B / MobileSAM Q4:** Segmentasi visual lokal dan fallback server.
+  - **SAM 3.1 Open 0.87B:** Segmentasi visual presisi tinggi.
   - **Muse Code:** Dokumentasi log vibecoding agentic di `docs/muse-code-log.md`.
 - **Prinsip Kepatuhan Regulasi Internasional:** Mematuhi aturan ketat formulir resmi (mis. standar ICAO 9303 / US Dept of State yang melarang keras *digitally altered or retouched photos*). Savvy.AI **tidak memanipulasi piksel foto**, melainkan menjalankan **Audit Kepatuhan Foto** secara deterministik.
 
@@ -68,16 +68,16 @@ Savvy.AI mengombinasikan siklus agen ReAct (*Think → Act → Observe*) berbasi
 
 ## 4. Cakupan Bahasa & Dukungan Suara (Multilingual Support)
 
-Mendukung warga global dan pendaftar internasional dengan asistensi teks, transkripsi suara (Meta Model API: Muse Voice Transcribe), dan output suara cerdas (ElevenLabs HD Audio untuk demo + Browser Web Speech API fallback):
+Mendukung warga global dan pendaftar internasional dengan asistensi teks, transkripsi suara (Meta Model API: Muse Voice Transcribe), dan output suara cerdas bawaan browser/OS (Web Speech API):
 
 | No | Bahasa | Prioritas / Status | Mesin Suara / Audio Stack |
 |---|---|---|---|
-| 1 | **Bahasa Indonesia** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
-| 2 | **Bahasa Inggris** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
-| 3 | **Bahasa Mandarin** | Didukung | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
-| 4 | **Bahasa Spanyol** | Didukung | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
-| 5 | **Bahasa Arab Standar** | Didukung | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
-| 6 | **Bahasa Prancis, Jerman, Jepang, Portugis** | Didukung | Muse Voice Transcribe (Meta Model API) + ElevenLabs HD / Browser Speech Synthesis |
+| 1 | **Bahasa Indonesia** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
+| 2 | **Bahasa Inggris** | ⭐ **Prioritas Utama** | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
+| 3 | **Bahasa Mandarin** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
+| 4 | **Bahasa Spanyol** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
+| 5 | **Bahasa Arab Standar** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
+| 6 | **Bahasa Prancis, Jerman, Jepang, Portugis** | Didukung | Muse Voice Transcribe (Meta Model API) + Browser/OS Web Speech API |
 
 ### 4.1 Arsitektur Modular i18n & Zero Hardcoded Strings
 1. **Aturan Baku Antarmuka:** Seluruh penulisan teks/string pada antarmuka pengguna (baik di `frontend/` web showcase/mock portal maupun `extension/` Chrome Side Panel) **dilarang keras di-hardcode**. Seluruh string tampilan wajib dimuat secara modular melalui modul terjemahan terpusat (`translate.js` / kamus `i18n`).
@@ -202,10 +202,10 @@ Pengaturan aksesibilitas deterministik langsung di sisi klien (`content_scripts`
    - **Proteksi Status Vault:** Opsi autofill hanya dapat dipicu jika Vault dalam status **Unlocked** (Master Password telah dimasukkan di sesi runtime aktif).
    - **Safe Undo (100% Reversible):** Tombol **Undo Autofill** mengembalikan seluruh perubahan nilai ke kondisi awal seketika melalui snapshot memori lokal.
 
-#### B. Upload to Vault (On-Device OCR)
-1. **Ekstraksi KTP / ID Card Lokal:**
-   - Pengguna mengunggah gambar identitas ke Side Panel.
-   - Diproses langsung di browser oleh **MobileSAM Q4 + RapidOCR ONNX (~18 MB)** tanpa mengirim foto identitas ke server.
+#### B. Upload to Vault (Multimodal Document Vision Extractor)
+1. **Ekstraksi KTP / Dokumen Aman (Pure Meta Model):**
+   - Pengguna menyetujui pemrosesan temporer sesuai UU PDP (Dialog Izin Eksplisit).
+   - Gambar diproses in-RAM oleh **Muse Spark Open (Meta)** via Baseten tanpa pernah disimpan di disk server atau Baseten. Gambar otomatis lenyap setelah 60 detik.
    - Hasil ekstraksi (NIK, Nama Lengkap, Tempat/Tgl Lahir, Alamat) otomatis terpetakan ke dalam Vault aktif setelah dikonfirmasi pengguna.
 
 #### C. Essay Coach (Smart Drafting & Rubric Alignment)
@@ -267,12 +267,11 @@ Sebagai etalase publik dan sarana demonstrasi langsung bagi juri hackathon, plat
 - **Frontend Web & Landing Page:** Next.js (App Router), React 18, TypeScript Strict, Tailwind CSS, Magic UI component patterns (Bento Grid, Border Beam, Marquee).
 - **Ekstensi Browser (Manifest V3):** WXT (Vite), React 18, TypeScript Strict, Tailwind CSS.
 - **Isolasi UI Ekstensi:** Side Panel (`sidepanel.html`) untuk kontrol utama, dan Closed Shadow DOM untuk Beacon Spotlight di halaman portal.
-- **Kriptografi Klien:** WebCrypto API `AES-256-GCM`, `PBKDF2-SHA256`.
-- **On-Device WASM/AI Stack (~19 MB):**
-  - MobileSAM Q4 ONNX (10 MB) — Segmentasi dokumen visual.
-  - RapidOCR ONNX (8 MB) — OCR lokal KTP/dokumen ke Vault.
+- **Kriptografi & Proteksi Klien:** WebCrypto API `AES-256-GCM`, `PBKDF2-SHA256` (Multiple Vault terisolasi).
+- **Client-Side Engine:**
   - Silero VAD (1 MB) — Deteksi suara hening & barge-in lokal.
-  - Opus Client / Audio Streaming — Pemutaran respons suara instan (<300 ms).
+  - DOM Masking Canvas — Sensor lokal area formulir sebelum snip visual.
+  - Pure Meta Model Architecture — 100% inferensi AI didukung oleh Muse Spark Open (tanpa model non-Meta).
 
 ### 6.2 Backend & Multi-Agent Inference Engine
 - **Runtime & Hosting:** Node.js Serverless di Vercel (`/api/*`).
@@ -428,7 +427,7 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
  │               Ekstensi Browser Savvy.AI (MV3)                │
  │  ├── Closed Shadow DOM Overlay (Beacon Spotlight, Cursor)    │
  │  ├── Side Panel UI (React + Tailwind)                        │
- │  ├── Local Engines: MobileSAM Q4, RapidOCR, Silero VAD        │
+ │  ├── Local Client Stack: Silero VAD, WebCrypto, DOM Masking  │
  │  ├── Native Web Speech API (TTS Suara Asisten On-Device)     │
  │  └── Multiple Vault (AES-256-GCM + Master Password Lokal)     │
  └───────────────────────────────┬───────────────────────────────┘
@@ -463,7 +462,7 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
 | `POST /api/audit/consistency` | Pemeriksaan keselarasan silang antar-kolom (cross-field) | Muse Spark Open | [`multi_agents.md`](file:///d:/webdev/laragon/www/savvy/.agents/multi_agents.md) |
 | `POST /api/photo/audit` | Audit teknis pasfoto (aspek rasio, blur Laplacian, ukuran) | `sharp` (in-memory deterministik) | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
 | `POST /api/voice/transcribe` | Transkripsi audio ucapan pengguna ke teks | Muse Voice Transcribe (Meta Model API) | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
-| `POST /api/voice/tts` (stream)| Audio stream respons asisten (ElevenLabs HD Proxy, fallback Web Speech) | ElevenLabs Free API / Browser Web Speech | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
+| Sisi Klien (On-Device) | Sintesis audio ucapan respons asisten instan (<50ms) | Browser/OS Native Web Speech API (`window.speechSynthesis`) | [`architecture.md`](file:///d:/webdev/laragon/www/savvy/.agents/architecture.md) |
 | `POST /api/feedback` | Pengiriman laporan kendala warga | Supabase DB | [`prd.md`](file:///d:/webdev/laragon/www/savvy/.agents/prd.md) |
 
 ---
@@ -491,7 +490,7 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
 | Token pertama chat stream RAG | < 1,8 detik | Responses API streaming + Meta Vector Store |
 | Latensi audio suara asisten (TTS) | < 100 ms | Web Speech API lokal on-device |
 | Explain This respons visual multimodal | < 4 detik | Muse Spark Open inference |
-| Ukuran bundle model on-device ekstensi | ≤ 20 MB (~19 MB aktual) | MobileSAM Q4 + RapidOCR + Silero VAD |
+| Ukuran bundle ekstensi | Ringan (< 5 MB) | Silero VAD (1 MB) + UI WXT React (Zero Heavy Non-Meta Models) |
 | Tingkat akurasi locator di mock portal | ≥ 95% | 5-layer resilient semantic locator |
 
 ---
@@ -515,7 +514,7 @@ Seluruh pemanggilan model AI cerdas berjalan secara terpusat langsung melalui **
    - Consistency Checker menandai perbedaan nama paspor vs nama di form identitas.
    - Pengguna menekan *Apply Fix* dari Drawer, mengunggah pasfoto tajam yang lolos uji rasio biometrik → status audit berubah hijau 🟢.
 5. **2:35–3:00 (Behind The Scenes & Penutup):**
-   - Menampilkan diagram arsitektur on-device 19 MB (MobileSAM + RapidOCR + Silero VAD) dan integrasi Meta AI (Muse Spark Open, Vector Store, Muse Voice).
+   - Menampilkan diagram arsitektur Pure Meta AI (Muse Spark Open via Baseten, Silero VAD, dan Native Web Speech API).
    - *"Savvy.AI: Pahami, Isi, Periksa — Built for Your World with Meta AI."*
 
 ### 9.2 Kriteria Penilaian Hackathon
