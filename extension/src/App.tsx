@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "./lib/i18n/LanguageContext";
 import { Header } from "./components/Header";
+import { AuthModal } from "./components/AuthModal";
 import { CoachTab } from "./components/CoachTab";
 import { VaultTab } from "./components/VaultTab";
 import { AuditorTab } from "./components/AuditorTab";
@@ -20,6 +21,8 @@ export function App() {
   const [activeTab, setActiveTab] = useState<"coach" | "vault" | "audit" | "a11y">("coach");
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [activePortalTitle, setActivePortalTitle] = useState("Portal LPDP 2026");
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
 
   // Sync active tab URL & Title in Chrome Extension context
   useEffect(() => {
@@ -46,6 +49,16 @@ export function App() {
       <Header
         isVaultUnlocked={isVaultUnlocked}
         setIsVaultUnlocked={setIsVaultUnlocked}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setAuthModalOpen(true)}
+      />
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        currentUser={currentUser}
+        onLoginSuccess={(user) => setCurrentUser(user)}
+        onLogout={() => setCurrentUser(null)}
       />
 
       {/* 4 Core Navigation Tabs matching PRD */}

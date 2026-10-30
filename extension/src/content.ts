@@ -188,8 +188,77 @@
       sendResponse({ fields, count: fields.length });
     }
 
+    if (message.type === "START_SNIP_SELECTION") {
+      startSnipMode();
+      sendResponse({ success: true, mode: "active" });
+    }
+
     return true;
   });
+
+  // Snip Mode for "Explain This" (Jargon Buster)
+  function startSnipMode() {
+    const snipOverlay = document.createElement("div");
+    snipOverlay.style.position = "fixed";
+    snipOverlay.style.top = "0";
+    snipOverlay.style.left = "0";
+    snipOverlay.style.width = "100vw";
+    snipOverlay.style.height = "100vh";
+    snipOverlay.style.backgroundColor = "rgba(37, 99, 235, 0.08)";
+    snipOverlay.style.cursor = "crosshair";
+    snipOverlay.style.zIndex = "2147483647";
+    snipOverlay.style.pointerEvents = "auto";
+
+    const banner = document.createElement("div");
+    banner.style.position = "fixed";
+    banner.style.top = "20px";
+    banner.style.left = "50%";
+    banner.style.transform = "translateX(-50%)";
+    banner.style.backgroundColor = "#2563EB";
+    banner.style.color = "#FFFFFF";
+    banner.style.padding = "10px 20px";
+    banner.style.borderRadius = "9999px";
+    banner.style.fontSize = "13px";
+    banner.style.fontWeight = "bold";
+    banner.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+    banner.style.pointerEvents = "none";
+    banner.innerText = "🔍 Savvy Snip: Klik paragraf / klausul juknis yang ingin dijelaskan";
+    snipOverlay.appendChild(banner);
+
+    const cleanup = () => {
+      snipOverlay.remove();
+      document.removeEventListener("keydown", onKeyDown);
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") cleanup();
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    snipOverlay.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cleanup();
+
+      const elementAtPoint = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
+      if (elementAtPoint) {
+        let text = elementAtPoint.innerText || elementAtPoint.textContent || "";
+        text = text.trim().slice(0, 500);
+
+        // Client-side PII black-out masking
+        text = text.replace(/\b[1-9][0-9]{15}\b/g, "[REDACTED_NIK]");
+
+        chrome.runtime.sendMessage({
+          type: "SNIP_EXPLAIN_RESULT",
+          text,
+          tagName: elementAtPoint.tagName,
+          portalUrl: window.location.href,
+        });
+      }
+    });
+
+    shadowRoot.appendChild(snipOverlay);
+  }
 
   // 6. Controller 14 Fitur Accessibility HUB (WCAG 2.2 AAA & Pure JS)
   function applyA11yFeature(feature: string, enabled: boolean) {

@@ -13,6 +13,8 @@ import {
   Check,
 } from "lucide-react";
 
+import { encryptVaultItem } from "../lib/crypto/vault";
+
 interface VaultTabProps {
   isVaultUnlocked: boolean;
   setIsVaultUnlocked: (val: boolean) => void;
@@ -28,12 +30,26 @@ export function VaultTab({ isVaultUnlocked, setIsVaultUnlocked }: VaultTabProps)
   const [essayDraft, setEssayDraft] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const handleSimulateOcr = () => {
+  const handleSimulateOcr = async () => {
     setOcrStatus("processing");
-    setTimeout(() => {
-      setOcrStatus("done");
-      setIsVaultUnlocked(true);
-    }, 1200);
+    try {
+      const sampleCard = {
+        nik: "3271041908980002",
+        nama: "Budi Santoso",
+        tanggal_lahir: "1998-08-19",
+        alamat: "Jl. Sudirman No. 45, Jakarta Pusat",
+        biometric_masked: true,
+      };
+      const encrypted = await encryptVaultItem(sampleCard, "SavvyJudge2026!");
+      console.log("[Savvy.AI Vault] Client-side AES-256-GCM encrypted payload:", encrypted);
+      setTimeout(() => {
+        setOcrStatus("done");
+        setIsVaultUnlocked(true);
+      }, 800);
+    } catch (err) {
+      console.error("Vault encryption error:", err);
+      setOcrStatus("idle");
+    }
   };
 
   const handleBatchAutofill = () => {

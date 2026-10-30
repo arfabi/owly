@@ -13,6 +13,8 @@ import {
   Radio,
 } from "lucide-react";
 
+import { inspectAndRedactPII } from "../lib/privacy/censor";
+
 interface CoachTabProps {
   isVaultUnlocked: boolean;
 }
@@ -24,6 +26,33 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
   const [hasAutofilled, setHasAutofilled] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [snipActive, setSnipActive] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [piiWarning, setPiiWarning] = useState<string | null>(null);
+
+  const handleChatChange = (val: string) => {
+    setChatInput(val);
+    const piiResult = inspectAndRedactPII(val);
+    if (piiResult.hasPII) {
+      setPiiWarning(piiResult.warningMessage || "Terdeteksi data sensitif");
+    } else {
+      setPiiWarning(null);
+    }
+  };
+
+  const handleTriggerSnip = () => {
+    setSnipActive(true);
+    if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.query) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
+          chrome.tabs.sendMessage(tabs[0].id, { type: "START_SNIP_SELECTION" }, () => {
+            setTimeout(() => setSnipActive(false), 2000);
+          });
+        }
+      });
+    } else {
+      setTimeout(() => setSnipActive(false), 2000);
+    }
+  };
 
   const handleVoiceToggle = () => {
     if (voiceStatus === "idle") {
@@ -128,19 +157,22 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
         )}
       </button>
 
-      {/* Handsfree Voicebot Card */}
+      {/* Handsfree Voicebot & Interactive Assistant with PII Chat Guard */}
       <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs space-y-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
             <Volume2 className="w-4 h-4 text-blue-600" />
             <span>{c.voicebotTitle}</span>
           </div>
-          <span className="text-[10px] font-semibold text-slate-400">Silero VAD</span>
+          <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3" />
+            <span>PII Guard Active</span>
+          </span>
         </div>
 
         {/* Dynamic Voice Waveform Visualizer */}
-        <div className="bg-slate-50 border border-slate-100 rounded-lg p-3 text-center">
-          <div className="flex items-center justify-center gap-1 h-6 mb-1.5">
+        <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 text-center">
+          <div className="flex items-center justify-center gap-1 h-5 mb-1">
             {[4, 12, 18, 24, 16, 8, 20, 14, 6].map((h, i) => (
               <div
                 key={i}
@@ -153,25 +185,48 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
                     ? "bg-blue-600 animate-pulse"
                     : "bg-slate-300"
                 }`}
-                style={{ height: voiceStatus !== "idle" ? `${h}px` : "6px" }}
+                style={{ height: voiceStatus !== "idle" ? `${h}px` : "5px" }}
               />
             ))}
           </div>
-          <div className="text-[11px] font-semibold text-slate-600">
+          <div className="text-[10px] font-semibold text-slate-600">
             {voiceStatus === "listening" && c.voiceStatusListening}
             {voiceStatus === "thinking" && c.voiceStatusThinking}
             {voiceStatus === "speaking" && c.voiceStatusSpeaking}
-            {voiceStatus === "idle" && "Tekan tombol untuk bicara bebas genggam"}
+            {voiceStatus === "idle" && "Bicara bebas genggam atau ketik pertanyaan di bawah"}
           </div>
         </div>
 
-        <button
-          onClick={handleVoiceToggle}
-          className="w-full py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-        >
-          <Mic className="w-3.5 h-3.5 text-blue-600" />
-          <span>{c.btnAskVoice}</span>
-        </button>
+        {/* Real-Time PII-Guarded Text Input */}
+        <div className="space-y-1.5">
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => handleChatChange(e.target.value)}
+              placeholder="Tanya Savvy tentang formulir..."
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans"
+            />
+            <button
+              onClick={handleVoiceToggle}
+              className={`p-1.5 rounded-lg border transition-all ${
+                voiceStatus !== "idle"
+                  ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse"
+                  : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+              }`}
+              title="Aktifkan Mikrofon Voicebot"
+            >
+              <Mic className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Client-side PII Warning Banner */}
+          {piiWarning && (
+            <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-left text-[10px] text-amber-900 leading-tight">
+              {piiWarning}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Explain This Snip Action */}
@@ -186,7 +241,7 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
           </p>
         </div>
         <button
-          onClick={() => setSnipActive(!snipActive)}
+          onClick={handleTriggerSnip}
           className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
             snipActive
               ? "bg-purple-600 text-white"

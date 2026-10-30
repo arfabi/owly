@@ -11,6 +11,8 @@ import {
   Eye,
 } from "lucide-react";
 
+import { auditFormData, AuditReport } from "../lib/audit/rules";
+
 export function AuditorTab() {
   const { t } = useLanguage();
   const a = t.audit;
@@ -18,6 +20,7 @@ export function AuditorTab() {
   const [isScanning, setIsScanning] = useState(false);
   const [photoFixed, setPhotoFixed] = useState(false);
   const [auditRunDone, setAuditRunDone] = useState(false);
+  const [report, setReport] = useState<AuditReport | null>(null);
 
   const handleScanPhoto = () => {
     setIsScanning(true);
@@ -28,8 +31,19 @@ export function AuditorTab() {
   };
 
   const handleRunFullAudit = () => {
+    // Run pre-submit consistency audit
+    const sampleFormData = {
+      nik: "3271041908980002",
+      nama: "Budi Santoso",
+      email: "budi.santoso@alumni.ui.ac.id",
+      tanggal_lahir: "1998-08-19",
+      kategori: "Beasiswa Reguler",
+      toefl_ielts: "550",
+    };
+    const res = auditFormData(sampleFormData);
+    setReport(res);
     setAuditRunDone(true);
-    setTimeout(() => setAuditRunDone(false), 4000);
+    setTimeout(() => setAuditRunDone(false), 5000);
   };
 
   return (

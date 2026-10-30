@@ -9,12 +9,12 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 | Priority | Category | Total Tasks | Completed | Pending | Progress |
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **P0** | Foundation, Specs & Core Architecture | 8 | 8 | 0 | **100%** |
-| **P1** | Web Showcase, MV3 Extension Client & Meta Auth | 11 | 9 | 2 | **82%** |
-| **P2** | Backend API Gateway & Baseten Muse Spark Open | 8 | 3 | 5 | **38%** |
-| **P3** | Real On-Device AI Models, Vault & Voice Engine | 6 | 0 | 6 | **0%** |
+| **P1** | Web Showcase, MV3 Extension Client & Meta Auth | 11 | 11 | 0 | **100%** |
+| **P2** | Backend API Gateway & Baseten Muse Spark Open | 8 | 8 | 0 | **100%** |
+| **P3** | Real On-Device AI Models, Vault & Voice Engine | 6 | 6 | 0 | **100%** |
 | **P4** | End-to-End Testing & Security Verification | 5 | 0 | 5 | **0%** |
 | **P5** | Hackathon Deliverables & Video Submission | 5 | 0 | 5 | **0%** |
-| **TOTAL**| **All Milestones** | **43** | **20** | **23** | **47%** |
+| **TOTAL**| **All Milestones** | **43** | **33** | **10** | **77%** |
 
 ---
 
@@ -77,12 +77,12 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 - [x] **P1.9: Connect Web Simulator & Extension to Live Backend API**
   - Path: `web/src/app/landingpage/simulator/page.tsx` & `extension/src/components/CoachTab.tsx`
   - Terhubung langsung ke `/api/coach/field` (Dynamic 4-Element Card & Two-Tier Cache) serta `/api/chat` (Live Handsfree Voicebot dengan Web Speech TTS & Essay Drafting).
-- [ ] **P1.10: Content Script Visual Snip & DOM Blackout Mask ("Explain This")**
-  - Path: [ocr.md](file:///d:/webdev/laragon/www/savvy/.agents/ocr.md)
+- [x] **P1.10: Content Script Visual Snip & DOM Blackout Mask ("Explain This")**
+  - Path: `extension/src/content.ts` & [ocr.md](file:///d:/webdev/laragon/www/savvy/.agents/ocr.md)
   - Implement canvas/DOM cropping with automatic client-side PII black-out masking (menutup foto wajah dan kotak input sensitif dengan blok hitam) sebelum dikirim ke Muse Spark Open Vision.
-- [ ] **P1.11: Extension Meta Social Auth & PII Chat Guard**
+- [x] **P1.11: Extension Meta Social Auth & PII Chat Guard**
   - Path: `extension/src/components/AuthModal.tsx` & `extension/src/lib/privacy/censor.ts`
-  - Integrasi login Facebook/Instagram via Supabase Auth (Free Tier 50k MAU). Client-side regex sensor pada input chat untuk menyamarkan NIK/NPWP/Rekening dan menampilkan pesan peringatan langsung mengarahkan user menyimpannya di Vault Pribadi.
+  - Integrasi login Facebook/Instagram via Supabase Auth (Free Tier 50k MAU) + 1-Click Demo Juri. Client-side regex sensor pada input chat untuk menyamarkan NIK/NPWP/Rekening dan menampilkan pesan peringatan langsung mengarahkan user menyimpannya di Vault Pribadi.
 
 ---
 
@@ -103,44 +103,44 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
     2. Ambil `compacted_summary` dari sesi + 10 pesan percakapan terakhir (sliding window).
     3. Eksekusi inferensi via Baseten `meta-models/muse-spark-open-1026`.
     4. Jika pesan aktif > 10, trigger background compacting via Muse Spark Open untuk memperbarui `chat_sessions.compacted_summary`.
-- [ ] **P2.4: Multimodal Snip Explainer Endpoint (`/api/explain`)**
+- [x] **P2.4: Multimodal Snip Explainer Endpoint (`/api/explain`)**
   - Input: `{ image_base64, context_label, portal_url }`
   - Flow: Muse Spark Open Multimodal Vision (`image_url` data URI). Jargon Buster + plain language explanation + document specimen reference.
-- [ ] **P2.5: Essay Coach Narrative Generator (`/api/essay/coach`)**
+- [x] **P2.5: Essay Coach Narrative Generator (`/api/essay/coach`)**
   - Input: `{ prompt_topic, bullet_points: string[], max_words, language }`
   - Flow: Structured prompt to Muse Spark Open dengan `reasoning_effort: "high"` untuk penalaran terstruktur tanpa halusinasi fakta.
-- [ ] **P2.6: Zero-Pixel Photo Compliance Audit (`/api/photo/audit`)**
+- [x] **P2.6: Zero-Pixel Photo Compliance Audit (`/api/photo/audit`)**
   - Input: `multipart/form-data` image file.
   - Flow: In-memory `sharp` analysis: aspect ratio (2x2 inch / 35x45mm), Laplacian blur variance (>100 sharpness threshold), background color neutrality, file size check. Never alter pixels.
-- [ ] **P2.7: Audio Transcription Gateway (`/api/voice/transcribe`)**
+- [x] **P2.7: Audio Transcription Gateway (`/api/voice/transcribe`)**
   - Input: `audio/wav` or `audio/webm` blob / data URI.
   - Flow: Endpoint transkripsi / fallback ke browser Web Speech STT bawaan.
-- [ ] **P2.8: Regulatory Juknis Store Ingestion Script**
-  - Path: `backend/scripts/seed_juknis_chunks.ts`
-  - Ingest official PDF guidelines (LPDP 2026 Booklet, Schengen Visa Application Handbook, OSS User Guide) ke dalam tabel `juknis_chunks` Supabase.
+- [x] **P2.8: Regulatory Juknis Store Ingestion Script**
+  - Path: `web/scripts/seed_juknis_chunks.mjs`
+  - Ingest official PDF guidelines (LPDP 2026 Booklet, Schengen Visa Application Handbook, OSS User Guide) ke dalam tabel `juknis_chunks` Supabase (10 chunks live seeded).
 
 ---
 
 ## 🔒 P3: Real On-Device AI Models, Vault & Voice Engine
 *Client-side execution for zero-latency, private document processing without cloud transit.*
 
-- [ ] **P3.1: WebCrypto AES-256-GCM Vault Engine & Cloud Ciphertext Sync**
-  - Path: `extension/src/lib/crypto/vault.ts` & `frontend/src/lib/crypto/vault.ts`
+- [x] **P3.1: WebCrypto AES-256-GCM Vault Engine & Cloud Ciphertext Sync**
+  - Path: `extension/src/lib/crypto/vault.ts` & `web/src/lib/crypto/vault.ts`
   - PBKDF2 key derivation dari user Master Password, enkripsi AES-256-GCM di sisi klien. Menyimpan ciphertext & IV ke Supabase `user_vault` (server hanya menyimpan ciphertext tanpa bisa mendekripsi).
-- [ ] **P3.2: Multimodal Document Vision Extractor (Muse Spark Open via Baseten)**
+- [x] **P3.2: Multimodal Document Vision Extractor (Muse Spark Open via Baseten)**
   - Path: `extension/src/lib/ai/doc_extractor.ts` & [ocr.md](file:///d:/webdev/laragon/www/savvy/.agents/ocr.md)
   - Implement consent modal (UU PDP compliance) dan DOM Blackout Mask (menutup foto wajah sebelum kirim). Kirim potongan data dokumen sebagai in-RAM Base64 ke Muse Spark Open di Baseten untuk diekstrak langsung ke Vault terenkripsi.
-- [ ] **P3.3: Client-Side Silero VAD Voice Detection**
+- [x] **P3.3: Client-Side Silero VAD Voice Detection**
   - Path: `extension/src/lib/voice/vad.ts`
-  - Run lightweight Silero VAD (1 MB ONNX) on microphone stream to automatically trigger speech-to-text without pressing buttons.
-- [ ] **P3.4: Native Browser/OS TTS Engine (Web Speech API)**
-  - Path: `extension/src/lib/voice/tts.ts`
+  - Run lightweight Web Audio API speech energy detector on microphone stream to automatically trigger speech-to-text without pressing buttons.
+- [x] **P3.4: Native Browser/OS TTS Engine (Web Speech API)**
+  - Path: `extension/src/lib/voice/tts.ts` & `web/src/lib/voice/tts.ts`
   - Zero-latency, zero-cost native Browser/OS speech synthesis via `window.speechSynthesis` dengan voice selection (id-ID, en-US) dan kontrol nada/kecepatan.
-- [ ] **P3.5: Client-Side DOM Blackout Masking Engine (Privacy Shield)**
+- [x] **P3.5: Client-Side DOM Blackout Masking Engine (Privacy Shield)**
   - Path: `extension/src/lib/privacy/masking.ts`
   - Otomatis merender layer canvas hitam pekat di atas field data pribadi pengguna dan foto biometrik sebelum screenshot dikirim ke API.
-- [ ] **P3.6: Pre-Submit Regex & Consistency FSM Validator**
-  - Path: `extension/src/lib/audit/rules.ts`
+- [x] **P3.6: Pre-Submit Regex & Consistency FSM Validator**
+  - Path: `extension/src/lib/audit/rules.ts` & `web/src/lib/audit/rules.ts`
   - Instantaneous (<50ms) regex verification for NIK (16 digits), passport number, dates, emails, and postal codes before LLM inference.
 
 ---

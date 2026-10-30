@@ -1,18 +1,25 @@
 import React from "react";
 import { useLanguage } from "../lib/i18n/LanguageContext";
-import { Lock, Unlock, Globe, Compass, Target } from "lucide-react";
+import { Lock, Unlock, Globe, Compass, Target, User, Sparkles } from "lucide-react";
 
 interface HeaderProps {
   isVaultUnlocked: boolean;
   setIsVaultUnlocked: (val: boolean) => void;
+  currentUser?: { name: string; email: string } | null;
+  onOpenAuthModal?: () => void;
 }
 
-export function Header({ isVaultUnlocked, setIsVaultUnlocked }: HeaderProps) {
+export function Header({
+  isVaultUnlocked,
+  setIsVaultUnlocked,
+  currentUser,
+  onOpenAuthModal,
+}: HeaderProps) {
   const { t, language, setLanguage } = useLanguage();
 
   return (
     <div className="bg-white border-b border-slate-200 p-3.5 space-y-2.5">
-      {/* Top Bar: Brand, Language, Vault Lock */}
+      {/* Top Bar: Brand, Language, Auth, Vault Lock */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white text-xs shadow-xs">
@@ -29,6 +36,25 @@ export function Header({ isVaultUnlocked, setIsVaultUnlocked }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* User Auth Button */}
+          <button
+            onClick={onOpenAuthModal}
+            className={`p-1 rounded-full border transition-all ${
+              currentUser
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+            }`}
+            title={currentUser ? currentUser.name : "Masuk Akun Juri"}
+          >
+            {currentUser ? (
+              <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center">
+                {currentUser.name.charAt(0)}
+              </span>
+            ) : (
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            )}
+          </button>
+
           {/* Language Switcher */}
           <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 text-[10px] font-bold">
             <button
