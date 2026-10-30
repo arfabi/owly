@@ -1,160 +1,268 @@
 -- ============================================================================
 -- SAVVY.AI — Supabase PostgreSQL Schema Migration
--- Versi: 2.1 (28 Oktober 2026)
--- Deskripsi: Skema terpadu untuk Stateful Multi-Chain Sessions, Shared Cache,
--- Vector Stores Directory, Crowdsourced Feedback, & User Preferences.
+-- Versi: 3.0 (30 Oktober 2026)
+-- Arsitektur: Meta Social Auth, PII Sanitized Chat, Memory Compacting, 
+-- Client-Side Encrypted WebCrypto Vault, Two-Tier Coach Cache & Juknis RAG.
 -- ============================================================================
 
--- Ekstensi UUID
+-- Aktifkan ekstensi UUID
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
--- 1. TABEL: savvy_sessions
--- Pengelolaan sesi stateful per user per tab browser via Meta Responses API.
--- Memungkinkan percakapan multi-turn tanpa mengirim ulang seluruh riwayat chat.
+-- 1. TABEL: profiles
+-- Sinkronisasi otomatis data profil dari Supabase Auth (Facebook / Instagram OAuth)
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS savvy_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    tab_id TEXT NOT NULL,                          -- ID tab unik browser (mis. 'tab_lpdp_kemenkeu_go_id')
-    portal_key TEXT NOT NULL,                      -- Domain aktif portal formulir (mis. 'beasiswalpdp.kemenkeu.go.id')
-    current_chain_id TEXT NOT NULL,                -- Identifier chain sesi aktif
-    current_response_id TEXT NOT NULL,             -- ID respons Meta terbaru (resp_xxx) untuk previous_response_id
-    token_count INT DEFAULT 0,                     -- Akumulasi token sesi untuk pemantauan kuota
-    message_count INT DEFAULT 0,                   -- Jumlah pertukaran pesan dalam sesi
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '48 hours', -- TTL sesi sesuai cache window Meta API
-    UNIQUE(user_id, tab_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_sessions_user_tab ON savvy_sessions(user_id, tab_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_expires ON savvy_sessions(expires_at);
-
--- ============================================================================
--- 2. TABEL: coach_cache
--- Shared Two-Tier Cache publik untuk kartu panduan 4-elemen Field Coach.
--- Menghindari pemanggilan ulang LLM untuk field formulir yang sama (hemat s/d 80% token).
--- ============================================================================
-CREATE TABLE IF NOT EXISTS coach_cache (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cache_key TEXT UNIQUE NOT NULL,                -- SHA-256 hash(portal_key + section + field_key + role)
-    portal_domain TEXT NOT NULL,                   -- Normalisasi domain portal formulir
-    field_key TEXT NOT NULL,                       -- Identifier semantik field (mis. 'nik', 'apostille')
-    language TEXT NOT NULL DEFAULT 'id',           -- Bahasa output panduan ('id', 'en', dll)
-    explanation_json JSONB NOT NULL,               -- Payload 4-elemen: { meaning, how_to_fill, example, pitfalls }
-    source_type TEXT NOT NULL DEFAULT 'ai_guidance',-- 'official' (dari juknis) | 'curated' | 'ai_guidance'
-    confirmation_ref TEXT,                         -- Sitasi bab/halaman juknis resmi atau URL referensi
-    model_used TEXT NOT NULL DEFAULT 'muse-spark-1.3', -- Versi model Meta yang menghasilkan cache
-    prompt_ver TEXT NOT NULL DEFAULT 'v1',         -- Versi prompt untuk invalidasi terarah
-    hit_count INT DEFAULT 1,                       -- Frekuensi pemakaian kartu panduan
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '30 days' -- TTL cache publik
-);
-
-CREATE INDEX IF NOT EXISTS idx_coach_cache_key ON coach_cache(cache_key);
-CREATE INDEX IF NOT EXISTS idx_coach_cache_portal ON coach_cache(portal_domain);
-
--- ============================================================================
--- 3. TABEL: vector_stores
--- Katalog pemetaan portal formulir resmi ke Meta Vector Store ID untuk tool file_search.
--- ============================================================================
-CREATE TABLE IF NOT EXISTS vector_stores (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    domain TEXT NOT NULL UNIQUE,                   -- Domain web portal resmi (mis. 'beasiswalpdp.kemenkeu.go.id')
-    vector_store_id TEXT NOT NULL,                 -- ID Vector Store resmi di Meta Model API (vs_xxx)
-    portal_name TEXT NOT NULL,                     -- Nama resmi portal (mis. 'Beasiswa LPDP 2026')
-    document_title TEXT NOT NULL,                  -- Judul juknis (mis. 'Buku Panduan Pendaftaran LPDP 2026')
-    doc_version TEXT NOT NULL DEFAULT '2026',      -- Versi rilis juknis
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    auth_provider TEXT DEFAULT 'facebook',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_vector_stores_domain ON vector_stores(domain);
+-- Trigger otomatis membuat profile saat user login/signup via OAuth (Google, Facebook, Instagram)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+    user_name TEXT;
+    user_avatar TEXT;
+    user_email TEXT;
+BEGIN
+    -- 1. Tangkap Nama (Google: name/full_name, Facebook: name, Instagram: username/name)
+    user_name := COALESCE(
+        NEW.raw_user_meta_data->>'full_name',
+        NEW.raw_user_meta_data->>'name',
+        NEW.raw_user_meta_data->>'user_name',
+        'Pengguna Savvy'
+    );
+    
+    -- 2. Tangkap Email
+    user_email := COALESCE(
+        NEW.email,
+        NEW.raw_user_meta_data->>'email',
+        NULL
+    );
+
+    -- 3. Tangkap Foto Profil (Google: picture/avatar_url, Facebook: picture.data.url / picture)
+    user_avatar := COALESCE(
+        NEW.raw_user_meta_data->>'avatar_url',
+        NEW.raw_user_meta_data->>'picture',
+        NEW.raw_user_meta_data->'picture'->'data'->>'url',
+        NULL
+    );
+
+    INSERT INTO public.profiles (id, email, full_name, avatar_url, auth_provider)
+    VALUES (
+        NEW.id,
+        user_email,
+        user_name,
+        user_avatar,
+        COALESCE(NEW.raw_app_meta_data->>'provider', 'oauth')
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        email = COALESCE(EXCLUDED.email, profiles.email),
+        full_name = COALESCE(EXCLUDED.full_name, profiles.full_name),
+        avatar_url = COALESCE(EXCLUDED.avatar_url, profiles.avatar_url),
+        updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT OR UPDATE ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ============================================================================
--- 4. TABEL: feedback_reports
--- Penampung pelaporan anomali panduan atau juknis usang dari pengguna.
+-- 2. TABEL: chat_sessions
+-- Sesi percakapan per user & per portal dengan Rolling Compacting Memory.
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS feedback_reports (
+CREATE TABLE IF NOT EXISTS public.chat_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-    category TEXT NOT NULL,                        -- 'wrong_guidance' | 'outdated_juknis' | 'ui_bug' | 'other'
-    portal_url TEXT NOT NULL,                      -- URL formulir saat kendala dialami
-    field_signature TEXT,                          -- Signature field terkait (bila ada)
-    report_data JSONB NOT NULL,                    -- Detail kendala & screenshot masking
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    tab_id TEXT NOT NULL,                                -- ID tab browser unik
+    portal_domain TEXT NOT NULL,                         -- Domain portal aktif (mis. beasiswalpdp.kemenkeu.go.id)
+    title TEXT DEFAULT 'Percakapan Baru',
+    compacted_summary TEXT DEFAULT NULL,                 -- Rangkuman profil & konteks user dari percakapan >10 pesan
+    message_count INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_user ON public.chat_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_portal ON public.chat_sessions(portal_domain);
+
+-- ============================================================================
+-- 3. TABEL: chat_messages
+-- Riwayat percakapan. Catatan: Data sensitif (NIK/NPWP) telah disensor sebelum disimpan.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.chat_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('system', 'user', 'assistant')),
+    content TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback_reports(created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session ON public.chat_messages(session_id, created_at ASC);
 
 -- ============================================================================
--- 5. TABEL: user_preferences (Profil & Konteks Pengguna)
--- Sinkronisasi identitas dasar (nama, goals aplikasi), preset aksesibilitas,
--- dan preferensi bahasa akun lintas perangkat untuk personalisasi bimbingan AI.
+-- 4. TABEL: user_vault
+-- Brankas Data Pribadi. Klien mengenkripsi data secara lokal via WebCrypto AES-256-GCM.
+-- Server Supabase HANYA menyimpan ciphertext & IV (Zero-Knowledge, aman dari kebocoran).
 -- ============================================================================
-CREATE TABLE IF NOT EXISTS user_preferences (
-    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name TEXT,                                -- Nama panggilan/lengkap pengguna (mis. 'Budi Santoso')
-    goals TEXT,                                    -- Target aplikasi aktif (mis. 'Beasiswa LPDP 2026', 'Visa Schengen')
-    accessibility_preset JSONB DEFAULT '{}'::jsonb,-- Konfigurasi preset 14 tools Accessibility HUB
-    default_language TEXT DEFAULT 'id',
+CREATE TABLE IF NOT EXISTS public.user_vault (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    doc_type TEXT NOT NULL CHECK (doc_type IN ('KTP', 'NPWP', 'PASPOR', 'TRANSKRIP', 'SERTIFIKAT', 'PROFIL_DATA')),
+    label TEXT NOT NULL,                                 -- Label dokumen (mis. 'KTP Utama', 'Sertifikat IELTS')
+    ciphertext TEXT NOT NULL,                            -- Base64 payload terenkripsi AES-256-GCM
+    iv TEXT NOT NULL,                                    -- Base64 96-bit Initialization Vector
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ============================================================================
--- KEBIJAKAN ROW-LEVEL SECURITY (RLS)
--- ============================================================================
-ALTER TABLE savvy_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE coach_cache ENABLE ROW LEVEL SECURITY;
-ALTER TABLE vector_stores ENABLE ROW LEVEL SECURITY;
-ALTER TABLE feedback_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
-
--- 1. Sesi privat: User hanya dapat membaca & memodifikasi sesinya sendiri
-DROP POLICY IF EXISTS "Users own their sessions" ON savvy_sessions;
-CREATE POLICY "Users own their sessions" ON savvy_sessions
-    FOR ALL USING (auth.uid() = user_id);
-
--- 2. Cache publik: Dibaca oleh seluruh user terautentikasi & anonim
-DROP POLICY IF EXISTS "Public read for coach cache" ON coach_cache;
-CREATE POLICY "Public read for coach cache" ON coach_cache
-    FOR SELECT USING (true);
-
--- Backend Service Role dapat mengelola cache
-DROP POLICY IF EXISTS "Service role manage coach cache" ON coach_cache;
-CREATE POLICY "Service role manage coach cache" ON coach_cache
-    FOR ALL USING (true) WITH CHECK (true);
-
--- 3. Vector stores katalog: Dibaca oleh seluruh user
-DROP POLICY IF EXISTS "Public read for vector stores" ON vector_stores;
-CREATE POLICY "Public read for vector stores" ON vector_stores
-    FOR SELECT USING (true);
-
--- 4. Feedback reports: Pengguna dapat mengirim feedback
-DROP POLICY IF EXISTS "Users insert feedback" ON feedback_reports;
-CREATE POLICY "Users insert feedback" ON feedback_reports
-    FOR INSERT WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
-
--- 5. User preferences: Pengguna mengelola preferensinya sendiri
-DROP POLICY IF EXISTS "Users manage preferences" ON user_preferences;
-CREATE POLICY "Users manage preferences" ON user_preferences
-    FOR ALL USING (auth.uid() = user_id);
+CREATE INDEX IF NOT EXISTS idx_user_vault_user ON public.user_vault(user_id);
 
 -- ============================================================================
--- CONTOH DATA AWAL (SEED DATA: Vector Store LPDP)
+-- 5. TABEL: coach_cache
+-- L1/L2 Shared Cache publik panduan 4-elemen formulir (Meaning, How, Example, Pitfalls).
 -- ============================================================================
-INSERT INTO vector_stores (domain, vector_store_id, portal_name, document_title, doc_version)
-VALUES (
-    'beasiswalpdp.kemenkeu.go.id',
-    'vs_lpdp_2026_official',
-    'Portal Pendaftaran Beasiswa LPDP 2026',
-    'Buku Panduan Pendaftaran Beasiswa LPDP Tahap 1 2026',
-    '2026.1'
+CREATE TABLE IF NOT EXISTS public.coach_cache (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cache_key TEXT UNIQUE NOT NULL,                      -- SHA-256 hash(portal_domain + field_key + lang)
+    portal_domain TEXT NOT NULL,
+    field_key TEXT NOT NULL,
+    language TEXT NOT NULL DEFAULT 'id',
+    explanation_json JSONB NOT NULL,
+    source_type TEXT NOT NULL DEFAULT 'ai_guidance',     -- 'official' | 'curated' | 'ai_guidance'
+    confirmation_ref TEXT,                               -- Nomor halaman / bab dokumen resmi
+    hit_count INT DEFAULT 1,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '30 days'
+);
+
+CREATE INDEX IF NOT EXISTS idx_coach_cache_lookup ON public.coach_cache(cache_key);
+CREATE INDEX IF NOT EXISTS idx_coach_cache_portal ON public.coach_cache(portal_domain);
+
+-- ============================================================================
+-- 6. TABEL: juknis_chunks
+-- Basis pengetahuan RAG panduan resmi portal publik untuk sitasi kutipan resmi.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.juknis_chunks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    portal_key TEXT NOT NULL,                            -- 'lpdp', 'schengen', 'casn', dll
+    document_title TEXT NOT NULL,                        -- 'Buku Panduan Pendaftaran Beasiswa LPDP 2026'
+    section_title TEXT NOT NULL,                         -- 'Bab IV: Persyaratan Khusus Beasiswa Afirmasi'
+    page_number INT,
+    chunk_text TEXT NOT NULL,
+    tags TEXT[] DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_juknis_portal ON public.juknis_chunks(portal_key);
+
+-- Seed awal panduan resmi LPDP 2026
+INSERT INTO public.juknis_chunks (portal_key, document_title, section_title, page_number, chunk_text, tags)
+VALUES
+(
+    'lpdp',
+    'Buku Panduan Beasiswa LPDP 2026',
+    'Persyaratan Umum Pendaftar Beasiswa Reguler',
+    14,
+    'Pendaftar Beasiswa Reguler wajib memiliki Indeks Prestasi Kumulatif (IPK) jenjang sebelumnya minimal 3.00 pada skala 4.00 untuk program Magister (S2), dan minimal 3.25 untuk program Doktor (S3). Dokumen transkrip asli atau legalisir wajib dilampirkan.',
+    ARRAY['ipk', 'reguler', 'persyaratan', 'transkrip']
+),
+(
+    'lpdp',
+    'Buku Panduan Beasiswa LPDP 2026',
+    'Persyaratan Khusus Beasiswa Afirmasi Daerah 3T',
+    22,
+    'Pendaftar kategori Afirmasi Daerah 3T (Tertinggal, Terdepan, Terluar) mendapatkan relaksasi syarat IPK minimal 2.50 untuk Magister (S2). Pendaftar wajib melampirkan KTP dan Kartu Keluarga yang membuktikan domisili resmi di wilayah 3T minimal 3 tahun berturut-turut.',
+    ARRAY['afirmasi', '3t', 'ipk', 'ktp', 'kartu keluarga']
+),
+(
+    'lpdp',
+    'Buku Panduan Beasiswa LPDP 2026',
+    'Ketentuan Sertifikat Bahasa Inggris',
+    18,
+    'Sertifikat kemampuan bahasa Inggris yang diterima untuk tujuan luar negeri adalah TOEFL iBT (skor min 80) atau IELTS (skor min 6.5). TOEFL ITP hanya diperbolehkan untuk pendaftaran universitas dalam negeri dengan skor minimal 500.',
+    ARRAY['toefl', 'ielts', 'bahasa', 'skor']
 )
-ON CONFLICT (domain) DO UPDATE 
-SET vector_store_id = EXCLUDED.vector_store_id,
-    document_title = EXCLUDED.document_title,
-    updated_at = NOW();
+ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- 7. TABEL: feedback_reports
+-- Laporan crowdsource jika pengguna menemukan petunjuk panduan yang keliru.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS public.feedback_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    portal_domain TEXT NOT NULL,
+    field_key TEXT NOT NULL,
+    issue_type TEXT NOT NULL,                            -- 'outdated' | 'wrong_format' | 'broken_rule'
+    user_comment TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================================
+-- 8. KEBIJAKAN KEAMANAN ROW-LEVEL SECURITY (RLS)
+-- Menjamin setiap user HANYA bisa mengakses datanya sendiri!
+-- ============================================================================
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_vault ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coach_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.juknis_chunks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.feedback_reports ENABLE ROW LEVEL SECURITY;
+
+-- 8.1 Policies Profiles
+CREATE POLICY "Users can view their own profile"
+    ON public.profiles FOR SELECT
+    USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile"
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id);
+
+-- 8.2 Policies Chat Sessions
+CREATE POLICY "Users can manage their own sessions"
+    ON public.chat_sessions FOR ALL
+    USING (auth.uid() = user_id);
+
+-- 8.3 Policies Chat Messages
+CREATE POLICY "Users can manage messages in their own sessions"
+    ON public.chat_messages FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.chat_sessions
+            WHERE chat_sessions.id = chat_messages.session_id
+            AND chat_sessions.user_id = auth.uid()
+        )
+    );
+
+-- 8.4 Policies User Vault (Zero-Knowledge Ciphertext)
+CREATE POLICY "Users can manage their own encrypted vault"
+    ON public.user_vault FOR ALL
+    USING (auth.uid() = user_id);
+
+-- 8.5 Policies Coach Cache & Juknis Chunks (Publik Boleh Membaca)
+CREATE POLICY "Public read coach_cache"
+    ON public.coach_cache FOR SELECT
+    TO anon, authenticated
+    USING (true);
+
+CREATE POLICY "Public read juknis_chunks"
+    ON public.juknis_chunks FOR SELECT
+    TO anon, authenticated
+    USING (true);
+
+-- 8.6 Policies Feedback Reports
+CREATE POLICY "Authenticated users can submit feedback"
+    ON public.feedback_reports FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = user_id);

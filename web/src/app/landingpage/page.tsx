@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { DemoAuthButton } from "@/components/DemoAuthButton";
 import {
   Sparkles,
   ShieldCheck,
@@ -93,6 +94,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DemoAuthButton />
             <LanguageSwitcher />
 
             <Link

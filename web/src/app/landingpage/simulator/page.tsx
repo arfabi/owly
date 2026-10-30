@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { DemoAuthButton } from "@/components/DemoAuthButton";
 import {
   Compass,
   Lock,
@@ -268,7 +269,10 @@ export default function SimulatorPage() {
             </button>
           </div>
 
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            <DemoAuthButton />
+            <LanguageSwitcher />
+          </div>
         </div>
       </nav>
 

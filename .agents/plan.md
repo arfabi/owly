@@ -10,11 +10,11 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 | :--- | :--- | :---: | :---: | :---: | :---: |
 | **P0** | Foundation, Specs & Core Architecture | 8 | 8 | 0 | **100%** |
 | **P1** | Web Showcase, MV3 Extension Client & Meta Auth | 11 | 8 | 3 | **73%** |
-| **P2** | Backend API Gateway & Baseten Muse Spark Open | 8 | 0 | 8 | **0%** |
+| **P2** | Backend API Gateway & Baseten Muse Spark Open | 8 | 3 | 5 | **38%** |
 | **P3** | Real On-Device AI Models, Vault & Voice Engine | 6 | 0 | 6 | **0%** |
 | **P4** | End-to-End Testing & Security Verification | 5 | 0 | 5 | **0%** |
 | **P5** | Hackathon Deliverables & Video Submission | 5 | 0 | 5 | **0%** |
-| **TOTAL**| **All Milestones** | **43** | **16** | **27** | **37%** |
+| **TOTAL**| **All Milestones** | **43** | **19** | **24** | **44%** |
 
 ---
 
@@ -88,19 +88,19 @@ Master roadmap and task tracker for **Savvy.AI** — Browser-native Compound Mul
 ## ⚡ P2: Backend API Gateway & Baseten Inference API Integration
 *Serverless Node.js endpoints bridging user requests to Muse Spark Open on Baseten, Juknis RAG Store, and Supabase.*
 
-- [ ] **P2.1: Backend Project Setup & Environment Configuration**
-  - Path: `backend/`
-  - Dependencies: `@supabase/supabase-js`, `dotenv`, `cors`, `zod`, `sharp`, `form-data`, `openai`.
-  - Configured `.env` dengan `BASETEN_API_KEY`, `BASETEN_BASE_URL=https://inference.baseten.co/v1`, `MUSE_SPARK_MODEL_NAME=meta-models/muse-spark-open-1026`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
-- [ ] **P2.2: Field Coach RAG Endpoint (`/api/coach/field`)**
-  - Input: `{ portal_id, field_id, field_name, label_text, context_text }`
-  - Flow: Query `coach_cache` in Supabase; if miss, invoke Juknis RAG chunks (`juknis_chunks`) via semantic keyword/tag matching. Format response with official rule, pitfall, and page citation.
-- [ ] **P2.3: General Assistant Chat & Compacting Engine (`/api/chat`)**
-  - Input: `{ session_id, message, form_context, language }`
+- [x] **P2.1: Backend Project Setup & Environment Configuration**
+  - Path: `web/src/app/api/` (Next.js Serverless API Gateway on Vercel)
+  - Dependencies: `@supabase/supabase-js`, `@vercel/analytics`, `dotenv`.
+  - Configured `.env.local` dengan `BASETEN_API_KEY`, `BASETEN_BASE_URL=https://inference.baseten.co/v1`, `MUSE_SPARK_MODEL_NAME=meta-models/muse-spark-open-1026`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+- [x] **P2.2: Field Coach RAG Endpoint (`/api/coach/field`)**
+  - Path: `web/src/app/api/coach/field/route.ts`
+  - Flow: Query `coach_cache` in Supabase; if miss, invoke Juknis RAG chunks (`juknis_chunks`), panggil Muse Spark Open di Baseten, generate 4-elemen (meaning, how_to_fill, example, pitfalls) + badge referensi halaman juknis, simpan ke cache dan return.
+- [x] **P2.3: General Assistant Chat & Compacting Engine (`/api/chat`)**
+  - Path: `web/src/app/api/chat/route.ts`
   - Flow: 
     1. Filter & redact PII teks (NIK/NPWP).
     2. Ambil `compacted_summary` dari sesi + 10 pesan percakapan terakhir (sliding window).
-    3. Eksekusi streaming inferensi via Baseten `meta-models/muse-spark-open-1026`.
+    3. Eksekusi inferensi via Baseten `meta-models/muse-spark-open-1026`.
     4. Jika pesan aktif > 10, trigger background compacting via Muse Spark Open untuk memperbarui `chat_sessions.compacted_summary`.
 - [ ] **P2.4: Multimodal Snip Explainer Endpoint (`/api/explain`)**
   - Input: `{ image_base64, context_label, portal_url }`

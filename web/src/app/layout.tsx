@@ -27,6 +27,7 @@ export const metadata: Metadata = {
 };
 
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
+import { Analytics } from "@vercel/analytics/react";
 
 export default function RootLayout({
   children,
@@ -40,6 +41,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-white text-slate-900 selection:bg-blue-500/10 selection:text-blue-700">
         <LanguageProvider>{children}</LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
