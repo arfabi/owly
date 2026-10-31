@@ -110,7 +110,7 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
     },
     tabs: {
       assistant: "AI Assistant",
-      guide: "Forms Guide",
+      guide: "Ask Savvy",
       vault: "AutoFill",
       audit: "Audit Form",
       a11y: "A11y Hub",
@@ -215,7 +215,7 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
     },
     tabs: {
       assistant: "AI Assistant",
-      guide: "Forms Guide",
+      guide: "Ask Savvy",
       vault: "AutoFill",
       audit: "Audit Form",
       a11y: "A11y Hub",

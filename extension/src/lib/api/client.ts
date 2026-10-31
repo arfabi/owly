@@ -51,7 +51,28 @@ function processBackendAgentLogs(data: any) {
   }
 }
 
-// 1. CHAT API: Multi-turn sliding context + Meta Muse Spark Open via Baseten
+export interface ToolExecutionPayload {
+  toolCallId: string;
+  toolName: string;
+  toolArgs?: any;
+  toolResult?: any;
+}
+
+export interface ChatResponse {
+  reply?: string;
+  sessionId?: string;
+  piiBlocked?: boolean;
+  requiresAction?: boolean;
+  toolCall?: {
+    id: string;
+    name: string;
+    arguments: any;
+  };
+  toolExecuted?: string;
+  agent_logs?: any[];
+}
+
+// 1. CHAT API: Multi-turn sliding context + Meta Muse Spark Open via Baseten (with Agentic Tool Calling)
 export async function sendChatMessage(
   message: string,
   sessionId?: string | null,
@@ -59,8 +80,9 @@ export async function sendChatMessage(
   pageUrl?: string,
   pageTitle?: string,
   imageBase64?: string | null,
-  meta?: PageMetadata | null
-): Promise<{ reply: string; sessionId?: string; piiBlocked?: boolean }> {
+  meta?: PageMetadata | null,
+  toolExecution?: ToolExecutionPayload | null
+): Promise<ChatResponse> {
   const startTime = Date.now();
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/chat`, {
     portalDomain,
@@ -71,6 +93,8 @@ export async function sendChatMessage(
     metaKeys: meta ? Object.keys(meta).filter((k) => !!(meta as any)[k]) : [],
     message: message.substring(0, 60) + (message.length > 60 ? "..." : ""),
     sessionId: sessionId || "new_session",
+    isToolReturn: !!toolExecution,
+    toolName: toolExecution?.toolName,
   });
 
   try {
@@ -85,6 +109,7 @@ export async function sendChatMessage(
         pageTitle,
         imageBase64,
         meta,
+        toolExecution,
       }),
     });
 
@@ -96,13 +121,22 @@ export async function sendChatMessage(
       throw new Error(`HTTP ${res.status}: ${errText}`);
     }
 
-    const data = await res.json();
+    const data: ChatResponse = await res.json();
     processBackendAgentLogs(data);
-    agentLog.reasoning(`✅ [API Success] POST /api/chat responded (${elapsed}ms)`, {
-      sessionId: data.sessionId,
-      replyPreview: data.reply?.substring(0, 80) + "...",
-      piiBlocked: data.piiBlocked || false,
-    });
+
+    if (data.requiresAction && data.toolCall) {
+      agentLog.planner(`🤖 [Agentic Tool Decision] Model requested tool: '${data.toolCall.name}' (${elapsed}ms)`, {
+        toolCallId: data.toolCall.id,
+        args: data.toolCall.arguments,
+      });
+    } else {
+      agentLog.reasoning(`✅ [API Success] POST /api/chat responded (${elapsed}ms)`, {
+        sessionId: data.sessionId,
+        replyPreview: data.reply?.substring(0, 80) + "...",
+        piiBlocked: data.piiBlocked || false,
+        toolExecuted: data.toolExecuted,
+      });
+    }
 
     return data;
   } catch (error: any) {
@@ -387,4 +421,32 @@ export async function analyzeForm(payload: {
     throw error;
   }
 }
+
+// 7. SHOW ME: Semantic Element Matching via Meta Muse Spark (Level 3)
+export async function matchElementSemantically(
+  query: string,
+  candidates: Array<{ domIndex: number; tag: string; text: string; aria?: string; placeholder?: string }>,
+  pageTitle?: string,
+  pageUrl?: string
+): Promise<{ matchedIndex: number | null; confidence: number; reason: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/element/match`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, candidates, pageTitle, pageUrl }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        matchedIndex: typeof data.matchedIndex === "number" ? data.matchedIndex : null,
+        confidence: typeof data.confidence === "number" ? data.confidence : 0,
+        reason: data.reason || "",
+      };
+    }
+  } catch (err: any) {
+    console.warn("[Element Match API] Error:", err);
+  }
+  return { matchedIndex: null, confidence: 0, reason: "Model inference unavailable" };
+}
+
 

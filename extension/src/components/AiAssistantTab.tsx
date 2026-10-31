@@ -22,15 +22,17 @@ import {
   Volume2,
   BookOpen,
   ArrowLeft,
+  Accessibility,
 } from "lucide-react";
 import { inspectAndRedactPII } from "../lib/privacy/censor";
 import { auditFormData } from "../lib/audit/rules";
 import { SimpleVadDetector } from "../lib/voice/vad";
 import { agentLog } from "../lib/agentLogger";
-import { sendChatMessage, transcribeVoiceAudio, PageMetadata, analyzeForm } from "../lib/api/client";
+import { sendChatMessage, transcribeVoiceAudio, PageMetadata, analyzeForm, matchElementSemantically } from "../lib/api/client";
 import { sendTabMessage } from "../lib/tabMessenger";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { FormsGuideTab } from "./FormsGuideTab";
+import { matchA11yFastPath, A11Y_TOOLS } from "../lib/a11y/registry";
 
 interface Message {
   id: string;
@@ -141,6 +143,8 @@ export function AiAssistantTab({
     fieldCount: number;
   } | null>(null);
 
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
+
   // Restore cached form analysis if already scanned
   useEffect(() => {
     if (!isFormAnalyzed) {
@@ -169,8 +173,101 @@ export function AiAssistantTab({
   const [piiWarning, setPiiWarning] = useState<string | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [micPermissionNeeded, setMicPermissionNeeded] = useState(false);
+  const [isLiveTalkActive, setIsLiveTalkActive] = useState(false);
+  const isLiveTalkActiveRef = useRef(false);
+  const recognitionRef = useRef<any>(null);
+  const pttTranscriptRef = useRef<string>("");
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const vadDetectorRef = useRef<SimpleVadDetector | null>(null);
+
+  const speakText = (textToSpeak: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+
+      const clean = textToSpeak
+        .replace(/[*_#`~>\[\]\(\)]/g, " ")
+        .replace(/https?:\/\/\S+/g, "")
+        .replace(/---/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (!clean) return;
+
+      const utterance = new SpeechSynthesisUtterance(clean);
+      utterance.lang = isId ? "id-ID" : "en-US";
+      utterance.rate = 1.05;
+
+      const voices = window.speechSynthesis.getVoices();
+      const targetPrefix = isId ? "id" : "en";
+      const matched = voices.find((v) => v.lang.toLowerCase().startsWith(targetPrefix));
+      if (matched) utterance.voice = matched;
+
+      utterance.onstart = () => {
+        setVoiceStatus("speaking");
+      };
+      utterance.onend = () => {
+        if (isLiveTalkActiveRef.current) {
+          setVoiceStatus("listening");
+        } else {
+          setVoiceStatus("idle");
+        }
+      };
+      utterance.onerror = () => {
+        if (isLiveTalkActiveRef.current) {
+          setVoiceStatus("listening");
+        } else {
+          setVoiceStatus("idle");
+        }
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn("[Savvy TTS Error]", e);
+    }
+  };
+
+  const [micPermissionState, setMicPermissionState] = useState<"granted" | "prompt" | "denied">("prompt");
+
+  const checkMicPermission = async () => {
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+      chrome.storage.local.get(["savvy_mic_granted"], (res) => {
+        if (res?.savvy_mic_granted) {
+          setMicPermissionState("granted");
+          setMicPermissionNeeded(false);
+        }
+      });
+    }
+
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const status = await navigator.permissions.query({ name: "microphone" as any });
+        if (status.state === "granted") {
+          setMicPermissionState("granted");
+          setMicPermissionNeeded(false);
+          if (typeof chrome !== "undefined" && chrome.storage?.local) {
+            chrome.storage.local.set({ savvy_mic_granted: true });
+          }
+        } else if (status.state === "denied") {
+          setMicPermissionState("denied");
+        } else {
+          setMicPermissionState("prompt");
+        }
+
+        status.onchange = () => {
+          if (status.state === "granted") {
+            setMicPermissionState("granted");
+            setMicPermissionNeeded(false);
+            if (typeof chrome !== "undefined" && chrome.storage?.local) {
+              chrome.storage.local.set({ savvy_mic_granted: true });
+            }
+          } else {
+            setMicPermissionState(status.state as any);
+          }
+        };
+      }
+    } catch (_) {}
+  };
 
   const openPermissionTab = () => {
     if (typeof chrome !== "undefined" && chrome.tabs?.create) {
@@ -181,7 +278,20 @@ export function AiAssistantTab({
   };
 
   useEffect(() => {
+    checkMicPermission();
+    window.addEventListener("focus", checkMicPermission);
     return () => {
+      window.removeEventListener("focus", checkMicPermission);
+      isLiveTalkActiveRef.current = false;
+      try {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        }
+      } catch (_) {}
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
       vadDetectorRef.current?.stop();
     };
   }, []);
@@ -211,7 +321,8 @@ export function AiAssistantTab({
   const handleSendMessage = async (
     textToSend?: string,
     attachedImageBase64?: string | null,
-    attachedMeta?: PageMetadata | null
+    attachedMeta?: PageMetadata | null,
+    shouldSpeakOutput: boolean = false
   ) => {
     const text = (textToSend || inputText).trim();
     if (!text && !attachedImageBase64) return;
@@ -234,8 +345,25 @@ export function AiAssistantTab({
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    if (!textToSend) setInputText("");
     setPiiWarning(null);
+
+    let liveUrl = currentUrl || "";
+    let liveTitle = currentTitle || "";
+
+    if (typeof chrome !== "undefined" && chrome.tabs?.query) {
+      try {
+        const activeTabs = await new Promise<chrome.tabs.Tab[]>((resolve) => {
+          chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+            if (tabs && tabs.length > 0 && tabs[0]?.url) return resolve(tabs);
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs2) => resolve(tabs2 || []));
+          });
+        });
+        if (activeTabs?.[0]) {
+          if (activeTabs[0].url) liveUrl = activeTabs[0].url;
+          if (activeTabs[0].title) liveTitle = activeTabs[0].title || "";
+        }
+      } catch (_) {}
+    }
 
     const lower = text.toLowerCase();
 
@@ -272,7 +400,13 @@ export function AiAssistantTab({
       return;
     }
 
-    if (lower.includes("autofill") || lower.includes("isi")) {
+    // 1b. Autofill intent check (Only if user explicitly asks to fill form, NEVER intercept snip / vision explain)
+    const isExplicitAutofill =
+      !attachedImageBase64 &&
+      (/\b(autofill|auto-fill)\b/i.test(lower) ||
+        /\b(isi\s+form|isi\s+formulir|isi\s+kolom|isikan\s+data|tolong\s+isi)\b/i.test(lower));
+
+    if (isExplicitAutofill) {
       if (!isFormAnalyzed) {
         setMessages((prev) => [
           ...prev,
@@ -341,53 +475,297 @@ export function AiAssistantTab({
       return;
     }
 
-    if (lower === "show me" || lower === "tunjuk kolom" || lower === "tunjukkan kolom" || lower === "sorot kolom") {
-      triggerShowMe();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: "savvy",
-          text: isId
-            ? `Lampu sorot Beacon Spotlight diarahkan ke kolom formulir aktif di layar.`
-            : `Beacon Spotlight has illuminated the active form input on the page.`,
-          timestamp: Date.now(),
-        },
-      ]);
-      return;
+    // ========================================================================
+    // SHOW ME: 4-Level Cascading Element Finder
+    // ========================================================================
+    const showMeRegex = /^(?:show\s+me\s*:?|tunjukkan\s*:?|tunjuk\s*:?|sorot\s*:?|cari\s*elemen\s*:?)\s*(.*)$/i;
+    const showMeMatch = text.match(showMeRegex);
+
+    if (showMeMatch) {
+      const targetQuery = showMeMatch[1].trim();
+      if (!targetQuery) {
+        triggerShowMe();
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "savvy",
+            text: isId
+              ? `Silakan ketik elemen atau tombol yang ingin Anda cari (misal: "Show me: signup button" atau "Show me: persyaratan").`
+              : `Please specify the element or button you want to find (e.g., "Show me: signup button" or "Show me: requirements").`,
+            badge: "Savvy.AI",
+            timestamp: Date.now(),
+          },
+        ]);
+        return;
+      }
+
+      agentLog.planner(`🔍 [Show Me Triggered] Searching for element: "${targetQuery}" across 4 cascading tiers...`);
+
+      // LEVEL 1 & LEVEL 2: Client-side DOM Search & Synonym Heuristics (0ms)
+      const domRes = await sendTabMessage({
+        type: "FIND_AND_HIGHLIGHT_ELEMENT",
+        query: targetQuery,
+      });
+
+      if (domRes?.data?.success) {
+        const found = domRes.data;
+        const levelMsg =
+          found.level === 1
+            ? isId
+              ? `⚡ Ditemukan! Elemen **"${found.matchedText}"** telah disorot dengan Beacon Spotlight di layar.`
+              : `⚡ Found! Element **"${found.matchedText}"** highlighted with Beacon Spotlight on screen.`
+            : isId
+            ? `⚡ Ditemukan via sinonim! Elemen **"${found.matchedText}"** telah disorot dengan Beacon Spotlight di layar.`
+            : `⚡ Found via synonym! Element **"${found.matchedText}"** highlighted with Beacon Spotlight on screen.`;
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "savvy",
+            text: levelMsg,
+            badge: "Savvy.AI",
+            timestamp: Date.now(),
+          },
+        ]);
+        return;
+      }
+
+      // LEVEL 3: Meta Muse Spark Open Semantic Reasoning (Threshold: confidence >= 0.8)
+      const candidates = domRes?.data?.candidates || [];
+      if (candidates.length > 0) {
+        agentLog.reasoning(`🧠 [Show Me Level 3] Querying Meta Muse Spark for ${candidates.length} DOM candidates...`);
+
+        try {
+          const matchResult = await matchElementSemantically(
+            targetQuery,
+            candidates,
+            liveTitle,
+            liveUrl
+          );
+
+          if (matchResult && matchResult.confidence >= 0.8 && matchResult.matchedIndex !== null) {
+            await sendTabMessage({
+              type: "HIGHLIGHT_DOM_ELEMENT_BY_INDEX",
+              domIndex: matchResult.matchedIndex,
+            });
+
+            const matchedCandidate = candidates[matchResult.matchedIndex];
+            const candidateName = matchedCandidate?.text || matchedCandidate?.aria || "Target Element";
+            const confidencePct = Math.round(matchResult.confidence * 100);
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: (Date.now() + 1).toString(),
+                sender: "savvy",
+                text: isId
+                  ? `🎯 Ditemukan via AI Reasoning (Keyakinan: ${confidencePct}%)! Elemen **"${candidateName}"** telah disorot di layar.\n\n*${matchResult.reason || ""}*`
+                  : `🎯 Found via AI Reasoning (${confidencePct}% confidence)! Element **"${candidateName}"** highlighted on screen.\n\n*${matchResult.reason || ""}*`,
+                badge: "Savvy.AI",
+                timestamp: Date.now(),
+              },
+            ]);
+            return;
+          }
+        } catch (l3Err) {
+          console.warn("[Show Me Level 3 Error]", l3Err);
+        }
+      }
+
+      // LEVEL 4: Multimodal Vision Safety-Net Fallback
+      agentLog.perception(`👁️ [Show Me Level 4] Activating Multimodal Vision fallback for: "${targetQuery}"...`);
+
+      let screenshotBase64: string | null = null;
+      try {
+        if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+          const captureRes: any = await new Promise((resolve) => {
+            chrome.runtime.sendMessage({ type: "CAPTURE_VISIBLE_TAB" }, resolve);
+          });
+          if (captureRes?.success && captureRes.dataUrl) {
+            screenshotBase64 = captureRes.dataUrl;
+          }
+        }
+      } catch (err) {
+        console.warn("[Show Me Level 4 Capture Error]", err);
+      }
+
+      const visionPrompt = isId
+        ? `Tolong temukan posisi visual dan jelaskan di mana letak "${targetQuery}" pada tampilan halaman web ini.`
+        : `Please visually locate and explain where to find "${targetQuery}" on this webpage screenshot.`;
+
+      try {
+        const visionData = await sendChatMessage(
+          visionPrompt,
+          chatSessionId,
+          "web-page",
+          liveUrl,
+          liveTitle,
+          screenshotBase64,
+          null
+        );
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "savvy",
+            text: isId
+              ? `👁️ **Panduan Visual (Multimodal Vision):**\n\n${visionData.reply}`
+              : `👁️ **Visual Guidance (Multimodal Vision):**\n\n${visionData.reply}`,
+            badge: "Savvy.AI",
+            timestamp: Date.now(),
+          },
+        ]);
+        return;
+      } catch (l4Err) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: "savvy",
+            text: isId
+              ? `Elemen **"${targetQuery}"** tidak ditemukan di area tampilan saat ini. Coba scroll ke bagian lain atau gunakan kata kunci alternatif.`
+              : `Element **"${targetQuery}"** was not found in the current view. Please try scrolling or using an alternative keyword.`,
+            badge: "Savvy.AI",
+            timestamp: Date.now(),
+          },
+        ]);
+        return;
+      }
+    }
+
+    // 1b. Accessibility Agentic Fast-Path Intent Trigger
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+      try {
+        const a11yData = await new Promise<Record<string, any>>((resolve) => {
+          chrome.storage.local.get(["savvy_a11y_levels"], (res) => resolve(res || {}));
+        });
+        const currentLevels: Record<string, number> = a11yData?.savvy_a11y_levels || {};
+        const a11yResult = matchA11yFastPath(text, currentLevels);
+        if (a11yResult) {
+          // Apply changes to web page
+          A11Y_TOOLS.forEach((tool) => {
+            const lvl = a11yResult.newLevels[tool.id] || 0;
+            const val = tool.options[lvl] || tool.options[0];
+            sendTabMessage({
+              type: "SET_A11Y_FEATURE",
+              feature: tool.id,
+              value: val,
+              level: lvl,
+              enabled: lvl > 0,
+            });
+          });
+          // Persist settings
+          chrome.storage.local.set({
+            savvy_a11y_levels: a11yResult.newLevels,
+            savvy_a11y_profile: a11yResult.profile || null,
+          });
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              sender: "savvy",
+              text: `${a11yResult.message}`,
+              actionButtons: [
+                {
+                  label: isId ? "👓 Buka Accessibility HUB" : "👓 Open Accessibility HUB",
+                  action: () => onOpenAccessibilityHub(),
+                  variant: "primary",
+                },
+              ],
+              timestamp: Date.now(),
+            },
+          ]);
+          return;
+        }
+      } catch (a11yErr) {
+        console.warn("[A11y Chat Intent Error]", a11yErr);
+      }
     }
 
     // 2. Live Hit to Cloud API (https://savvy-companion.vercel.app/api/chat)
     try {
       let activeDomain = "web-page";
-      if (currentUrl) {
+      if (liveUrl) {
         try {
-          activeDomain = new URL(currentUrl).hostname;
+          activeDomain = new URL(liveUrl).hostname;
         } catch (_) {
-          activeDomain = currentUrl;
+          activeDomain = liveUrl;
         }
       }
       const data = await sendChatMessage(
         text,
         chatSessionId,
         activeDomain,
-        currentUrl,
-        currentTitle,
+        liveUrl,
+        liveTitle,
         attachedImageBase64,
         attachedMeta
       );
-      if (data.sessionId) setChatSessionId(data.sessionId);
+      let finalReply = data.reply || "";
+      let badgeLabel = "Savvy.AI";
+
+      // ======================================================================
+      // MULTI-TURN AGENTIC TOOL CALLING: Model requested 'capture_current_screen'
+      // ======================================================================
+      if (data.requiresAction && data.toolCall?.name === "capture_current_screen") {
+        agentLog.planner(`🤖 [Agentic Loop] Executing tool '${data.toolCall.name}' requested by Muse Spark Open...`, {
+          reason: data.toolCall.arguments?.reason,
+        });
+
+        // 1. Ambil screenshot visible tab pengguna secara otomatis
+        const captureRes = await new Promise<any>((resolve) => {
+          if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+            chrome.runtime.sendMessage({ type: "CAPTURE_VISIBLE_TAB" }, (resp) => resolve(resp));
+          } else {
+            resolve({ success: false });
+          }
+        });
+
+        const screenDataUrl = captureRes?.success && captureRes.dataUrl ? captureRes.dataUrl : null;
+        agentLog.action(
+          `📸 [Agentic Loop] Captured visible tab (${screenDataUrl ? Math.round(screenDataUrl.length / 1024) + " KB" : "failed"}). Dispatching Turn 2...`
+        );
+
+        // 2. Kirim Turn 2 ke backend dengan toolExecution dan gambar screenshot
+        const turn2Data = await sendChatMessage(
+          text,
+          data.sessionId || chatSessionId,
+          activeDomain,
+          liveUrl,
+          liveTitle,
+          screenDataUrl,
+          attachedMeta,
+          {
+            toolCallId: data.toolCall.id,
+            toolName: data.toolCall.name,
+            toolArgs: data.toolCall.arguments,
+            toolResult: { success: !!screenDataUrl },
+          }
+        );
+
+        if (turn2Data.sessionId) setChatSessionId(turn2Data.sessionId);
+        finalReply = turn2Data.reply || (isId ? "Maaf, saya tidak dapat mengamati tampilan layar saat ini." : "Could not observe current screen view.");
+        badgeLabel = isId ? "Savvy.AI • Vision Agent 📸" : "Savvy.AI • Vision Agent 📸";
+      }
 
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           sender: "savvy",
-          text: data.reply,
-          badge: attachedImageBase64 ? "Meta Muse Spark • Vision Snip" : "Meta Muse Spark • Cloud",
+          text: finalReply,
+          badge: badgeLabel,
           timestamp: Date.now(),
         },
       ]);
+
+      if (shouldSpeakOutput && finalReply) {
+        speakText(finalReply);
+      }
     } catch (apiErr) {
       // Fallback if cloud server is unavailable or offline
       let domainContext = "portal resmi";
@@ -395,18 +773,24 @@ export function AiAssistantTab({
         if (currentUrl) domainContext = new URL(currentUrl).hostname;
       } catch (_) {}
 
+      const fallbackReply = isId
+        ? `Berdasarkan panduan pada ${domainContext}: Pastikan data yang dimasukkan sesuai dokumen resmi dan format yang ditentukan. Bila ada istilah yang meragukan, gunakan fitur 'Explain This' (Lightshot snip) untuk memotong bagian yang membingungkan.`
+        : `Per official guidance for ${domainContext}: Ensure entered information matches your documents. If any clause is unclear, use 'Explain This' (Lightshot snip) to highlight any confusing text.`;
+
       setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           sender: "savvy",
-          text: isId
-            ? `Berdasarkan panduan pada ${domainContext}: Pastikan data yang dimasukkan sesuai dokumen resmi dan format yang ditentukan. Bila ada istilah yang meragukan, gunakan fitur 'Explain This' (Lightshot snip) untuk memotong bagian yang membingungkan.`
-            : `Per official guidance for ${domainContext}: Ensure entered information matches your documents. If any clause is unclear, use 'Explain This' (Lightshot snip) to highlight any confusing text.`,
+          text: fallbackReply,
           badge: isId ? `Resmi • ${domainContext}` : `Official • ${domainContext}`,
           timestamp: Date.now(),
         },
       ]);
+
+      if (shouldSpeakOutput) {
+        speakText(fallbackReply);
+      }
     }
   };
 
@@ -591,11 +975,17 @@ export function AiAssistantTab({
     sendTabMessage({ type: "START_SNIP_SELECTION" });
   };
 
-  // Quick Action 2: Show Me (Spotlight beacon on input & open Guide)
+  // Quick Action 2: Show Me (Pre-fill prompt input & focus)
   const triggerShowMe = () => {
-    agentLog.planner("Triggered starter: 'Show Me' -> Navigating beacon spotlight to active field & opening Guide.");
-    sendTabMessage({ type: "SHOW_FIELD_SPOTLIGHT" });
-    setIsGuideMode(true);
+    agentLog.planner("Triggered starter: 'Show Me' -> Pre-filling prompt input with 'Show me: '");
+    setInputText("Show me: ");
+    setTimeout(() => {
+      if (chatInputRef.current) {
+        chatInputRef.current.focus();
+        const len = "Show me: ".length;
+        chatInputRef.current.setSelectionRange(len, len);
+      }
+    }, 50);
   };
 
   // Quick Action 3: AutoFill (Switch to Auto Fill tab)
@@ -610,77 +1000,196 @@ export function AiAssistantTab({
     onNavigateTab("audit");
   };
 
-  // Push to talk voice handlers
+  // Push to talk voice handlers (User speaks -> transcribes into chat message, AI Output -> Text Only)
   const handlePttMouseDown = () => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert(isId ? "Browser Anda belum mendukung Web Speech Recognition." : "Your browser does not support Web Speech Recognition.");
+      return;
+    }
+
     setIsPttPressed(true);
     setVoiceStatus("listening");
-    agentLog.voice("🎙️ PTT button held -> Listening...");
+    pttTranscriptRef.current = "";
+    agentLog.voice("🎙️ PTT button held -> Listening and transcribing speech...");
+
+    try {
+      const rec = new SpeechRecognition();
+      rec.lang = isId ? "id-ID" : "en-US";
+      rec.continuous = true;
+      rec.interimResults = true;
+
+      rec.onresult = (event: any) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript.trim()) {
+          pttTranscriptRef.current = transcript.trim();
+          setInputText(transcript.trim());
+        }
+      };
+
+      rec.onerror = (err: any) => {
+        console.warn("[PTT Recognition Error]", err);
+        if (err.error === "not-allowed") {
+          setMicPermissionNeeded(true);
+          openPermissionTab();
+        }
+      };
+
+      rec.start();
+      recognitionRef.current = rec;
+    } catch (e) {
+      console.warn("[PTT Start Error]", e);
+    }
   };
 
   const handlePttMouseUp = async () => {
     if (!isPttPressed) return;
     setIsPttPressed(false);
     setVoiceStatus("thinking");
-    agentLog.voice("🎙️ PTT button released -> Processing speech transcription...");
+    agentLog.voice("🎙️ PTT button released -> Finalizing speech transcription...");
 
     try {
-      const mockAudioBase64 = "UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
-      const res = await transcribeVoiceAudio(mockAudioBase64, language === "en" ? "Transcribe speech" : "Transkripsikan ucapan");
-      const transcriptionText = res.text || "";
-      agentLog.voice(`🗣️ Transcribed voice text: "${transcriptionText}"`);
-
-      setVoiceStatus("speaking");
-      await handleSendMessage(transcriptionText || (isId ? "Bagaimana cara pengisian formulir ini?" : "How to fill this form?"));
-    } catch (err: any) {
-      if (err.message?.includes("Permission dismissed") || err.name === "NotAllowedError") {
-        setMicPermissionNeeded(true);
-        openPermissionTab();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
       }
-      setVoiceStatus("speaking");
-      await handleSendMessage(isId ? "Bagaimana cara pengisian formulir ini?" : "How to fill this form?");
-    } finally {
+    } catch (_) {}
+
+    const textFromSpeech = pttTranscriptRef.current.trim();
+    if (textFromSpeech) {
+      agentLog.voice(`🗣️ [PTT Transcribed] "${textFromSpeech}" (Output: Text Only)`);
+      // PTT output is text only -> shouldSpeakOutput = false
+      await handleSendMessage(textFromSpeech, null, null, false);
+    } else {
       setVoiceStatus("idle");
     }
   };
 
-  // Live talk toggle
+  // Live talk toggle (Continuous hands-free conversation with SpeechSynthesis audio output)
   const handleVadToggle = async () => {
-    if (voiceStatus === "idle") {
-      agentLog.voice("🎙️ Live Talk activated.");
+    if (!isLiveTalkActive) {
+      agentLog.voice("🎙️ Live Talk activated -> Two-way hands-free conversation with Web Speech TTS.");
+      setIsLiveTalkActive(true);
+      isLiveTalkActiveRef.current = true;
       setVoiceStatus("listening");
-      try {
-        if (!vadDetectorRef.current) {
-          vadDetectorRef.current = new SimpleVadDetector();
-        }
-        await vadDetectorRef.current.start({
-          onSpeechEnd: () => {
-            setVoiceStatus("speaking");
-            handleSendMessage(isId ? "Tolong jelaskan aturan kolom ini" : "Explain rules for this field");
-            setTimeout(() => setVoiceStatus("listening"), 3000);
-          },
-          onVolumeChange: (vol: number) => setLiveVolume(vol),
-          onError: (err: any) => {
-            agentLog.voice("⚠️ Live Talk mic permission error. Opening permission tab...", err);
-            setMicPermissionNeeded(true);
-            setVoiceStatus("idle");
-            openPermissionTab();
-          },
-        });
-      } catch (e: any) {
-        agentLog.voice("⚠️ Live Talk error. Opening permission tab...", e);
-        setMicPermissionNeeded(true);
+
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert(isId ? "Browser Anda belum mendukung Web Speech Recognition." : "Your browser does not support Web Speech Recognition.");
         setVoiceStatus("idle");
-        openPermissionTab();
+        setIsLiveTalkActive(false);
+        isLiveTalkActiveRef.current = false;
+        return;
+      }
+
+      try {
+        const rec = new SpeechRecognition();
+        rec.lang = isId ? "id-ID" : "en-US";
+        rec.continuous = true;
+        rec.interimResults = true;
+
+        let liveSpeechBuffer = "";
+
+        rec.onresult = (event: any) => {
+          let interim = "";
+          let final = "";
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              final += event.results[i][0].transcript;
+            } else {
+              interim += event.results[i][0].transcript;
+            }
+          }
+
+          if (interim) {
+            setInputText(interim);
+          }
+
+          if (final.trim()) {
+            liveSpeechBuffer = final.trim();
+            setInputText(liveSpeechBuffer);
+            agentLog.voice(`🗣️ [Live Talk Transcribed] "${liveSpeechBuffer}" -> Querying AI with TTS audio output`);
+            rec.stop(); // Stop listening while AI answers & speaks
+            setVoiceStatus("thinking");
+
+            // Live Talk output: Spoken via Web Speech API (shouldSpeakOutput: true)
+            handleSendMessage(liveSpeechBuffer, null, null, true).finally(() => {
+              if (isLiveTalkActiveRef.current) {
+                setTimeout(() => {
+                  if (isLiveTalkActiveRef.current) {
+                    try {
+                      rec.start();
+                      setVoiceStatus("listening");
+                    } catch (_) {}
+                  }
+                }, 500);
+              }
+            });
+          }
+        };
+
+        rec.onerror = (err: any) => {
+          console.warn("[Live Talk Error]", err);
+          if (err.error === "not-allowed") {
+            setMicPermissionNeeded(true);
+            openPermissionTab();
+            setVoiceStatus("idle");
+            setIsLiveTalkActive(false);
+            isLiveTalkActiveRef.current = false;
+          }
+        };
+
+        rec.onend = () => {
+          if (isLiveTalkActiveRef.current && voiceStatus !== "speaking" && voiceStatus !== "thinking") {
+            try {
+              rec.start();
+            } catch (_) {}
+          }
+        };
+
+        rec.start();
+        recognitionRef.current = rec;
+      } catch (e) {
+        console.warn("[Live Talk Start Error]", e);
+        setVoiceStatus("idle");
+        setIsLiveTalkActive(false);
+        isLiveTalkActiveRef.current = false;
       }
     } else {
       agentLog.voice("🎙️ Live Talk stopped.");
-      vadDetectorRef.current?.stop();
+      isLiveTalkActiveRef.current = false;
+      setIsLiveTalkActive(false);
+      try {
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        }
+      } catch (_) {}
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
       setVoiceStatus("idle");
       setLiveVolume(0);
     }
   };
 
   const handleNewConversation = () => {
+    isLiveTalkActiveRef.current = false;
+    setIsLiveTalkActive(false);
+    try {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+    } catch (_) {}
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
     setMessages([]);
     setInputText("");
     setPiiWarning(null);
@@ -787,211 +1296,187 @@ export function AiAssistantTab({
         {/* ==================================================================== */}
         {/* 2. ON BOARDING BANNER CARD (Only shown when not analyzing)           */}
         {/* ==================================================================== */}
+        {/* ==================================================================== */}
+        {/* UNIFIED ONBOARDING, FORM GUIDANCE & QUICK TOOLS CARD                 */}
+        {/* ==================================================================== */}
         {!isAnalyzing && (
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3 text-left">
-            {!isFormAnalyzed ? (
-              <>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-savvy-soft-blue border border-savvy-blue/30 flex items-center justify-center text-savvy-blue shrink-0">
-                    <ScanLine className="w-5 h-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-savvy-blue">
-                      On Boarding
-                    </div>
-                    <h3 className="font-extrabold text-sm text-slate-900 leading-tight mt-0.5">
-                      {isId ? "Belum yakin cara mengisi formulir ini?" : "Not sure what to fill in?"}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      {isId
-                        ? "Savvy.AI akan memindai halaman ini dan membimbingmu kolom demi kolom sesuai Juknis resmi."
-                        : "Savvy.AI reads this page and walks you through every field, one by one according to official guidelines."}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleAnalyzeThisForm}
-                  className="w-full py-3 px-4 rounded-xl bg-savvy-gradient text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-savvy-blue/25 hover:opacity-95 transition-all cursor-pointer"
-                >
-                  <Search className="w-4 h-4" />
-                  <span>Analyze This Form</span>
-                </button>
-              </>
-            ) : (
-              /* Post-Analysis Card with Form Summary & Big Full-Width Buttons */
-              <div className="space-y-3 text-left">
-                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-savvy-blue bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
-                      Form Analyzed & Ready
-                    </span>
-                    <h3 className="font-extrabold text-sm text-slate-900 mt-1.5 leading-tight">
-                      {scannedSummary?.title || "Pendaftaran Beasiswa LPDP 2026"}
-                    </h3>
-                    <div className="text-[11px] text-slate-500 font-medium">
-                      {scannedSummary?.institution || "Kementerian Keuangan RI"}
-                    </div>
-                  </div>
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400/50 shrink-0 mt-1" />
-                </div>
-
-                {/* Form Details */}
-                <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-200/80 space-y-2 text-xs">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Target Pengajuan:
-                    </span>
-                    <span className="font-bold text-slate-800 text-xs mt-0.5 block">
-                      {scannedSummary?.targetOutcome || "Pendaftaran Beasiswa LPDP Tahap 1 2026"}
-                    </span>
-                  </div>
-
-                  <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Panduan Resmi:
-                      </span>
-                      <span className="text-savvy-blue font-bold text-xs flex items-center gap-1 mt-0.5">
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>Ditemukan Panduan Resmi ({scannedSummary?.officialRef || "Juknis LPDP 2026"})</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-1.5 border-t border-slate-200/60">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Total Isian Pertanyaan yang harus diisi:
-                    </span>
-                    <span className="font-extrabold text-emerald-700 text-xs mt-0.5 block">
-                      {scannedSummary?.fieldCount || 14} Kolom
-                    </span>
-                  </div>
-                </div>
-
-                {/* Dua Tombol Bawah Besar dan Full */}
-                <div className="space-y-2 pt-1">
-                  <button
-                    onClick={() => {
-                      agentLog.planner("Navigating to: Guide Field by Field");
-                      sendTabMessage({ type: "NAVIGATE_TO_FIELD", fieldIndex: 0 });
-                      setIsGuideMode(true);
-                    }}
-                    className="w-full py-3.5 px-4 rounded-xl bg-savvy-gradient text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-savvy-blue/25 hover:opacity-95 transition-all cursor-pointer"
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    <span>Guide Field by Field</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      agentLog.planner("Navigating to: Fill with 1 Click-Autofill");
-                      onNavigateTab("vault");
-                    }}
-                    className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-purple-600/25 hover:opacity-95 transition-all cursor-pointer"
-                  >
-                    <Zap className="w-4 h-4" />
-                    <span>Fill with 1 Click-Autofill</span>
-                  </button>
-                </div>
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-4 text-left">
+            {/* 1. Header Greeting & Logo */}
+            <div className="flex items-start gap-3 pb-3 border-b border-slate-100">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-600 to-blue-700 p-2.5 flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                <img src="logo.png" alt="Savvy AI" className="w-6 h-6 object-contain drop-shadow-sm brightness-110" />
               </div>
-            )}
+              <div className="min-w-0 flex-1">
+                <h4 className="font-black text-sm text-slate-900 leading-tight">
+                  Halo, Saya Savvy AI
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Asisten cerdas pendamping Browsermu, ketik pertanyaan dibawah atau pilih bantuan cepat.
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Pandu Saya Isi Formulir Ini (Analyze Section) */}
+            <div className="bg-slate-50/90 border border-slate-200/80 rounded-xl p-3.5 space-y-2.5">
+              {!isFormAnalyzed ? (
+                <>
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-savvy-soft-blue flex items-center justify-center text-savvy-blue shrink-0 mt-0.5">
+                      <ScanLine className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h5 className="font-extrabold text-xs text-slate-900 leading-tight">
+                        Pandu saya isi formulir ini
+                      </h5>
+                      <p className="text-[10.5px] text-slate-500 mt-0.5 leading-relaxed">
+                        Savvy akan memindai halaman ini dan membimbingmu untuk mengisi formulir ini.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleAnalyzeThisForm}
+                    className="w-full py-2.5 px-3 rounded-xl bg-savvy-gradient text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-savvy-blue/20 hover:opacity-95 transition-all cursor-pointer"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    <span>Analyze this Form</span>
+                  </button>
+                </>
+              ) : (
+                /* Post-Analysis Summary & Actions */
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-savvy-blue bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                        Form Analyzed & Ready
+                      </span>
+                      <h5 className="font-extrabold text-xs text-slate-900 mt-1 leading-tight">
+                        {scannedSummary?.title || "Pendaftaran Beasiswa LPDP 2026"}
+                      </h5>
+                      <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
+                        {scannedSummary?.fieldCount || 14} Kolom Pertanyaan Terdeteksi
+                      </div>
+                    </div>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400/50 shrink-0 mt-1" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      onClick={() => {
+                        agentLog.planner("Navigating to: Guide Field by Field");
+                        sendTabMessage({ type: "NAVIGATE_TO_FIELD", fieldIndex: 0 });
+                        setIsGuideMode(true);
+                      }}
+                      className="py-2 px-2.5 rounded-xl bg-savvy-gradient text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-95 transition-all cursor-pointer truncate"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">Guide Field by Field</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        agentLog.planner("Navigating to: Fill with 1 Click-Autofill");
+                        onNavigateTab("vault");
+                      }}
+                      className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-95 transition-all cursor-pointer truncate"
+                    >
+                      <Zap className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">1-Click Autofill</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Dua Tombol Fitur Utama: Explain This & Show Me */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={triggerExplainThis}
+                className="p-2.5 rounded-xl border border-slate-200 hover:border-savvy-purple/50 hover:bg-purple-50/40 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-savvy-purple flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Crop className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-extrabold text-slate-900 truncate">
+                    Explain This
+                  </div>
+                  <div className="text-[9px] text-slate-400 font-medium truncate">
+                    Lightshot Snip
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={triggerShowMe}
+                className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Eye className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11px] font-extrabold text-slate-900 truncate">
+                    Show Me
+                  </div>
+                  <div className="text-[9px] text-slate-400 font-medium truncate">
+                    Cari Tombol / Teks
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* 4. Bagian Alat Bantu (Accessibility Chips) */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                Alat Bantu
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  {
+                    label: "👁️ Teks Kekecilan",
+                    query: "tulisannya kekecilan tolong perbesar",
+                    title: "Perbesar ukuran teks halaman",
+                  },
+                  {
+                    label: "🌗 Layar Silau",
+                    query: "layarnya silau tolong mode gelap",
+                    title: "Aktifkan kontras tinggi / gelap",
+                  },
+                  {
+                    label: "🔊 Bacakan Halaman",
+                    query: "tolong bacakan halaman ini",
+                    title: "Bacakan teks halaman via TTS",
+                  },
+                  {
+                    label: "🧠 Susah Fokus",
+                    query: "susah fokus membaca tolong spotlight",
+                    title: "Aktifkan reading spotlight & jeda animasi",
+                  },
+                ].map((chip) => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => handleSendMessage(chip.query)}
+                    title={chip.title}
+                    className="text-[10.5px] font-medium whitespace-nowrap bg-slate-50 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition-all cursor-pointer select-none shadow-2xs"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+
+                {/* Accessibility Lainnya Button */}
+                <button
+                  type="button"
+                  onClick={onOpenAccessibilityHub}
+                  className="text-[10.5px] font-bold whitespace-nowrap bg-blue-50/80 hover:bg-blue-100 text-blue-700 hover:text-blue-800 px-2.5 py-1 rounded-full border border-blue-200 transition-all cursor-pointer select-none shadow-2xs flex items-center gap-1"
+                >
+                  <Accessibility className="w-3 h-3 text-blue-600" />
+                  <span>Accessibility Lainnya</span>
+                </button>
+              </div>
+            </div>
           </div>
         )}
-
-        {/* ==================================================================== */}
-        {/* 2. GREETING & 4 BANTUAN CEPAT CARD */}
-        {/* ==================================================================== */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs space-y-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-savvy-soft-blue flex items-center justify-center p-1.5 border border-savvy-blue/20 shrink-0">
-              <img src="logo.png" alt="Savvy" className="w-5 h-5 object-contain" />
-            </div>
-            <div>
-              <h4 className="font-black text-xs text-slate-900 leading-none">
-                Halo, Saya Savvy.AI
-              </h4>
-              <p className="text-[10.5px] text-slate-500 mt-1 leading-snug">
-                Asisten Cerdas pendamping Browsermu, Ketik Pertanyaan dibawah atau pilih bantuan cepat :
-              </p>
-            </div>
-          </div>
-
-          {/* 4 Bantuan Cepat Buttons */}
-          <div className="grid grid-cols-2 gap-2 pt-0.5">
-            {/* 1. Explain This */}
-            <button
-              onClick={triggerExplainThis}
-              className="p-2.5 rounded-xl border border-slate-200 hover:border-savvy-purple/50 hover:bg-purple-50/40 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
-            >
-              <div className="w-7 h-7 rounded-lg bg-purple-50 text-savvy-purple flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Crop className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                  Explain This
-                </div>
-                <div className="text-[9px] text-slate-400 font-medium truncate">
-                  Lightshot Snip
-                </div>
-              </div>
-            </button>
-
-            {/* 2. Show Me */}
-            <button
-              onClick={triggerShowMe}
-              className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
-            >
-              <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Eye className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                  Show Me
-                </div>
-                <div className="text-[9px] text-slate-400 font-medium truncate">
-                  Spotlight Field
-                </div>
-              </div>
-            </button>
-
-            {/* 3. Auto Fill */}
-            <button
-              onClick={triggerAutoFill}
-              className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
-            >
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Zap className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                  Auto Fill
-                </div>
-                <div className="text-[9px] text-slate-400 font-medium truncate">
-                  1-Click Vault
-                </div>
-              </div>
-            </button>
-
-            {/* 4. Form Audit */}
-            <button
-              onClick={triggerFormAudit}
-              className="p-2.5 rounded-xl border border-slate-200 hover:border-amber-400 hover:bg-amber-50/50 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
-            >
-              <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <ShieldCheck className="w-3.5 h-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                  Form Audit
-                </div>
-                <div className="text-[9px] text-slate-400 font-medium truncate">
-                  Pre-Submit Check
-                </div>
-              </div>
-            </button>
-          </div>
-        </div>
 
         {/* ==================================================================== */}
         {/* 3. CHAT THREAD MESSAGES (If any) */}
@@ -1095,12 +1580,22 @@ export function AiAssistantTab({
             <button
               onClick={() => {
                 setIsVoiceModalOpen(false);
-                if (voiceStatus !== "idle") {
-                  vadDetectorRef.current?.stop();
-                  setVoiceStatus("idle");
+                isLiveTalkActiveRef.current = false;
+                setIsLiveTalkActive(false);
+                try {
+                  if (recognitionRef.current) {
+                    recognitionRef.current.stop();
+                    recognitionRef.current = null;
+                  }
+                } catch (_) {}
+                if (typeof window !== "undefined" && "speechSynthesis" in window) {
+                  window.speechSynthesis.cancel();
                 }
+                vadDetectorRef.current?.stop();
+                setVoiceStatus("idle");
               }}
-              className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              title={isId ? "Tutup Voice Companion" : "Close Voice Companion"}
             >
               <X className="w-4 h-4" />
             </button>
@@ -1145,23 +1640,41 @@ export function AiAssistantTab({
             </button>
           </div>
 
-          {/* Mic Permission Banner */}
-          {micPermissionNeeded && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-xs text-amber-900 flex items-center justify-between gap-2 shadow-2xs text-left">
-              <div className="flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                <span className="text-[10.5px] leading-tight">
-                  {isId ? "Akses mikrofon ditolak Chrome di Side Panel." : "Microphone access dismissed."}
+          {/* Mic Permission Status Bar */}
+          <div className={`rounded-xl p-2.5 text-xs flex items-center justify-between gap-2 shadow-2xs text-left border transition-all ${
+            micPermissionState === "granted"
+              ? "bg-emerald-50/80 border-emerald-200/80 text-emerald-900"
+              : "bg-slate-50 border-slate-200/90 text-slate-800"
+          }`}>
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                micPermissionState === "granted"
+                  ? "bg-emerald-500 shadow-sm shadow-emerald-400"
+                  : "bg-amber-500"
+              }`} />
+              <span className="text-[11px] font-bold text-slate-700">
+                Izin Mikrofon:{" "}
+                <span className={`font-extrabold uppercase tracking-wide ${
+                  micPermissionState === "granted" ? "text-emerald-700" : "text-amber-600"
+                }`}>
+                  {micPermissionState === "granted" ? "Active" : "Tidak Aktif"}
                 </span>
-              </div>
+              </span>
+            </div>
+
+            {micPermissionState === "granted" ? (
+              <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-100/70 border border-emerald-300/50 px-2 py-0.5 rounded-md">
+                ✓ Ready
+              </span>
+            ) : (
               <button
                 onClick={openPermissionTab}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-2 py-0.5 rounded-lg text-[10px] shrink-0"
+                className="bg-savvy-gradient text-white font-extrabold px-3 py-1 rounded-lg text-[10.5px] hover:opacity-95 shadow-2xs cursor-pointer shrink-0"
               >
-                {isId ? "Izinkan" : "Grant"}
+                Izinkan
               </button>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Interactive Controls */}
           {voiceType === "ptt" ? (
@@ -1193,24 +1706,26 @@ export function AiAssistantTab({
               <button
                 onClick={handleVadToggle}
                 className={`w-full py-2.5 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  voiceStatus !== "idle"
+                  isLiveTalkActive
                     ? "bg-rose-50 text-rose-700 border border-rose-200"
                     : "bg-savvy-gradient text-white hover:opacity-95"
                 }`}
               >
-                <Radio className={`w-3.5 h-3.5 ${voiceStatus !== "idle" ? "animate-pulse text-rose-600" : ""}`} />
+                <Radio className={`w-3.5 h-3.5 ${isLiveTalkActive ? "animate-pulse text-rose-600" : ""}`} />
                 <span>
-                  {voiceStatus !== "idle"
+                  {isLiveTalkActive
                     ? isId ? "Hentikan Live Talk" : "Stop Live Talk"
                     : isId ? "Mulai Live Talk" : "Start Live Talk"}
                 </span>
               </button>
               <p className="text-[10px] font-semibold text-slate-500">
-                {voiceStatus === "listening"
-                  ? isId ? "Savvy sedang mendengarkan ucapan Anda..." : "Savvy is listening..."
-                  : voiceStatus === "speaking"
-                  ? isId ? "Savvy sedang menjawab..." : "Savvy is speaking..."
-                  : isId ? "Siap mendengarkan pertanyaan Anda" : "Ready to listen"}
+                {isLiveTalkActive
+                  ? voiceStatus === "speaking"
+                    ? isId ? "🔊 Savvy sedang menjawab dengan suara..." : "🔊 Savvy is speaking..."
+                    : voiceStatus === "thinking"
+                    ? isId ? "🧠 Memproses jawaban..." : "🧠 Thinking..."
+                    : isId ? "🎙️ Savvy siap mendengarkan ucapan Anda..." : "🎙️ Savvy is listening..."
+                  : isId ? "Klik untuk mengaktifkan dialog suara dua arah" : "Click to enable two-way voice chat"}
               </p>
             </div>
           )}
@@ -1218,65 +1733,81 @@ export function AiAssistantTab({
       )}
 
       {/* ==================================================================== */}
-      {/* 5. BOTTOM CHAT INPUT SECTION */}
+      {/* 5. BOTTOM CHAT INPUT SECTION (Hidden when Voice Companion is active) */}
       {/* ==================================================================== */}
-      <div className="p-3 bg-white border-t border-slate-200 space-y-2 shrink-0">
-        {/* PII Warning */}
-        {piiWarning && (
-          <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-left text-[10px] text-amber-900 flex items-start gap-1.5 leading-tight">
-            <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-            <span>{piiWarning}</span>
+      {!isVoiceModalOpen && (
+        <div className="p-3 bg-white border-t border-slate-200 space-y-2 shrink-0">
+          {/* PII Warning */}
+          {piiWarning && (
+            <div className="p-2 rounded-xl bg-amber-50 border border-amber-200 text-left text-[10px] text-amber-900 flex items-start gap-1.5 leading-tight">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+              <span>{piiWarning}</span>
+            </div>
+          )}
+
+          {/* Input Textarea Box (Reduced to 2 Rows) with Mic and Send Buttons */}
+          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl focus-within:border-savvy-blue focus-within:bg-white focus-within:shadow-sm transition-all p-2.5 shadow-2xs flex flex-col justify-between gap-1.5">
+            <textarea
+              ref={chatInputRef}
+              rows={2}
+              value={inputText}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              placeholder="Tanya Apapun, Atur Tampilan, atau 'Show me: ...'"
+              className="w-full bg-transparent px-1 py-0.5 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none font-sans leading-relaxed resize-none min-h-[48px]"
+            />
+
+            <div className="flex items-center justify-between pt-1 border-t border-slate-100/90">
+              <span className="text-[10px] text-slate-400 font-medium pl-1">
+                Enter ↵ untuk kirim, Shift+Enter untuk baris baru
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                {/* Tombol Mikrofon: Menampilkan Voice Companion */}
+                <button
+                  type="button"
+                  onClick={() => setIsVoiceModalOpen((prev) => !prev)}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                    isVoiceModalOpen
+                      ? "bg-purple-100 text-savvy-purple shadow-2xs"
+                      : "text-slate-500 hover:text-savvy-purple hover:bg-purple-50/80"
+                  }`}
+                  title="Voice Companion (PTT & Live Talk)"
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+
+                {/* Tombol Kirim */}
+                <button
+                  type="button"
+                  onClick={() => handleSendMessage()}
+                  disabled={!inputText.trim()}
+                  className="w-8 h-8 rounded-xl bg-savvy-blue hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-savvy-blue text-white flex items-center justify-center shrink-0 transition-all shadow-xs cursor-pointer"
+                  title="Kirim Pesan"
+                >
+                  <Send className="w-3.5 h-3.5 -mr-0.5" />
+                </button>
+              </div>
+            </div>
           </div>
-        )}
 
-        {/* Input Text Box with Mic and Send Buttons */}
-        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl focus-within:border-savvy-blue focus-within:bg-white transition-all p-1.5 gap-1.5">
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSendMessage();
-            }}
-            placeholder="Ask Savvy.AI about this page...."
-            className="w-full bg-transparent px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none font-sans"
-          />
-
-          {/* Tombol Mikrofon: Menampilkan Voice Companion */}
-          <button
-            onClick={() => setIsVoiceModalOpen((prev) => !prev)}
-            className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer ${
-              isVoiceModalOpen
-                ? "bg-purple-100 text-savvy-purple"
-                : "text-slate-500 hover:text-savvy-purple hover:bg-purple-50"
-            }`}
-            title="Voice Companion (PTT & Live Talk)"
-          >
-            <Mic className="w-4 h-4" />
-          </button>
-
-          {/* Tombol Kirim */}
-          <button
-            onClick={() => handleSendMessage()}
-            disabled={!inputText.trim()}
-            className="w-8 h-8 rounded-full bg-savvy-blue hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-savvy-blue text-white flex items-center justify-center shrink-0 transition-all shadow-xs cursor-pointer"
-            title="Kirim Pesan"
-          >
-            <Send className="w-3.5 h-3.5 -mr-0.5" />
-          </button>
+          {/* Start New Conversation */}
+          <div className="flex flex-col items-center pt-1">
+            <button
+              onClick={handleNewConversation}
+              className="text-[10px] font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1.5 py-1 px-3 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <RefreshCw className="w-3 h-3 text-slate-400" />
+              <span>Start New Conversation</span>
+            </button>
+          </div>
         </div>
-
-        {/* Start New Conversation */}
-        <div className="flex flex-col items-center pt-1">
-          <button
-            onClick={handleNewConversation}
-            className="text-[10px] font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1.5 py-1 px-3 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            <RefreshCw className="w-3 h-3 text-slate-400" />
-            <span>Start New Conversation</span>
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

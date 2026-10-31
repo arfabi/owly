@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     if (meta?.ogTitle && meta.ogTitle !== pageTitle) metaInfoLines.push(`- OpenGraph Title: "${meta.ogTitle}"`);
     if (meta?.ogDescription && meta.ogDescription !== meta.description) metaInfoLines.push(`- OpenGraph Deskripsi: "${meta.ogDescription}"`);
     if (meta?.lang) metaInfoLines.push(`- Bahasa Halaman: "${meta.lang}"`);
-    if (imageBase64) metaInfoLines.push(`- Lampiran Gambar: Tangkapan layar area visual snip (Lightshot crop) berhasil dilampirkan.`);
+    if (imageBase64) metaInfoLines.push(`- Lampiran Gambar: Tangkapan layar area visual berhasil dilampirkan.`);
 
     const systemPromptContent = `Kamu adalah Savvy AI — Smart Form & Public Service Web Companion yang ramah, solutif, empatik, dan cerdas.
 Konteks Halaman Pengguna Saat Ini:
@@ -157,11 +157,32 @@ ${pageTitle ? `- Judul Halaman: "${pageTitle}"` : ''}
 ${metaInfoLines.length > 0 ? metaInfoLines.join('\n') : ''}
 
 Pedoman Asisten:
-1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website, meta informasi, dan tangkapan layar area yang mereka tanyakan saat ini (baik berupa tabel, perbandingan data, instruksi formulir, diagram, teks regulasi, atau konten web lainnya).
-2. JANGAN mengasumsikan pengguna sedang mendaftar beasiswa KECUALI domain/halaman yang dibuka memang tentang beasiswa (${isScholarshipPortal ? 'aktif: portal beasiswa' : 'bukan portal beasiswa'}) atau pengguna sendiri yang spesifik bertanya tentang beasiswa!
-3. Jika pengguna membuka portal imigrasi/paspor, visa, OSS, perizinan, formulir pendaftaran kerja, atau website umum lainnya, jawablah secara tepat sasaran sesuai konteks topik tersebut.
-4. Jika ada informasi yang membutuhkan data identitas pribadi (seperti NIK, NPWP, atau nomor kartu), ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi (UU PDP).
-5. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
+1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website, meta informasi, dan tangkapan layar area yang mereka tanyakan saat ini (baik berupa tabel, perbandingan data, instruksi formulir, diagram, teks regulasi, foto/gambar, atau konten web lainnya).
+2. Jika pengguna bertanya tentang tampilan visual, gambar, foto, warna pakaian/baju/objek di layar, tombol, atau tata letak yang belum Anda lihat gambarnya, Anda memiliki TOOL 'capture_current_screen' untuk meminta tangkapan layar otomatis.
+3. JANGAN mengasumsikan pengguna sedang mendaftar beasiswa KECUALI domain/halaman yang dibuka memang tentang beasiswa (${isScholarshipPortal ? 'aktif: portal beasiswa' : 'bukan portal beasiswa'}) atau pengguna sendiri yang spesifik bertanya tentang beasiswa!
+4. Jika pengguna membuka portal imigrasi/paspor, visa, OSS, perizinan, formulir pendaftaran kerja, atau website umum lainnya, jawablah secara tepat sasaran sesuai konteks topik tersebut.
+5. Jika ada informasi yang membutuhkan data identitas pribadi (seperti NIK, NPWP, atau nomor kartu), ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi (UU PDP).
+6. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
+
+    const AVAILABLE_TOOLS = [
+      {
+        type: "function",
+        function: {
+          name: "capture_current_screen",
+          description: "Ambil tangkapan layar (screenshot) halaman web aktif pengguna saat ini. Panggil tool ini JIKA pengguna menanyakan tentang foto, gambar, warna baju/pakaian, objek visual, diagram, tombol/elemen tertentu di layar, atau apa pun yang membutuhkan pengamatan visual langsung pada layar pengguna.",
+          parameters: {
+            type: "object",
+            properties: {
+              reason: {
+                type: "string",
+                description: "Alasan mengapa screenshot layar pengguna dibutuhkan untuk menjawab pertanyaan."
+              }
+            },
+            required: ["reason"]
+          }
+        }
+      }
+    ];
 
     const messagesPayload: any[] = [
       {
@@ -183,8 +204,92 @@ Pedoman Asisten:
       messagesPayload.push(...historyMessages);
     }
 
-    // Tambahkan pesan user saat ini (Multimodal jika ada imageBase64)
-    if (imageBase64) {
+    // 5. Eksekusi Model — Cek apakah ini Turn 2 (Tool Execution Return) atau Turn 1
+    const { toolExecution = null } = body;
+    let response: Response;
+
+    if (toolExecution && imageBase64) {
+      // ======================================================================
+      // TURN 2: Tool Execution Return (Client completed capture_current_screen)
+      // ======================================================================
+      agent_logs.push({
+        domain: 'ACTION',
+        message: `Agentic Tool Loop [Turn 2]: Received '${toolExecution.toolName}' result from extension client.`,
+        data: { toolCallId: toolExecution.toolCallId }
+      });
+
+      // Tambahkan history pesan dari Turn 1
+      messagesPayload.push({
+        role: 'user',
+        content: cleanText
+      });
+
+      // Asisten memanggil tool
+      messagesPayload.push({
+        role: 'assistant',
+        content: null,
+        tool_calls: [
+          {
+            id: toolExecution.toolCallId || 'call_capture_screen',
+            type: 'function',
+            function: {
+              name: toolExecution.toolName || 'capture_current_screen',
+              arguments: typeof toolExecution.toolArgs === 'string'
+                ? toolExecution.toolArgs
+                : JSON.stringify(toolExecution.toolArgs || { reason: 'Observasi visual layar' })
+            }
+          }
+        ]
+      });
+
+      // Respons dari tool
+      messagesPayload.push({
+        role: 'tool',
+        tool_call_id: toolExecution.toolCallId || 'call_capture_screen',
+        content: 'Tangkapan layar halaman aktif berhasil diambil dan dilampirkan oleh Savvy Agent.'
+      });
+
+      // Pesan multimodal dengan gambar screenshot yang diminta
+      messagesPayload.push({
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `Berikut adalah tangkapan layar (screenshot) halaman saat ini yang diminta. Silakan amati dan jawab pertanyaan saya secara akurat: "${cleanText}"`
+          },
+          {
+            type: 'image_url',
+            image_url: {
+              url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
+            }
+          }
+        ]
+      });
+
+      agent_logs.push({
+        domain: 'PERCEPTION',
+        message: 'Multimodal Vision: Meta Muse Spark Open analyzing active screen capture.'
+      });
+
+      response = await fetch(`${basetenBaseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${basetenApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: messagesPayload,
+          reasoning_effort: 'medium',
+          temperature: 0.3,
+          max_tokens: 800
+        })
+      });
+
+    } else if (imageBase64) {
+      // ======================================================================
+      // Visual Snip / Lightshot crop terlampir langsung dari pengguna
+      // ======================================================================
       agent_logs.push({
         domain: 'PERCEPTION',
         message: 'Multimodal Vision: Attached Lightshot visual snip for Muse Spark reasoning.'
@@ -201,33 +306,7 @@ Pedoman Asisten:
           }
         ]
       });
-    } else {
-      messagesPayload.push({ role: 'user', content: cleanText });
-    }
 
-    // 5. Panggil Baseten Inference API
-    let response = await fetch(`${basetenBaseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${basetenApiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: messagesPayload,
-        reasoning_effort: 'medium',
-        temperature: 0.3,
-        max_tokens: 800
-      })
-    });
-
-    // Fallback: Jika endpoint model Baseten text-only, kirim ulang tanpa image_url array
-    if (!response.ok && imageBase64) {
-      console.warn('Multimodal request failed, falling back to text prompt with metadata context');
-      messagesPayload[messagesPayload.length - 1] = {
-        role: 'user',
-        content: `[Tangkapan Layar Crop Area Terlampir]\n${cleanText}`
-      };
       response = await fetch(`${basetenBaseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -242,6 +321,58 @@ Pedoman Asisten:
           max_tokens: 800
         })
       });
+
+    } else {
+      // ======================================================================
+      // TURN 1: Text Prompt with Tool Calling capability (OpenAI-compatible)
+      // ======================================================================
+      messagesPayload.push({ role: 'user', content: cleanText });
+
+      agent_logs.push({
+        domain: 'PLANNER',
+        message: 'Agentic Tool Loop [Turn 1]: Providing tools [capture_current_screen] to Meta Muse Spark Open.'
+      });
+
+      try {
+        response = await fetch(`${basetenBaseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${basetenApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: messagesPayload,
+            tools: AVAILABLE_TOOLS,
+            tool_choice: 'auto',
+            reasoning_effort: 'medium',
+            temperature: 0.2,
+            max_tokens: 800
+          })
+        });
+
+        // Fallback jika provider tidak mendukung parameter tools
+        if (!response.ok && response.status === 400) {
+          console.warn('[Tool Calling Fallback] Retrying without tools parameter');
+          response = await fetch(`${basetenBaseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${basetenApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: messagesPayload,
+              reasoning_effort: 'medium',
+              temperature: 0.3,
+              max_tokens: 800
+            })
+          });
+        }
+      } catch (err: any) {
+        console.error('Baseten call error:', err);
+        throw err;
+      }
     }
 
     if (!response.ok) {
@@ -251,7 +382,45 @@ Pedoman Asisten:
     }
 
     const completion = await response.json();
-    const reply = completion.choices?.[0]?.message?.content || 'Maaf, saya tidak dapat memproses jawaban saat ini.';
+    const choice = completion.choices?.[0];
+    const toolCalls = choice?.message?.tool_calls;
+
+    // Cek apakah Muse Spark Open memutuskan untuk memanggil tool!
+    if (toolCalls && toolCalls.length > 0) {
+      const primaryTool = toolCalls[0];
+      let parsedArgs: any = {};
+      try {
+        parsedArgs = typeof primaryTool.function?.arguments === 'string'
+          ? JSON.parse(primaryTool.function.arguments)
+          : (primaryTool.function?.arguments || {});
+      } catch (_) {
+        parsedArgs = { raw: primaryTool.function?.arguments };
+      }
+
+      const toolName = primaryTool.function?.name || 'capture_current_screen';
+      agent_logs.push({
+        domain: 'PLANNER',
+        message: `Agentic Decision: Muse Spark opted to invoke tool '${toolName}' (${parsedArgs.reason || 'Visual context needed'})`,
+        data: {
+          toolCallId: primaryTool.id,
+          name: toolName,
+          arguments: parsedArgs
+        }
+      });
+
+      return NextResponse.json({
+        requiresAction: true,
+        toolCall: {
+          id: primaryTool.id || `call_${Date.now()}`,
+          name: toolName,
+          arguments: parsedArgs
+        },
+        sessionId: activeSessionId,
+        agent_logs
+      });
+    }
+
+    const reply = choice?.message?.content || 'Maaf, saya tidak dapat memproses jawaban saat ini.';
     const latency = Date.now() - startTime;
 
     agent_logs.push({

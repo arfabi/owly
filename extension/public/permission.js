@@ -11,6 +11,10 @@ async function requestMic() {
     // Stop the tracks immediately after permission is granted
     stream.getTracks().forEach(track => track.stop());
 
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ savvy_mic_granted: true });
+    }
+
     statusBox.className = 'status-box status-success';
     statusBox.style.display = 'block';
     statusBox.innerHTML = '✅ <strong>Izin mikrofon berhasil diberikan!</strong><br><span style="font-size:12px; font-weight:400; color:#047857">Tab ini akan otomatis ditutup dalam 2 detik. Silakan kembali ke Side Panel Savvy.AI.</span>';

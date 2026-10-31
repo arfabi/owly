@@ -14,6 +14,7 @@ import {
   X,
   Compass,
   BookOpen,
+  Sparkles,
 } from "lucide-react";
 
 import { agentLog, logAgent, AgentDomain } from "./lib/agentLogger";
@@ -85,19 +86,73 @@ export function App() {
     }
   }, []);
 
-  // Sync real active tab URL & Title in Chrome Extension context
+  // Sync real active tab URL & Title in Chrome Extension context dynamically
   useEffect(() => {
-    if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.query) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-        if (tab?.url) setActiveTabUrl(tab.url);
-        if (tab?.title) setActiveTabTitle(tab.title);
+    if (typeof chrome === "undefined" || !chrome.tabs) return;
+
+    const syncCurrentTab = () => {
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+        let tab = tabs?.[0];
+        if (!tab || !tab.url) {
+          chrome.tabs.query({ active: true, currentWindow: true }, (tabs2) => {
+            tab = tabs2?.[0];
+            if (tab) {
+              if (tab.url) setActiveTabUrl(tab.url);
+              if (tab.title) setActiveTabTitle(tab.title || "");
+            }
+          });
+          return;
+        }
+        if (tab.url) setActiveTabUrl(tab.url);
+        if (tab.title) setActiveTabTitle(tab.title || "");
       });
+    };
+
+    // Initial sync
+    syncCurrentTab();
+
+    // Listener saat pengguna berpindah tab (tab switch)
+    const handleActivated = (activeInfo: { tabId: number; windowId: number }) => {
+      chrome.tabs.get(activeInfo.tabId, (tab) => {
+        if (tab) {
+          if (tab.url) setActiveTabUrl(tab.url);
+          if (tab.title) setActiveTabTitle(tab.title || "");
+        }
+      });
+    };
+
+    // Listener saat tab aktif berganti URL / loading selesai
+    const handleUpdated = (_tabId: number, changeInfo: any, tab: chrome.tabs.Tab) => {
+      if (tab.active && (changeInfo.url || changeInfo.title || changeInfo.status === "complete")) {
+        if (tab.url) setActiveTabUrl(tab.url);
+        if (tab.title) setActiveTabTitle(tab.title || "");
+      }
+    };
+
+    // Listener saat window focus berganti
+    const handleWindowFocus = (windowId: number) => {
+      if (typeof chrome !== "undefined" && chrome.windows && windowId !== chrome.windows.WINDOW_ID_NONE) {
+        syncCurrentTab();
+      }
+    };
+
+    chrome.tabs.onActivated.addListener(handleActivated);
+    chrome.tabs.onUpdated.addListener(handleUpdated);
+    if (chrome.windows?.onFocusChanged) {
+      chrome.windows.onFocusChanged.addListener(handleWindowFocus);
     }
+
+    return () => {
+      chrome.tabs.onActivated.removeListener(handleActivated);
+      chrome.tabs.onUpdated.removeListener(handleUpdated);
+      if (chrome.windows?.onFocusChanged) {
+        chrome.windows.onFocusChanged.removeListener(handleWindowFocus);
+      }
+    };
   }, []);
 
   const tabs = [
-    { id: "guide", label: "Guide", icon: BookOpen },
+    { id: "guide", label: "Ask Savvy", icon: Sparkles },
     { id: "vault", label: "Auto Fill", icon: Zap },
     { id: "audit", label: "Audit Form", icon: ShieldCheck },
   ] as const;

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import {
   RotateCcw,
-  Sparkles,
   Accessibility,
+  Undo2,
 } from "lucide-react";
 
 import { agentLog } from "../lib/agentLogger";
 import { sendTabMessage } from "../lib/tabMessenger";
+import { A11Y_PROFILES } from "../lib/a11y/registry";
 
 interface ToolItem {
   id: string;
@@ -40,17 +41,25 @@ export function AccessibilityHubTab() {
 
   const [activeProfile, setActiveProfile] = useState<string | null>(null);
 
+  // Undo History Stack (up to 20 snapshots)
+  const [undoStack, setUndoStack] = useState<
+    Array<{ levels: Record<string, number>; profile: string | null }>
+  >([]);
+
   // Restore persistent settings on mount
   useEffect(() => {
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.get(["savvy_a11y_levels", "savvy_a11y_profile"], (res: Record<string, any>) => {
-        if (res?.savvy_a11y_levels && typeof res.savvy_a11y_levels === "object") {
-          setToolLevels(res.savvy_a11y_levels as Record<string, number>);
+      chrome.storage.local.get(
+        ["savvy_a11y_levels", "savvy_a11y_profile"],
+        (res: Record<string, any>) => {
+          if (res?.savvy_a11y_levels && typeof res.savvy_a11y_levels === "object") {
+            setToolLevels(res.savvy_a11y_levels as Record<string, number>);
+          }
+          if (res?.savvy_a11y_profile) {
+            setActiveProfile(String(res.savvy_a11y_profile));
+          }
         }
-        if (res?.savvy_a11y_profile) {
-          setActiveProfile(String(res.savvy_a11y_profile));
-        }
-      });
+      );
     }
   }, []);
 
@@ -59,33 +68,25 @@ export function AccessibilityHubTab() {
     {
       id: "spotlight",
       title: "Reading Spotlight",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">🔦</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">🔦</span>,
       options: ["Off", "On"],
     },
     {
       id: "tts",
       title: "Text to Speech (TTS)",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">🔊</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">🔊</span>,
       options: ["Off", "On"],
     },
     {
       id: "contrast",
       title: "Contrast Mode",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">🌗</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">🌗</span>,
       options: ["Normal", "High", "Invert", "Monochrome"],
     },
     {
       id: "links",
       title: "Highlight Links",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">🔗</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">🔗</span>,
       options: ["Off", "Highlight", "Underline", "High Contrast"],
     },
     {
@@ -122,9 +123,7 @@ export function AccessibilityHubTab() {
     {
       id: "hideImages",
       title: "Hide All Images",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">🖼️</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">🖼️</span>,
       options: ["Normal", "Hidden", "Grayscale"],
     },
     {
@@ -140,17 +139,13 @@ export function AccessibilityHubTab() {
     {
       id: "bigCursor",
       title: "Big Cursor",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">🖱️</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">🖱️</span>,
       options: ["Normal", "Large (Black)", "Large (White)", "Highlighter"],
     },
     {
       id: "liveTooltips",
       title: "Live Explanatory Tooltips",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">💬</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">💬</span>,
       options: ["Off", "On"],
     },
     {
@@ -166,21 +161,18 @@ export function AccessibilityHubTab() {
     {
       id: "textAlign",
       title: "Text Alignment",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">📄</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">📄</span>,
       options: ["Normal", "Left", "Center", "Justify"],
     },
     {
       id: "colorSat",
       title: "Color Saturation",
-      icon: (
-        <span className="text-3xl drop-shadow-xs select-none">💧</span>
-      ),
+      icon: <span className="text-3xl drop-shadow-xs select-none">💧</span>,
       options: ["Normal", "High (+50%)", "Low (-50%)", "Monochrome"],
     },
   ];
 
+  // Helper to persist to storage
   const persistSettings = (levels: Record<string, number>, profile: string | null) => {
     const settingsMap: Record<string, { value: string; level: number; enabled: boolean }> = {};
     tools.forEach((t) => {
@@ -200,8 +192,44 @@ export function AccessibilityHubTab() {
     }
   };
 
+  // Dispatch all tools to content script
+  const dispatchAllLevels = (levels: Record<string, number>) => {
+    tools.forEach((tool) => {
+      const lvl = levels[tool.id] || 0;
+      const val = tool.options[lvl] || tool.options[0];
+      sendTabMessage({
+        type: "SET_A11Y_FEATURE",
+        feature: tool.id,
+        value: val,
+        level: lvl,
+        enabled: lvl > 0,
+      });
+    });
+  };
+
+  // Push to Undo Stack
+  const pushUndo = (prevLevels: Record<string, number>, prevProfile: string | null) => {
+    setUndoStack((prev) => [...prev.slice(-19), { levels: { ...prevLevels }, profile: prevProfile }]);
+  };
+
+  // Undo action
+  const handleUndo = () => {
+    if (undoStack.length === 0) return;
+    const last = undoStack[undoStack.length - 1];
+    setUndoStack((prev) => prev.slice(0, -1));
+
+    setToolLevels(last.levels);
+    setActiveProfile(last.profile);
+    persistSettings(last.levels, last.profile);
+    dispatchAllLevels(last.levels);
+    agentLog.action("👓 A11y changes undone.");
+  };
+
+  // Manual Toggle Tool
   const toggleTool = (id: string, options: string[]) => {
+    pushUndo(toolLevels, activeProfile);
     setActiveProfile(null);
+
     setToolLevels((prev) => {
       const currentIdx = prev[id] || 0;
       const nextIdx = (currentIdx + 1) % options.length;
@@ -210,7 +238,6 @@ export function AccessibilityHubTab() {
 
       agentLog.action(`👓 A11y feature '${id}' set to: ${nextVal} (level ${nextIdx})`);
 
-      // Dispatch to content script
       sendTabMessage({
         type: "SET_A11Y_FEATURE",
         feature: id,
@@ -228,106 +255,48 @@ export function AccessibilityHubTab() {
     });
   };
 
+  // Apply Predefined Profile
   const applyProfile = (profileKey: "adhd" | "dyslexia" | "low_vision" | "senior") => {
+    pushUndo(toolLevels, activeProfile);
+
     if (activeProfile === profileKey) {
-      // Toggle off profile
       resetAll();
       return;
     }
 
     setActiveProfile(profileKey);
-    const newLevels: Record<string, number> = {
-      spotlight: 0,
-      tts: 0,
-      contrast: 0,
-      links: 0,
-      textSize: 0,
-      textSpacing: 0,
-      pauseAnim: 0,
-      hideImages: 0,
-      dyslexiaFont: 0,
-      bigCursor: 0,
-      liveTooltips: 0,
-      lineHeight: 0,
-      textAlign: 0,
-      colorSat: 0,
-    };
+    const baseLevels: Record<string, number> = {};
+    tools.forEach((t) => (baseLevels[t.id] = 0));
 
-    if (profileKey === "adhd") {
-      newLevels.spotlight = 1; // On
-      newLevels.pauseAnim = 1; // Paused
-    } else if (profileKey === "dyslexia") {
-      newLevels.dyslexiaFont = 1; // On
-      newLevels.lineHeight = 2; // 1.8x
-      newLevels.textSpacing = 2; // Medium (+25%)
-    } else if (profileKey === "low_vision") {
-      newLevels.contrast = 1; // High
-      newLevels.textSize = 2; // +50%
-      newLevels.bigCursor = 1; // Large (Black)
-    } else if (profileKey === "senior") {
-      newLevels.textSize = 1; // +25%
-      newLevels.lineHeight = 1; // 1.5x
-      newLevels.bigCursor = 1; // Large (Black)
-      newLevels.links = 1; // Highlight
-    }
+    const profilePreset = A11Y_PROFILES[profileKey];
+    const newLevels = { ...baseLevels, ...profilePreset.levels };
 
     setToolLevels(newLevels);
     persistSettings(newLevels, profileKey);
+    dispatchAllLevels(newLevels);
     agentLog.action(`👓 Applied Quick Accessibility Profile: ${profileKey.toUpperCase()}`, newLevels);
-
-    // Apply all tools to content script
-    tools.forEach((tool) => {
-      const lvl = newLevels[tool.id] || 0;
-      const val = tool.options[lvl];
-      sendTabMessage({
-        type: "SET_A11Y_FEATURE",
-        feature: tool.id,
-        value: val,
-        level: lvl,
-        enabled: lvl > 0,
-      });
-    });
   };
 
+  // Reset All
   const resetAll = () => {
+    pushUndo(toolLevels, activeProfile);
     agentLog.action("👓 A11y features reset to default.");
     setActiveProfile(null);
-    const resetLevels: Record<string, number> = {
-      spotlight: 0,
-      tts: 0,
-      contrast: 0,
-      links: 0,
-      textSize: 0,
-      textSpacing: 0,
-      pauseAnim: 0,
-      hideImages: 0,
-      dyslexiaFont: 0,
-      bigCursor: 0,
-      liveTooltips: 0,
-      lineHeight: 0,
-      textAlign: 0,
-      colorSat: 0,
-    };
+
+    const resetLevels: Record<string, number> = {};
+    tools.forEach((t) => (resetLevels[t.id] = 0));
+
     setToolLevels(resetLevels);
     persistSettings(resetLevels, null);
-
-    tools.forEach((tool) => {
-      sendTabMessage({
-        type: "SET_A11Y_FEATURE",
-        feature: tool.id,
-        value: tool.options[0],
-        level: 0,
-        enabled: false,
-      });
-    });
+    dispatchAllLevels(resetLevels);
   };
 
   const activeCount = Object.values(toolLevels).filter((lvl) => lvl > 0).length;
 
   return (
-    <div className="p-3.5 space-y-3.5 text-slate-800">
+    <div className="p-3.5 space-y-3.5 text-slate-800 pb-20">
       {/* ==================================================================== */}
-      {/* 1. WELCOME CARD (Greeting & Description) */}
+      {/* 1. WELCOME CARD (Clean & Elegant) */}
       {/* ==================================================================== */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-1.5">
         <div className="flex items-center gap-2">
@@ -344,7 +313,7 @@ export function AccessibilityHubTab() {
       </div>
 
       {/* ==================================================================== */}
-      {/* 2. QUICK ACCESSIBILITY PROFILES (Matching Image 1) */}
+      {/* 2. QUICK ACCESSIBILITY PROFILES */}
       {/* ==================================================================== */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
         <div className="flex items-center justify-between">
@@ -399,7 +368,7 @@ export function AccessibilityHubTab() {
             }`}
           >
             <span className="text-lg select-none">👁️</span>
-            <span className="text-[11px] font-bold leading-tight">Low Vision / High Contrast</span>
+            <span className="text-[11px] font-bold leading-tight">Low Vision</span>
           </button>
 
           {/* Profile 4: Senior Friendly */}
@@ -412,7 +381,7 @@ export function AccessibilityHubTab() {
             }`}
           >
             <span className="text-lg select-none">👴</span>
-            <span className="text-[11px] font-bold leading-tight">Senior Friendly</span>
+            <span className="text-[11px] font-bold leading-tight">Senior Comfort</span>
           </button>
         </div>
       </div>
@@ -438,9 +407,7 @@ export function AccessibilityHubTab() {
               title={`Klik untuk ubah opsi (Opsi: ${tool.options.join(" → ")})`}
             >
               {/* Large Centered Icon */}
-              <div className="flex items-center justify-center h-9">
-                {tool.icon}
-              </div>
+              <div className="flex items-center justify-center h-9">{tool.icon}</div>
 
               {/* Title */}
               <div className="font-bold text-[11.5px] leading-tight text-slate-800 text-center px-1">
@@ -460,6 +427,37 @@ export function AccessibilityHubTab() {
             </button>
           );
         })}
+      </div>
+
+      {/* ==================================================================== */}
+      {/* 4. STICKY BOTTOM ACTION BAR (UNDO & RESET) */}
+      {/* ==================================================================== */}
+      <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-between gap-2 shadow-lg z-30">
+        <div className="text-[11px] font-semibold text-slate-500">
+          <span className="text-blue-600 font-bold">{activeCount}</span> fitur aktif
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Undo Button */}
+          <button
+            onClick={handleUndo}
+            disabled={undoStack.length === 0}
+            className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <Undo2 className="w-3.5 h-3.5" />
+            <span>Urungkan</span>
+          </button>
+
+          {/* Reset All Button */}
+          <button
+            onClick={resetAll}
+            disabled={activeCount === 0}
+            className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset Semua</span>
+          </button>
+        </div>
       </div>
     </div>
   );

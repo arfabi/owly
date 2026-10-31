@@ -4,6 +4,12 @@
 // ============================================================================
 
 (() => {
+  // Cegah injeksi ganda jika script sudah aktif di halaman/frame ini
+  if ((window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__) {
+    return;
+  }
+  (window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__ = true;
+
   // Bersihkan observer lama jika di-injeksi ulang setelah extension reload
   if ((window as any).__SAVVY_OBSERVER__) {
     try {
@@ -48,8 +54,17 @@
   agentLog.perception("Content Script activated. Closed Shadow DOM host initialized on page.");
 
   // 1. Injeksi Closed Shadow DOM untuk Beacon Spotlight & A11y Overlays
-  let hostContainer = document.getElementById("savvy-root");
-  if (!hostContainer) {
+  // Bersihkan elemen host lama jika script di-injeksi ulang (misal: extension reload / SPA navigation)
+  let shadowRoot: ShadowRoot;
+  let hostContainer: HTMLElement | null = null;
+  try {
+    const existingHost = document.getElementById("savvy-root");
+    if (existingHost) {
+      try {
+        existingHost.remove();
+      } catch (_) {}
+    }
+
     hostContainer = document.createElement("div");
     hostContainer.id = "savvy-root";
     hostContainer.style.position = "absolute";
@@ -59,10 +74,14 @@
     hostContainer.style.height = "100%";
     hostContainer.style.pointerEvents = "none";
     hostContainer.style.zIndex = "2147483647"; // Maksimum z-index
-    document.body.appendChild(hostContainer);
-  }
+    (document.body || document.documentElement).appendChild(hostContainer);
 
-  const shadowRoot = hostContainer.attachShadow({ mode: "closed" });
+    shadowRoot = hostContainer.attachShadow({ mode: "open" });
+    (window as any).__SAVVY_SHADOW_ROOT__ = shadowRoot;
+  } catch (err) {
+    console.warn("[Savvy.AI] Shadow root attachment fallback:", err);
+    shadowRoot = (window as any).__SAVVY_SHADOW_ROOT__ || (document.body as any);
+  }
 
   // Style untuk elemen di dalam Closed Shadow DOM
   const styleEl = document.createElement("style");
@@ -924,7 +943,7 @@
   const domObserver = new MutationObserver((mutations) => {
     // Ignore mutations on savvy root container to prevent infinite feedback loops
     const hasExternalMutation = mutations.some((m) => {
-      return m.target !== hostContainer && !hostContainer.contains(m.target);
+      return hostContainer ? (m.target !== hostContainer && !hostContainer.contains(m.target as Node)) : true;
     });
     if (hasExternalMutation) {
       onDomMutated();
@@ -943,8 +962,175 @@
   window.addEventListener("popstate", onDomMutated);
   window.addEventListener("hashchange", onDomMutated);
 
+  // ============================================================================
+  // SHOW ME: Cascading Element Finder (Level 1 & Level 2)
+  // ============================================================================
+  const SYNONYM_DICTIONARY: Record<string, string[]> = {
+    "bikin akun": ["sign up", "signup", "register", "daftar", "registrasi", "buat akun", "create account", "join"],
+    "buat akun": ["sign up", "signup", "register", "daftar", "registrasi", "create account", "join"],
+    "daftar": ["sign up", "signup", "register", "registrasi", "buat akun", "apply", "pendaftaran"],
+    "masuk": ["login", "log in", "sign in", "signin", "masuk"],
+    "login": ["log in", "sign in", "signin", "masuk"],
+    "signup": ["sign up", "register", "daftar", "registrasi", "buat akun"],
+    "keluar": ["logout", "log out", "sign out", "keluar"],
+    "unggah": ["upload", "unggah", "pilih berkas", "pilih file", "choose file", "browse"],
+    "upload": ["unggah", "pilih berkas", "pilih file", "choose file", "browse"],
+    "unduh": ["download", "unduh", "unduh berkas", "ambil file"],
+    "download": ["unduh", "unduh berkas", "ambil file"],
+    "syarat": ["persyaratan", "kriteria", "ketentuan", "eligibility", "terms", "requirement"],
+    "persyaratan": ["syarat", "kriteria", "ketentuan", "eligibility", "terms", "requirement"],
+    "bantuan": ["help", "bantuan", "faq", "panduan", "hubungi kami", "contact", "support"],
+    "biaya": ["tarif", "harga", "biaya", "fee", "cost", "pembayaran", "payment"],
+    "kirim": ["submit", "kirim", "send", "ajukan", "lanjut", "next"],
+    "submit": ["kirim", "send", "ajukan", "simpan", "save"],
+    "simpan": ["save", "simpan", "submit"],
+    "batal": ["cancel", "batal", "reset"],
+  };
+
+  function findAndHighlightDomElement(rawQuery: string): {
+    success: boolean;
+    level?: number;
+    matchedText?: string;
+    tag?: string;
+    candidates?: Array<{ domIndex: number; tag: string; text: string; aria?: string; placeholder?: string }>;
+  } {
+    const q = rawQuery.toLowerCase().trim();
+    if (!q) return { success: false };
+
+    // Strip generic filler words: "tombol", "button", "bagian", "seksi", "kolom", "field", "link"
+    const cleanQ = q
+      .replace(/\b(tombol|button|bagian|seksi|kolom|field|link|halaman|menu)\b/gi, "")
+      .trim();
+    const effectiveQ = cleanQ.length >= 2 ? cleanQ : q;
+
+    // Gather all visible interactive elements & key structural elements
+    const selector = "button, a, input, select, textarea, [role='button'], [role='link'], [role='tab'], h1, h2, h3, h4, h5, h6, section, [id], label, dt, th";
+    const all = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
+
+    const visibleElements: HTMLElement[] = [];
+    for (const el of all) {
+      if (el.id === "savvy-root" || el.closest("#savvy-root")) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width <= 4 || rect.height <= 4) continue;
+      const style = window.getComputedStyle(el);
+      if (style.visibility === "hidden" || style.display === "none" || style.opacity === "0") continue;
+      visibleElements.push(el);
+    }
+
+    const getElText = (el: HTMLElement) => {
+      const aria = el.getAttribute("aria-label") || "";
+      const placeholder = (el as HTMLInputElement).placeholder || "";
+      const text = el.textContent?.trim() || "";
+      const title = el.getAttribute("title") || "";
+      const val = (el as HTMLInputElement).value || "";
+      return `${text} ${aria} ${placeholder} ${title} ${val}`.toLowerCase().replace(/\s+/g, " ").trim();
+    };
+
+    // LEVEL 1: Exact & Substring Match
+    let bestEl: HTMLElement | null = null;
+    let bestScore = 0;
+
+    for (const el of visibleElements) {
+      const elText = getElText(el);
+      if (!elText) continue;
+
+      const isInteractive = /^(button|a|input|select|textarea)$/i.test(el.tagName) || el.getAttribute("role") === "button" || el.getAttribute("role") === "link";
+      let score = 0;
+
+      if (elText === effectiveQ || elText === q) {
+        score = isInteractive ? 100 : 85;
+      } else if (elText.includes(effectiveQ)) {
+        score = isInteractive ? 80 : 65;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestEl = el;
+      }
+    }
+
+    if (bestEl && bestScore >= 65) {
+      bestEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      showFieldSpotlight(bestEl);
+      agentLog.action(`🎯 [Show Me Level 1] Found exact/substring match for "${rawQuery}" -> <${bestEl.tagName.toLowerCase()}>`, { score: bestScore });
+      return {
+        success: true,
+        level: 1,
+        matchedText: bestEl.textContent?.trim().slice(0, 50) || bestEl.getAttribute("aria-label") || bestEl.tagName,
+        tag: bestEl.tagName.toLowerCase(),
+      };
+    }
+
+    // LEVEL 2: Synonym Heuristics
+    for (const [key, synonyms] of Object.entries(SYNONYM_DICTIONARY)) {
+      if (effectiveQ.includes(key) || key.includes(effectiveQ)) {
+        for (const syn of synonyms) {
+          for (const el of visibleElements) {
+            const elText = getElText(el);
+            if (elText.includes(syn)) {
+              el.scrollIntoView({ behavior: "smooth", block: "center" });
+              showFieldSpotlight(el);
+              agentLog.action(`⚡ [Show Me Level 2] Found synonym match ("${key}" -> "${syn}") for "${rawQuery}" -> <${el.tagName.toLowerCase()}>`);
+              return {
+                success: true,
+                level: 2,
+                matchedText: el.textContent?.trim().slice(0, 50) || syn,
+                tag: el.tagName.toLowerCase(),
+              };
+            }
+          }
+        }
+      }
+    }
+
+    // LEVEL 3 Prep: No match in Level 1 & 2 -> Harvest top candidates for Meta Muse Spark
+    const interactiveOnly = visibleElements.filter((el) => {
+      const tag = el.tagName.toLowerCase();
+      return tag === "button" || tag === "a" || tag === "input" || el.getAttribute("role") === "button" || el.getAttribute("role") === "link";
+    });
+
+    const candidatesPool = interactiveOnly.length >= 5 ? interactiveOnly : visibleElements;
+    const topCandidates = candidatesPool.slice(0, 20);
+
+    (window as any).__SAVVY_SHOW_ME_CANDIDATES__ = topCandidates;
+
+    const candidatePayload = topCandidates.map((el, idx) => ({
+      domIndex: idx,
+      tag: el.tagName.toLowerCase(),
+      text: (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60),
+      aria: el.getAttribute("aria-label") || "",
+      placeholder: (el as HTMLInputElement).placeholder || "",
+    })).filter((c) => c.text.length > 0 || c.aria.length > 0 || c.placeholder.length > 0);
+
+    return {
+      success: false,
+      candidates: candidatePayload,
+    };
+  }
+
   // 5. Message Listener dari Side Panel
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    // Show Me 4-Level Dispatchers
+    if (message.type === "FIND_AND_HIGHLIGHT_ELEMENT") {
+      const result = findAndHighlightDomElement(message.query || "");
+      sendResponse(result);
+      return;
+    }
+
+    if (message.type === "HIGHLIGHT_DOM_ELEMENT_BY_INDEX") {
+      const idx = message.domIndex;
+      const list = (window as any).__SAVVY_SHOW_ME_CANDIDATES__;
+      if (list && list[idx]) {
+        const el = list[idx] as HTMLElement;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        showFieldSpotlight(el);
+        sendResponse({ success: true, text: el.textContent?.trim().slice(0, 50) });
+        return;
+      }
+      sendResponse({ success: false, reason: "Element index not found in cache" });
+      return;
+    }
+
     if (message.type === "INJECT_VALUE") {
       const { fieldId, fieldName, fieldIndex, value } = message;
       let target: HTMLElement | null = null;
