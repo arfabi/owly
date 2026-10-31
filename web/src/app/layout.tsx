@@ -13,11 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Savvy.AI - Your AI Browser Companion for Forms & Web",
+  title: "Owly.AI - Your AI Browser Companion for Forms & Web",
   description:
     "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
   keywords: [
-    "Savvy.AI",
+    "Owly.AI",
     "Meta Global AI Hackathon",
     "Form Assistant",
     "LPDP Form Coach",

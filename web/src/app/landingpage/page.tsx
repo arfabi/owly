@@ -65,12 +65,12 @@ export default function Home() {
         <nav className="magic-pill rounded-full px-5 py-2.5 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2.5">
             <img
-              src="/logo.png"
-              alt="Savvy.AI Logo"
+              src="/owly.png"
+              alt="Owly.AI Logo"
               className="w-8 h-8 object-contain drop-shadow-xs"
             />
             <span className="font-extrabold text-lg tracking-tight text-savvy-navy">
-              Savvy<span className="text-savvy-blue">.AI</span>
+              Owly<span className="text-savvy-blue">.AI</span>
             </span>
           </div>
 
@@ -241,8 +241,8 @@ export default function Home() {
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <img
-                      src="/logo.png"
-                      alt="Savvy.AI"
+                      src="/owly.png"
+                      alt="Owly.AI"
                       className="w-6 h-6 object-contain drop-shadow-xs"
                     />
                     <span className="text-xs font-bold text-savvy-navy">{t.browserMockup.fieldCoachHeader}</span>

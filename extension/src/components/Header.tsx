@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLanguage } from "../lib/i18n/LanguageContext";
-import { Accessibility, Globe, X, Check } from "lucide-react";
+import { Accessibility, Globe, X, Check, Terminal } from "lucide-react";
 
 // SVG Flag Components
 export function IndonesiaFlag({ className = "w-5 h-3.5" }: { className?: string }) {
@@ -41,9 +41,10 @@ export function EnglishFlag({ className = "w-5 h-3.5" }: { className?: string })
 
 interface HeaderProps {
   onOpenAccessibilityHub?: () => void;
+  onOpenLogConsole?: () => void;
 }
 
-export function Header({ onOpenAccessibilityHub }: HeaderProps) {
+export function Header({ onOpenAccessibilityHub, onOpenLogConsole }: HeaderProps) {
   const { language, setLanguage } = useLanguage();
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
 
@@ -53,13 +54,13 @@ export function Header({ onOpenAccessibilityHub }: HeaderProps) {
         {/* Brand Header */}
         <div className="flex items-center gap-2.5">
           <img
-            src="logo.png"
-            alt="Savvy.AI Logo"
+            src="owly.png"
+            alt="Owly.AI Logo"
             className="w-7 h-7 object-contain drop-shadow-xs"
           />
           <div>
             <h1 className="font-extrabold text-sm leading-none text-savvy-navy tracking-tight">
-              Savvy<span className="text-savvy-blue">.AI</span>
+              Owly<span className="text-savvy-blue">.AI</span>
             </h1>
             <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
               Your AI Browser Companion for Forms & Web
@@ -67,8 +68,22 @@ export function Header({ onOpenAccessibilityHub }: HeaderProps) {
           </div>
         </div>
 
-        {/* Right Icons: Accessibility HUB & Language Switcher */}
+        {/* Right Icons: Accessibility HUB, Log Console, & Language Switcher */}
         <div className="flex items-center gap-1.5">
+          {/* Log Console Button (Dev/Judge Agentic Stream) */}
+          <button
+            onClick={onOpenLogConsole}
+            className="flex items-center justify-center p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-400 hover:text-emerald-300 border border-slate-700 transition-all cursor-pointer shadow-2xs group relative"
+            title="Log Console • Live Agent Tracing (Untuk Juri)"
+            aria-label="Log Console"
+          >
+            <Terminal className="w-4 h-4 text-emerald-400 group-hover:text-emerald-300 transition-colors stroke-[2.2]" />
+            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+          </button>
+
           {/* Accessibility HUB Button */}
           <button
             onClick={onOpenAccessibilityHub}

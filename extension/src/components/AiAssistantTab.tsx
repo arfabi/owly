@@ -493,7 +493,7 @@ export function AiAssistantTab({
             text: isId
               ? `Silakan ketik elemen atau tombol yang ingin Anda cari (misal: "Show me: signup button" atau "Show me: persyaratan").`
               : `Please specify the element or button you want to find (e.g., "Show me: signup button" or "Show me: requirements").`,
-            badge: "Savvy.AI",
+            badge: "Owly.AI",
             timestamp: Date.now(),
           },
         ]);
@@ -525,7 +525,7 @@ export function AiAssistantTab({
             id: (Date.now() + 1).toString(),
             sender: "savvy",
             text: levelMsg,
-            badge: "Savvy.AI",
+            badge: "Owly.AI",
             timestamp: Date.now(),
           },
         ]);
@@ -563,7 +563,7 @@ export function AiAssistantTab({
                 text: isId
                   ? `🎯 Ditemukan via AI Reasoning (Keyakinan: ${confidencePct}%)! Elemen **"${candidateName}"** telah disorot di layar.\n\n*${matchResult.reason || ""}*`
                   : `🎯 Found via AI Reasoning (${confidencePct}% confidence)! Element **"${candidateName}"** highlighted on screen.\n\n*${matchResult.reason || ""}*`,
-                badge: "Savvy.AI",
+                badge: "Owly.AI",
                 timestamp: Date.now(),
               },
             ]);
@@ -614,7 +614,7 @@ export function AiAssistantTab({
             text: isId
               ? `👁️ **Panduan Visual (Multimodal Vision):**\n\n${visionData.reply}`
               : `👁️ **Visual Guidance (Multimodal Vision):**\n\n${visionData.reply}`,
-            badge: "Savvy.AI",
+            badge: "Owly.AI",
             timestamp: Date.now(),
           },
         ]);
@@ -628,7 +628,7 @@ export function AiAssistantTab({
             text: isId
               ? `Elemen **"${targetQuery}"** tidak ditemukan di area tampilan saat ini. Coba scroll ke bagian lain atau gunakan kata kunci alternatif.`
               : `Element **"${targetQuery}"** was not found in the current view. Please try scrolling or using an alternative keyword.`,
-            badge: "Savvy.AI",
+            badge: "Owly.AI",
             timestamp: Date.now(),
           },
         ]);
@@ -706,7 +706,7 @@ export function AiAssistantTab({
         attachedMeta
       );
       let finalReply = data.reply || "";
-      let badgeLabel = "Savvy.AI";
+      let badgeLabel = "Owly.AI";
 
       // ======================================================================
       // MULTI-TURN AGENTIC TOOL CALLING: Model requested 'capture_current_screen'
@@ -749,7 +749,7 @@ export function AiAssistantTab({
 
         if (turn2Data.sessionId) setChatSessionId(turn2Data.sessionId);
         finalReply = turn2Data.reply || (isId ? "Maaf, saya tidak dapat mengamati tampilan layar saat ini." : "Could not observe current screen view.");
-        badgeLabel = isId ? "Savvy.AI • Vision Agent 📸" : "Savvy.AI • Vision Agent 📸";
+        badgeLabel = isId ? "Owly.AI • Vision Agent 📸" : "Owly.AI • Vision Agent 📸";
       }
 
       setMessages((prev) => [
@@ -1301,19 +1301,25 @@ export function AiAssistantTab({
         {/* ==================================================================== */}
         {!isAnalyzing && (
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-4 text-left">
-            {/* 1. Header Greeting & Logo */}
-            <div className="flex items-start gap-3 pb-3 border-b border-slate-100">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-600 to-blue-700 p-2.5 flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
-                <img src="logo.png" alt="Savvy AI" className="w-6 h-6 object-contain drop-shadow-sm brightness-110" />
+            {/* 1. Header Greeting & Logo (Centered Big Logo Full Without Border) */}
+            <div className="flex flex-col items-center text-center pt-1 pb-4 border-b border-slate-100">
+              <div className="relative mb-2 group">
+                <img
+                  src="owly.png"
+                  alt="Owly AI"
+                  className="w-24 h-24 object-contain drop-shadow-md transition-transform group-hover:scale-105"
+                />
+                <span className="absolute bottom-1 right-1 flex h-3.5 w-3.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white"></span>
+                </span>
               </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="font-black text-sm text-slate-900 leading-tight">
-                  Halo, Saya Savvy AI
-                </h4>
-                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                  Asisten cerdas pendamping Browsermu, ketik pertanyaan dibawah atau pilih bantuan cepat.
-                </p>
-              </div>
+              <h4 className="font-black text-base text-slate-900 tracking-tight">
+                Halo, Saya Owly AI
+              </h4>
+              <p className="text-xs text-slate-500 mt-1 max-w-[280px] leading-relaxed">
+                Asisten cerdas pendamping Browsermu, ketik pertanyaan di bawah atau pilih bantuan cepat.
+              </p>
             </div>
 
             {/* 2. Pandu Saya Isi Formulir Ini (Analyze Section) */}
@@ -1329,7 +1335,7 @@ export function AiAssistantTab({
                         Pandu saya isi formulir ini
                       </h5>
                       <p className="text-[10.5px] text-slate-500 mt-0.5 leading-relaxed">
-                        Savvy akan memindai halaman ini dan membimbingmu untuk mengisi formulir ini.
+                        Owly akan memindai halaman ini dan membimbingmu untuk mengisi formulir ini.
                       </p>
                     </div>
                   </div>

@@ -6,6 +6,7 @@ import { FormsGuideTab } from "./components/FormsGuideTab";
 import { VaultTab } from "./components/VaultTab";
 import { AuditorTab } from "./components/AuditorTab";
 import { AccessibilityHubTab } from "./components/AccessibilityHubTab";
+import { LogConsoleModal } from "./components/LogConsoleModal";
 import {
   Bot,
   FileText,
@@ -27,6 +28,7 @@ export function App() {
   const [activeTabUrl, setActiveTabUrl] = useState<string>("");
   const [activeTabTitle, setActiveTabTitle] = useState<string>("");
   const [a11yModalOpen, setA11yModalOpen] = useState(false);
+  const [isLogConsoleOpen, setIsLogConsoleOpen] = useState(false);
 
   // Connect to background script & log initial session
   useEffect(() => {
@@ -152,7 +154,7 @@ export function App() {
   }, []);
 
   const tabs = [
-    { id: "guide", label: "Ask Savvy", icon: Sparkles },
+    { id: "guide", label: "Ask Owly", icon: Sparkles },
     { id: "vault", label: "Auto Fill", icon: Zap },
     { id: "audit", label: "Audit Form", icon: ShieldCheck },
   ] as const;
@@ -162,6 +164,7 @@ export function App() {
       {/* Extension Header */}
       <Header
         onOpenAccessibilityHub={() => setA11yModalOpen(true)}
+        onOpenLogConsole={() => setIsLogConsoleOpen(true)}
       />
 
       {/* Clean Capsule Top Navigation Tabs (3 Tabs) */}
@@ -243,6 +246,12 @@ export function App() {
             </div>
           </div>
         )}
+
+        {/* Live Execution Log Console Modal (Dev & Hackathon Judges) */}
+        <LogConsoleModal
+          isOpen={isLogConsoleOpen}
+          onClose={() => setIsLogConsoleOpen(false)}
+        />
       </div>
 
       {/* Footer: Privacy Notice */}

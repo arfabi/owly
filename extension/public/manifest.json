@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Savvy.AI - Your AI Browser Companion for Forms & Web",
+  "name": "Owly.AI - Your AI Browser Companion for Forms & Web",
   "version": "1.0.0",
   "description": "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
   "permissions": [
@@ -23,7 +23,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "Buka Savvy.AI Side Panel",
+    "default_title": "Buka Owly.AI Side Panel",
     "default_icon": {
       "16": "icons/icon-off-16.png",
       "32": "icons/icon-off-32.png",

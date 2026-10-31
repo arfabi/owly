@@ -112,6 +112,69 @@
       justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
+
+    /* Virtual AI Ghost Cursor Pointer (Show Me Agent) */
+    .savvy-ghost-cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 2147483647;
+      transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+      will-change: transform, opacity;
+      display: none;
+      opacity: 0;
+    }
+    .savvy-ghost-cursor.visible {
+      display: block;
+      opacity: 1;
+    }
+    .savvy-ghost-cursor svg {
+      filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
+      transform: rotate(-10deg);
+      transition: transform 0.2s ease;
+    }
+    .savvy-ghost-cursor.clicking svg {
+      transform: rotate(-10deg) scale(0.85);
+    }
+    .savvy-ghost-label {
+      position: absolute;
+      left: 22px;
+      top: 14px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #2563eb 100%);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .savvy-ghost-pulse {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.45);
+      border: 2px solid #60a5fa;
+      transform: translate(-30%, -30%) scale(0);
+      pointer-events: none;
+      opacity: 0;
+    }
+    @keyframes savvy-ghost-ripple {
+      0% { transform: translate(-30%, -30%) scale(0.3); opacity: 0.9; }
+      50% { transform: translate(-30%, -30%) scale(2.8); opacity: 0.5; }
+      100% { transform: translate(-30%, -30%) scale(4.8); opacity: 0; }
+    }
+    .savvy-ghost-pulse.active-pulse {
+      animation: savvy-ghost-ripple 0.9s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
     .savvy-reading-guide {
       position: fixed;
       left: 0;
@@ -271,7 +334,7 @@
       <div class="savvy-scanner-card">
         <div class="savvy-scanner-card-header">
           <span class="savvy-scanner-spinner"></span>
-          <span class="savvy-scanner-title">This Page is being scanned by Savvy.AI</span>
+          <span class="savvy-scanner-title">This Page is being scanned by Owly.AI</span>
         </div>
         <div class="savvy-scanner-subtitle">Please wait until finish...</div>
       </div>
@@ -805,6 +868,72 @@
   spotlightEl.innerHTML = `<div class="savvy-spotlight-beacon">S</div>`;
   shadowRoot.appendChild(spotlightEl);
 
+  // Virtual AI Ghost Cursor Pointer (Show Me Agent Visual Navigator)
+  const ghostCursorEl = document.createElement("div");
+  ghostCursorEl.className = "savvy-ghost-cursor";
+  ghostCursorEl.innerHTML = `
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <path d="M4 3L11 20L14 13L21 10L4 3Z" fill="#2563EB" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="savvy-ghost-pulse"></div>
+    <div class="savvy-ghost-label">
+      <span>✨</span> Owly
+    </div>
+  `;
+  shadowRoot.appendChild(ghostCursorEl);
+
+  let lastUserMousePos = { x: window.innerWidth * 0.7, y: window.innerHeight * 0.3 };
+  window.addEventListener("mousemove", (e) => {
+    lastUserMousePos = { x: e.clientX, y: e.clientY };
+  }, { passive: true });
+
+  let ghostCursorTimeout: any = null;
+
+  function animateGhostCursorToElement(target: HTMLElement) {
+    if (ghostCursorTimeout) clearTimeout(ghostCursorTimeout);
+
+    // 1. Smooth scroll ke arah target di halaman
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // 2. Beri jeda agar scrolling mulai berjalan, lalu luncurkan kursor virtual
+    setTimeout(() => {
+      const rect = target.getBoundingClientRect();
+      const targetX = rect.left + Math.min(Math.max(rect.width * 0.5, 12), rect.width - 8);
+      const targetY = rect.top + Math.min(Math.max(rect.height * 0.5, 12), rect.height - 8);
+
+      // Mulai kursor di posisi pointer mouse pengguna saat ini
+      ghostCursorEl.style.transition = "none";
+      ghostCursorEl.style.transform = `translate(${lastUserMousePos.x}px, ${lastUserMousePos.y}px)`;
+      ghostCursorEl.classList.remove("clicking");
+      const pulseEl = ghostCursorEl.querySelector(".savvy-ghost-pulse") as HTMLElement;
+      if (pulseEl) pulseEl.classList.remove("active-pulse");
+
+      ghostCursorEl.classList.add("visible");
+
+      // Animasikan kursor meluncur secara smooth ke tombol/input target
+      requestAnimationFrame(() => {
+        ghostCursorEl.style.transition = "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease";
+        ghostCursorEl.style.transform = `translate(${targetX}px, ${targetY}px)`;
+
+        // Ketika kursor tiba di target
+        ghostCursorTimeout = setTimeout(() => {
+          ghostCursorEl.classList.add("clicking");
+          if (pulseEl) pulseEl.classList.add("active-pulse");
+
+          // Tampilkan spotlight beacon di elemen target
+          showFieldSpotlight(target);
+
+          // Hilangkan kursor virtual setelah selesai menunjuk
+          ghostCursorTimeout = setTimeout(() => {
+            ghostCursorEl.classList.remove("visible");
+            ghostCursorEl.classList.remove("clicking");
+            if (pulseEl) pulseEl.classList.remove("active-pulse");
+          }, 1800);
+        }, 850);
+      });
+    }, 150);
+  }
+
   let spotlightTimeout: any = null;
 
   function hideFieldSpotlight() {
@@ -1050,8 +1179,7 @@
     }
 
     if (bestEl && bestScore >= 65) {
-      bestEl.scrollIntoView({ behavior: "smooth", block: "center" });
-      showFieldSpotlight(bestEl);
+      animateGhostCursorToElement(bestEl);
       agentLog.action(`🎯 [Show Me Level 1] Found exact/substring match for "${rawQuery}" -> <${bestEl.tagName.toLowerCase()}>`, { score: bestScore });
       return {
         success: true,
@@ -1068,8 +1196,7 @@
           for (const el of visibleElements) {
             const elText = getElText(el);
             if (elText.includes(syn)) {
-              el.scrollIntoView({ behavior: "smooth", block: "center" });
-              showFieldSpotlight(el);
+              animateGhostCursorToElement(el);
               agentLog.action(`⚡ [Show Me Level 2] Found synonym match ("${key}" -> "${syn}") for "${rawQuery}" -> <${el.tagName.toLowerCase()}>`);
               return {
                 success: true,
@@ -1122,8 +1249,7 @@
       const list = (window as any).__SAVVY_SHOW_ME_CANDIDATES__;
       if (list && list[idx]) {
         const el = list[idx] as HTMLElement;
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        showFieldSpotlight(el);
+        animateGhostCursorToElement(el);
         sendResponse({ success: true, text: el.textContent?.trim().slice(0, 50) });
         return;
       }

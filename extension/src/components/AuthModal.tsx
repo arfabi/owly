@@ -56,13 +56,13 @@ export function AuthModal({
 
         <div className="flex items-center gap-2.5 mb-3">
           <img
-            src="logo.png"
-            alt="Savvy.AI Logo"
+            src="owly.png"
+            alt="Owly.AI Logo"
             className="w-8 h-8 object-contain drop-shadow-xs"
           />
           <div>
             <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
-              Savvy<span className="text-savvy-blue">.AI</span> Auth
+              Owly<span className="text-savvy-blue">.AI</span> Auth
             </h3>
             <p className="text-[10px] text-slate-500">Zero-Knowledge Public Form Assistant</p>
           </div>

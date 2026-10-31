@@ -39,12 +39,12 @@ export default function PrivacyPage() {
         <nav className="magic-pill rounded-full px-5 py-2.5 flex items-center justify-between shadow-xs">
           <Link href="/" className="flex items-center gap-2.5 group">
             <img
-              src="/logo.png"
-              alt="Savvy.AI Logo"
+              src="/owly.png"
+              alt="Owly.AI Logo"
               className="w-8 h-8 object-contain drop-shadow-xs group-hover:scale-105 transition-transform"
             />
             <span className="font-extrabold text-lg tracking-tight text-savvy-navy">
-              Savvy<span className="text-savvy-blue">.AI</span>
+              Owly<span className="text-savvy-blue">.AI</span>
             </span>
           </Link>
 

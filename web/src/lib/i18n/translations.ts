@@ -295,12 +295,12 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     ctaBanner: {
       title: "Siap Mengisi Formulir Tanpa Cemas?",
       description:
-        "Uji coba Savvy.AI sekarang di Mock Portal resmi atau pasang ekstensi Chrome untuk pengalaman pendaftaran publik yang lebih manusiawi.",
+        "Uji coba Owly.AI sekarang di Mock Portal resmi atau pasang ekstensi Chrome untuk pengalaman pendaftaran publik yang lebih manusiawi.",
       btnDemo: "Buka Demo Mock Portal",
       btnDocs: "Dokumentasi GitHub",
     },
     footer: {
-      copyright: "© 2026 Savvy.AI • Dibuat untuk Meta Global AI Developer Hackathon 2026 • Track: Indie Developer",
+      copyright: "© 2026 Owly.AI • Dibuat untuk Meta Global AI Developer Hackathon 2026 • Track: Indie Developer",
       subline: "Built for Your World with Meta Muse Spark, Responses API, and Native Web Accessibility.",
     },
     mockPortal: {
@@ -313,7 +313,7 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       nikLabel: "Nomor Induk Kependudukan (NIK)",
       nikPlaceholder: "16 digit angka sesuai e-KTP fisik",
       nikHint: "Pastikan NIK masih aktif di Dinas Kependudukan dan Pencatatan Sipil (Dukcapil).",
-      spotlightActive: "Spotlight Aktif (Savvy)",
+      spotlightActive: "Spotlight Aktif (Owly)",
       namaLabel: "Nama Lengkap (Sesuai Ijazah & KTP)",
       namaPlaceholder: "Contoh: Budi Santoso",
       tglLabel: "Tanggal Lahir",
@@ -326,7 +326,7 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       btnAudit: "Jalankan Pre-Submit Audit",
       btnSubmit: "Kirim Formulir (Submit)",
       submitDisabledTip: "Tombol ini hanya ditekan oleh pengguna sendiri setelah lampu hijau audit menyala",
-      auditHeader: "Hasil Pre-Submit Auditor (Savvy.AI)",
+      auditHeader: "Hasil Pre-Submit Auditor (Owly.AI)",
       auditEmptyMsg: "Audit Gagal (Lampu Merah): Masih ada kolom wajib yang belum diisi lengkap.",
       auditNikInvalidMsg: "Audit Gagal (Lampu Merah): NIK wajib berjumlah tepat 16 digit angka.",
       auditEssayShortMsg: "Peringatan (Lampu Kuning): Esai kontribusi terlalu singkat (disarankan minimal 50 kata).",
@@ -483,12 +483,12 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
     ctaBanner: {
       title: "Ready to Fill Important Forms Without Anxiety?",
       description:
-        "Test Savvy.AI today on our official Mock Portal or install the Chrome Extension for a more humane digital citizen experience.",
+        "Test Owly.AI today on our official Mock Portal or install the Chrome Extension for a more humane digital citizen experience.",
       btnDemo: "Open Mock Portal Demo",
       btnDocs: "GitHub Documentation",
     },
     footer: {
-      copyright: "© 2026 Savvy.AI • Built for Meta Global AI Developer Hackathon 2026 • Track: Indie Developer",
+      copyright: "© 2026 Owly.AI • Built for Meta Global AI Developer Hackathon 2026 • Track: Indie Developer",
       subline: "Built for Your World with Meta Muse Spark, Responses API, and Native Web Accessibility.",
     },
     mockPortal: {
@@ -501,7 +501,7 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       nikLabel: "National Identification Number (NIK)",
       nikPlaceholder: "16-digit number matching physical e-KTP",
       nikHint: "Ensure NIK is actively registered in Civil Registry (Dukcapil).",
-      spotlightActive: "Spotlight Active (Savvy)",
+      spotlightActive: "Spotlight Active (Owly)",
       namaLabel: "Full Name (as in Diploma & ID)",
       namaPlaceholder: "Example: Budi Santoso",
       tglLabel: "Date of Birth",
@@ -514,7 +514,7 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       btnAudit: "Run Pre-Submit Audit",
       btnSubmit: "Submit Application",
       submitDisabledTip: "This button is strictly pressed by the user after audit green light is cleared",
-      auditHeader: "Pre-Submit Auditor Result (Savvy.AI)",
+      auditHeader: "Pre-Submit Auditor Result (Owly.AI)",
       auditEmptyMsg: "Audit Failed (Red Light): Required fields remain unfilled.",
       auditNikInvalidMsg: "Audit Failed (Red Light): NIK must be exactly 16 numeric digits.",
       auditEssayShortMsg: "Warning (Yellow Light): Contribution essay is too brief (minimum 50 words recommended).",

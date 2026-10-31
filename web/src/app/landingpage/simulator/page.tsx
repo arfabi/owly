@@ -355,12 +355,12 @@ export default function SimulatorPage() {
           <div className="h-4 w-[1px] bg-slate-800" />
           <div className="flex items-center gap-2">
             <img
-              src="/logo.png"
-              alt="Savvy.AI Logo"
+              src="/owly.png"
+              alt="Owly.AI Logo"
               className="w-6 h-6 object-contain drop-shadow-xs"
             />
             <span className="font-extrabold text-sm tracking-tight text-white">
-              Savvy<span className="text-[#398CF5]">.AI</span>
+              Owly<span className="text-[#398CF5]">.AI</span>
             </span>
             <span className="px-2 py-0.5 rounded-full bg-[#398CF5]/10 text-[#398CF5] text-[10px] font-bold border border-[#398CF5]/20">
               Interactive Simulator
@@ -674,13 +674,13 @@ export default function SimulatorPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <img
-                src="/logo.png"
-                alt="Savvy.AI"
+                src="/owly.png"
+                alt="Owly.AI"
                 className="w-7 h-7 object-contain drop-shadow-xs"
               />
               <div>
                 <span className="font-extrabold text-xs text-slate-900 tracking-tight">
-                  Savvy<span className="text-[#398CF5]">.AI</span>
+                  Owly<span className="text-[#398CF5]">.AI</span>
                 </span>
                 <span className="text-[10px] text-slate-400 block -mt-0.5 truncate max-w-[170px]" title="Your AI Browser Companion for Forms & Web">
                   Your AI Browser Companion for Forms & Web
