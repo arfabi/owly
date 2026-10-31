@@ -161,7 +161,8 @@ Owly.AI mengimplementasikan siklus **Agentic Loop** terstandarisasi:
 
 ### 3. Tool Calling: Sinergi Muse Spark vs Deterministik
 
-Owly.AI memisahkan tanggung jawab alat secara tegas: **AI untuk penalaran probabilistik, kode deterministik untuk kepastian 100%**.
+Owly.AI memisahkan tanggung jawab alat secara tegas: **AI untuk penalaran probabilistik, kode deterministik untuk kepastian 100%**. *(Rincian matriks lengkap per fitur dapat dilihat pada dokumen [detail_feature/recap_agentic.md](file:///d:/webdev/laragon/www/savvy/detail_feature/recap_agentic.md))*
+
 
 | Kategori Alat | Nama Alat | Sumber / Mesin | Fungsi & Peran |
 |---|---|---|---|

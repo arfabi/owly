@@ -222,7 +222,7 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="nik-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
                       {isId ? "Nomor Induk Kependudukan (NIK)" : "National Identification Number (NIK)"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
@@ -252,7 +252,7 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="fullname-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
                       {isId ? "Nama Lengkap (Sesuai Ijazah & KTP)" : "Full Legal Name"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
@@ -280,13 +280,14 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="birthplace-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
                       {isId ? "Tempat Lahir (Kota/Kabupaten)" : "Place of Birth"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="birthPlace"
+                      id="birthplace-field"
                       value={tempatLahir}
                       onChange={(e) => setTempatLahir(e.target.value)}
                       onFocus={() => setFocusedField("tempatLahir")}
@@ -304,7 +305,7 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="birthdate-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
                       {isId ? "Tanggal Lahir" : "Date of Birth"} <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -361,13 +362,14 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="phone-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
                       {isId ? "Nomor Telepon / WhatsApp" : "Mobile / WhatsApp Number"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="phoneNumber"
+                      id="phone-field"
                       value={phone}
                       onChange={handlePhoneChange}
                       onFocus={() => setFocusedField("phone")}
@@ -385,13 +387,14 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="email-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
                       {isId ? "Alamat Email Aktif" : "Active Email Address"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="email"
                       name="emailAddress"
+                      id="email-field"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setFocusedField("email")}
@@ -409,12 +412,13 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="npwp-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
                       {isId ? "Nomor Pokok Wajib Pajak (NPWP)" : "Tax Identification Number (NPWP)"}
                     </label>
                     <input
                       type="text"
                       name="npwpNumber"
+                      id="npwp-field"
                       value={npwp}
                       onChange={handleNpwpChange}
                       onFocus={() => setFocusedField("npwp")}
@@ -442,10 +446,12 @@ export default function SimulatorPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   {/* Select Jenjang */}
                   <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/30">
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="jenjang-field" className="block text-xs font-bold text-slate-800 mb-1.5">
                       {isId ? "Jenjang Beasiswa" : "Target Degree"} <span className="text-red-500">*</span>
                     </label>
                     <select
+                      id="jenjang-field"
+                      name="degreeLevel"
                       value={jenjang}
                       onChange={(e) => setJenjang(e.target.value)}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
@@ -459,10 +465,12 @@ export default function SimulatorPage() {
 
                   {/* Select Negara Tujuan */}
                   <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/30">
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="country-field" className="block text-xs font-bold text-slate-800 mb-1.5">
                       {isId ? "Negara Tujuan Studi" : "Destination Country"} <span className="text-red-500">*</span>
                     </label>
                     <select
+                      id="country-field"
+                      name="targetCountry"
                       value={negaraTujuan}
                       onChange={(e) => setNegaraTujuan(e.target.value)}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
@@ -478,11 +486,13 @@ export default function SimulatorPage() {
 
                   {/* Text Universitas */}
                   <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/30">
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="univ-field" className="block text-xs font-bold text-slate-800 mb-1.5">
                       {isId ? "Universitas Tujuan" : "Target University"} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
+                      id="univ-field"
+                      name="targetUniversity"
                       value={universitas}
                       onChange={(e) => setUniversitas(e.target.value)}
                       placeholder="Contoh: University of Oxford"
@@ -498,7 +508,7 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="toefl-field" className="block text-xs font-bold text-slate-800 mb-1.5">
                       {isId ? "Skor Resmi TOEFL ITP / iBT" : "Official TOEFL Score"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
@@ -528,13 +538,14 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="gpa-field" className="block text-xs font-bold text-slate-800 mb-1.5">
                       {isId ? "IPK Jenjang Sebelumnya (Skala 4.00)" : "Cumulative GPA (4.00 Scale)"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
                       name="gpaScore"
+                      id="gpa-field"
                       min={0}
                       max={4.0}
                       step={0.01}
@@ -555,13 +566,14 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                    <label htmlFor="age-field" className="block text-xs font-bold text-slate-800 mb-1.5">
                       {isId ? "Usia per 31 Desember 2026" : "Age by Dec 31, 2026"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
                       name="applicantAge"
+                      id="age-field"
                       min={18}
                       max={60}
                       value={usia}
@@ -591,7 +603,7 @@ export default function SimulatorPage() {
                   {/* Upload Image: Pasfoto Biometrik */}
                   <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                      <label htmlFor="photo-upload" className="block text-xs font-bold text-slate-800 mb-1">
                         {isId ? "Pasfoto Biometrik Resmi (2x2 Inci / 35x45 mm)" : "Official Biometric Passport Photo"}{" "}
                         <span className="text-red-500">*</span>
                       </label>
@@ -603,7 +615,7 @@ export default function SimulatorPage() {
 
                       <div className="flex items-center gap-4">
                         {photoPreview ? (
-                          <div className="w-16 h-20 rounded-xl overflow-hidden border-2 border-blue-500 shadow-xs shrink-0 relative">
+                          <div className="w-16 h-20 rounded-xl border border-blue-500 shadow-xs shrink-0 relative overflow-hidden">
                             <img
                               src={photoPreview}
                               alt="Biometric Preview"
@@ -620,6 +632,7 @@ export default function SimulatorPage() {
                             type="file"
                             accept="image/jpeg,image/png"
                             id="photo-upload"
+                            name="biometricPhoto"
                             onChange={handlePhotoUpload}
                             className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
                           />
@@ -636,7 +649,7 @@ export default function SimulatorPage() {
                   {/* Upload File: Scan KTP Fisik */}
                   <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                      <label htmlFor="ktp-upload" className="block text-xs font-bold text-slate-800 mb-1">
                         {isId ? "Scan Kartu Tanda Penduduk (e-KTP Asli)" : "Scanned National ID Card"}{" "}
                         <span className="text-red-500">*</span>
                       </label>
@@ -646,6 +659,8 @@ export default function SimulatorPage() {
 
                       <input
                         type="file"
+                        id="ktp-upload"
+                        name="ktpDocument"
                         accept="image/*,application/pdf"
                         onChange={(e) => setKtpFileName(e.target.files?.[0]?.name || null)}
                         className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
@@ -661,7 +676,7 @@ export default function SimulatorPage() {
                   {/* Upload File: Ijazah & Transkrip Terlegalisir (PDF) */}
                   <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                      <label htmlFor="ijazah-upload" className="block text-xs font-bold text-slate-800 mb-1">
                         {isId ? "Ijazah & Transkrip Terlegalisir (PDF)" : "Certified Diploma & Transcript (PDF)"}{" "}
                         <span className="text-red-500">*</span>
                       </label>
@@ -671,6 +686,8 @@ export default function SimulatorPage() {
 
                       <input
                         type="file"
+                        id="ijazah-upload"
+                        name="diplomaDocument"
                         accept="application/pdf"
                         onChange={(e) => setIjazahFileName(e.target.files?.[0]?.name || null)}
                         className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
@@ -686,7 +703,7 @@ export default function SimulatorPage() {
                   {/* Upload File: Surat Rekomendasi (PDF) */}
                   <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                      <label htmlFor="rekomendasi-upload" className="block text-xs font-bold text-slate-800 mb-1">
                         {isId ? "Surat Rekomendasi Tokoh / Akademisi (PDF)" : "Academic Recommendation Letter (PDF)"}{" "}
                         <span className="text-red-500">*</span>
                       </label>
@@ -696,6 +713,8 @@ export default function SimulatorPage() {
 
                       <input
                         type="file"
+                        id="rekomendasi-upload"
+                        name="recommendationLetter"
                         accept="application/pdf"
                         onChange={(e) => setRekomendasiFileName(e.target.files?.[0]?.name || null)}
                         className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
@@ -729,7 +748,7 @@ export default function SimulatorPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-bold text-slate-800">
+                      <label htmlFor="essay-field" className="text-xs font-bold text-slate-800">
                         {isId ? "Esai Komitmen Kembali ke Indonesia & Rencana Kontribusi" : "Return Commitment & Contribution Plan Essay"}{" "}
                         <span className="text-red-500">*</span>
                       </label>
@@ -762,11 +781,12 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label className="block text-xs font-bold text-slate-800 mb-2">
+                    <label htmlFor="proposal-field" className="block text-xs font-bold text-slate-800 mb-2">
                       {isId ? "Ringkasan Rencana Riset / Studi (Research Abstract)" : "Research Proposal Abstract"}
                     </label>
                     <textarea
                       rows={3}
+                      id="proposal-field"
                       name="researchAbstract"
                       value={researchSummary}
                       onChange={(e) => setResearchSummary(e.target.value)}

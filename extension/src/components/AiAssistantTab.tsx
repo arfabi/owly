@@ -302,7 +302,7 @@ export function AiAssistantTab({
 
   const handleInputChange = (val: string) => {
     setInputText(val);
-    const piiResult = inspectAndRedactPII(val);
+    const piiResult = inspectAndRedactPII(val, language);
     if (piiResult.hasPII) {
       agentLog.security("🛡️ UU PDP Scrubber: Blocked sensitive PII in chat input field.", {
         warning: piiResult.warningMessage,

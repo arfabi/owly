@@ -20,7 +20,7 @@ interface CoachTabProps {
 }
 
 export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const c = t.coach;
 
   const [hasAutofilled, setHasAutofilled] = useState(false);
@@ -31,9 +31,9 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
 
   const handleChatChange = (val: string) => {
     setChatInput(val);
-    const piiResult = inspectAndRedactPII(val);
+    const piiResult = inspectAndRedactPII(val, language);
     if (piiResult.hasPII) {
-      setPiiWarning(piiResult.warningMessage || "Terdeteksi data sensitif");
+      setPiiWarning(piiResult.warningMessage || (language === "id" ? "Terdeteksi data sensitif" : "Sensitive PII detected"));
     } else {
       setPiiWarning(null);
     }

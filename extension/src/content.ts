@@ -69,6 +69,53 @@
     action: (msg: string, data?: any) => logContentAgent("ACTION", msg, data),
   };
 
+  // Content script translation dictionary
+  const CONTENT_I18N = {
+    en: {
+      scannerTitle: "This Page is being scanned by Owly.AI",
+      scannerSubtitle: "Please wait until finish...",
+      snipTitle: "Owly Snip",
+      snipInstruction: "Drag cursor over text or section to snip • ESC to cancel",
+      snipExplainBtn: "Explain with Owly.AI",
+      snipCopyBtn: "Copy Text",
+      snipCopied: "Copied!",
+      snipCancelTitle: "Cancel (ESC)",
+      snipCapturing: "✓ Capturing screenshot...",
+    },
+    id: {
+      scannerTitle: "Halaman ini sedang dipindai oleh Owly.AI",
+      scannerSubtitle: "Mohon tunggu hingga selesai...",
+      snipTitle: "Owly Snip",
+      snipInstruction: "Seret kursor untuk memotong area teks • ESC untuk batal",
+      snipExplainBtn: "Jelaskan dengan Owly.AI",
+      snipCopyBtn: "Salin Teks",
+      snipCopied: "Tersalin!",
+      snipCancelTitle: "Batal (ESC)",
+      snipCapturing: "✓ Mengambil tangkapan layar...",
+    },
+  };
+
+  let contentLang: "en" | "id" = "en";
+  if (typeof chrome !== "undefined" && chrome.storage?.local) {
+    chrome.storage.local.get(["owly_preferred_lang", "preferred_language"], (res) => {
+      const saved = res.owly_preferred_lang || res.preferred_language;
+      if (saved === "id" || saved === "en") {
+        contentLang = saved;
+      }
+    });
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "local") {
+        const newLang = changes.owly_preferred_lang?.newValue || changes.preferred_language?.newValue;
+        if (newLang === "id" || newLang === "en") {
+          contentLang = newLang;
+        }
+      }
+    });
+  }
+  function getContentT() {
+    return CONTENT_I18N[contentLang] || CONTENT_I18N.en;
+  }
+
   agentLog.perception("Content Script activated. Closed Shadow DOM host initialized on page.");
 
   // 1. Injeksi Closed Shadow DOM untuk Beacon Spotlight & A11y Overlays
@@ -342,6 +389,7 @@
   // Laser scanner overlay controller
   function startScanAnimation() {
     stopScanAnimation();
+    const t = getContentT();
     const overlay = document.createElement("div");
     overlay.className = "savvy-scanner-overlay";
     overlay.innerHTML = `
@@ -352,9 +400,9 @@
       <div class="savvy-scanner-card">
         <div class="savvy-scanner-card-header">
           <span class="savvy-scanner-spinner"></span>
-          <span class="savvy-scanner-title">This Page is being scanned by Owly.AI</span>
+          <span class="savvy-scanner-title">${t.scannerTitle}</span>
         </div>
-        <div class="savvy-scanner-subtitle">Please wait until finish...</div>
+        <div class="savvy-scanner-subtitle">${t.scannerSubtitle}</div>
       </div>
     `;
     shadowRoot.appendChild(overlay);
@@ -419,7 +467,13 @@
     let curr: HTMLElement | null = el.parentElement;
     let depth = 0;
     while (curr && depth < 5 && curr.tagName !== "BODY" && curr.tagName !== "FORM") {
-      // 4a. Check preceding sibling of current ancestor container (e.g. left column div)
+      // 4a. FIRST check inside current ancestor container (e.g. wrapper div containing this input and its label)
+      const insideLabel = curr.querySelector("label, .form-label, .col-form-label, dt, th, legend, h3, h4, h5, h6, strong, b");
+      if (insideLabel && !insideLabel.contains(el) && isValidLabelText(insideLabel.textContent)) {
+        return cleanLabelText(insideLabel.textContent);
+      }
+
+      // 4b. Check preceding sibling of current ancestor container (e.g. left column div)
       let sib = curr.previousElementSibling;
       while (sib) {
         const cand = sib.querySelector("label, .form-label, .col-form-label, dt, th, legend, h3, h4, h5, h6, strong, b");
@@ -430,12 +484,6 @@
           return cleanLabelText(sib.textContent);
         }
         sib = sib.previousElementSibling;
-      }
-
-      // 4b. If ancestor has a label that doesn't contain `el`
-      const insideLabel = curr.querySelector("label, .form-label, .col-form-label, dt, th, legend, h3, h4, h5, h6, strong, b");
-      if (insideLabel && !insideLabel.contains(el) && isValidLabelText(insideLabel.textContent)) {
-        return cleanLabelText(insideLabel.textContent);
       }
 
       // 4c. Table row
@@ -883,7 +931,7 @@
   const spotlightEl = document.createElement("div");
   spotlightEl.className = "savvy-spotlight";
   spotlightEl.style.display = "none";
-  spotlightEl.innerHTML = `<div class="savvy-spotlight-beacon">S</div>`;
+  spotlightEl.innerHTML = `<div class="savvy-spotlight-beacon">O</div>`;
   shadowRoot.appendChild(spotlightEl);
 
   // Virtual AI Ghost Cursor Pointer (Show Me Agent Visual Navigator)
@@ -1647,15 +1695,16 @@
       z-index: 2147483647;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     `;
+    const t = getContentT();
     headerPill.innerHTML = `
       <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #60A5FA;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>
         </svg>
-        <span>Savvy Snip</span>
+        <span>${t.snipTitle}</span>
       </div>
       <div style="width: 1px; height: 14px; background: rgba(255, 255, 255, 0.2);"></div>
-      <span style="color: #E2E8F0; font-size: 12px;">Seret kursor untuk memotong area teks • <strong>ESC</strong> untuk batal</span>
+      <span style="color: #E2E8F0; font-size: 12px;">${t.snipInstruction}</span>
     `;
     overlay.appendChild(headerPill);
 
@@ -1767,7 +1816,7 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
       </svg>
-      <span>Jelaskan dengan Savvy AI</span>
+      <span>${t.snipExplainBtn}</span>
     `;
 
     // Button 2: Copy Text
@@ -1792,7 +1841,7 @@
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
       </svg>
-      <span>Salin Teks</span>
+      <span>${t.snipCopyBtn}</span>
     `;
 
     // Button 3: Cancel (Close)
@@ -1811,7 +1860,7 @@
       transition: all 0.15s ease;
     `;
     btnCancel.innerHTML = `✕`;
-    btnCancel.title = "Batal (ESC)";
+    btnCancel.title = t.snipCancelTitle;
 
     toolbar.appendChild(btnExplain);
     toolbar.appendChild(btnCopy);
@@ -1986,7 +2035,7 @@
       // Visual feedback: Green flash
       cropBox.style.borderColor = "#10B981";
       cropBox.style.boxShadow = "0 0 0 99999px rgba(15, 23, 42, 0.65), 0 0 25px rgba(16, 185, 129, 0.6)";
-      dimLabel.textContent = "✓ Mengambil tangkapan layar...";
+      dimLabel.textContent = getContentT().snipCapturing;
       dimLabel.style.color = "#34D399";
       btnExplain.disabled = true;
       btnExplain.style.opacity = "0.7";
@@ -2032,14 +2081,15 @@
       const text = extractTextInRect();
       if (text) {
         navigator.clipboard.writeText(text);
-        btnCopy.innerHTML = `✓ Tersalin!`;
+        const tNow = getContentT();
+        btnCopy.innerHTML = `✓ ${tNow.snipCopied}`;
         setTimeout(() => {
           btnCopy.innerHTML = `
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
-            <span>Salin Teks</span>
+            <span>${tNow.snipCopyBtn}</span>
           `;
         }, 1500);
       }

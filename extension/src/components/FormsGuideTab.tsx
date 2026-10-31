@@ -442,7 +442,9 @@ export function classifyFieldGuidance(raw: any, isId: boolean): FieldItem {
     return {
       id: raw.id || "nama_lengkap",
       name: raw.name || "nama_lengkap",
-      label: raw.label || (isId ? "Nama Lengkap (Full Name)" : "Full Name"),
+      label: (raw.label && !raw.label.toLowerCase().includes("nik") && !raw.label.toLowerCase().includes("identification"))
+        ? raw.label
+        : (isId ? "Nama Lengkap (Full Name)" : "Full Legal Name"),
       localizedLabel: isId ? "Nama Lengkap Sesuai Paspor / KTP" : "Full Name (Passport / ID)",
       badgeType: "official",
       badgeLabel: "Official Guidance",
@@ -467,7 +469,9 @@ export function classifyFieldGuidance(raw: any, isId: boolean): FieldItem {
     return {
       id: raw.id || "nik",
       name: raw.name || "nik",
-      label: raw.label || (isId ? "Nomor Induk Kependudukan (NIK)" : "National ID (NIK)"),
+      label: (raw.label && !raw.label.toLowerCase().includes("nama") && !raw.label.toLowerCase().includes("full name"))
+        ? raw.label
+        : (isId ? "Nomor Induk Kependudukan (NIK)" : "National Identification Number (NIK)"),
       localizedLabel: isId ? "Nomor Induk Kependudukan (16 Digit)" : "National Identification Number",
       badgeType: "official",
       badgeLabel: "Official Guidance",
@@ -557,86 +561,124 @@ export function classifyFieldGuidance(raw: any, isId: boolean): FieldItem {
   };
 }
 
-const DEFAULT_FIELDS: FieldItem[] = [
-  {
-    id: "nik",
-    name: "nik",
-    label: "Nomor Induk Kependudukan (NIK)",
-    badgeType: "official",
-    badgeLabel: "Official Guidance",
-    meaning: "Nomor identitas kependudukan tunggal 16 digit yang diterbitkan resmi oleh Dinas Dukcapil.",
-    howTo: "Ketik 16 digit angka tanpa spasi, titik, atau tanda hubung (-). Wajib persis sesuai e-KTP fisik terbaru.",
-    example: "3271041908980002",
-    pitfall: "Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili.",
-    vaultKey: "nik",
-    fallbackValue: "3271041908980002",
-  },
-  {
-    id: "nama_lengkap",
-    name: "nama_lengkap",
-    label: "Nama Lengkap (Sesuai e-KTP)",
-    badgeType: "official",
-    badgeLabel: "Official Guidance",
-    meaning: "Nama sah pendaftar yang tercatat pada sistem administrasi kependudukan negara.",
-    howTo: "Tuliskan nama lengkap tanpa gelar akademik/keagamaan, kecuali formulir memiliki kolom gelar tersendiri.",
-    example: "Budi Santoso",
-    pitfall: "Perbedaan satu huruf antara KTP dan Ijazah dapat menyebabkan verifikasi manual tertolak.",
-    vaultKey: "nama",
-    fallbackValue: "Budi Santoso",
-  },
-  {
-    id: "tanggal_lahir",
-    name: "tanggal_lahir",
-    label: "Tanggal Lahir",
-    badgeType: "curated",
-    badgeLabel: "Owly Curated",
-    meaning: "Tanggal kelahiran sesuai akta kelahiran resmi dan e-KTP.",
-    howTo: "Pilih tanggal dari kalender atau gunakan format YYYY-MM-DD sesuai standar portal.",
-    example: "1998-08-19",
-    pitfall: "Pastikan batas usia pendaftaran belum melewati ketentuan maksimal per 31 Desember tahun berjalan.",
-    vaultKey: "tanggal_lahir",
-    fallbackValue: "1998-08-19",
-  },
-  {
-    id: "alamat_ktp",
-    name: "alamat",
-    label: "Alamat Domisili KTP",
-    badgeType: "curated",
-    badgeLabel: "Owly Curated",
-    meaning: "Alamat tempat tinggal resmi yang tertera pada kartu identitas penduduk.",
-    howTo: "Ketik nama jalan, nomor rumah, RT/RW, kelurahan, dan kecamatan secara lengkap.",
-    example: "Jl. Sudirman No. 45 RT 02/RW 04, Jakarta Pusat",
-    pitfall: "Jangan hanya menuliskan nama kota, kelengkapan RT/RW sering menjadi syarat verifikasi kurir dokumen.",
-    vaultKey: "alamat",
-    fallbackValue: "Jl. Sudirman No. 45, Jakarta Pusat",
-  },
-  {
-    id: "no_hp",
-    name: "no_hp",
-    label: "Nomor WhatsApp / Seluler",
-    badgeType: "curated",
-    badgeLabel: "Owly Curated",
-    meaning: "Nomor telepon aktif yang terhubung dengan layanan pesan singkat dan WhatsApp.",
-    howTo: "Gunakan format nomor nasional diawali 08 atau format internasional (+62).",
-    example: "081234567890",
-    pitfall: "Nomor yang tidak aktif saat proses wawancara atau verifikasi OTP akan menggugurkan pendaftaran.",
-    vaultKey: "no_hp",
-    fallbackValue: "081234567890",
-  },
-  {
-    id: "email",
-    name: "email",
-    label: "Alamat Email Aktif",
-    badgeType: "curated",
-    badgeLabel: "Owly Curated",
-    meaning: "Surat elektronik utama untuk penerimaan aktivasi akun, verifikasi, dan pengumuman kelulusan.",
-    howTo: "Gunakan email pribadi permanen berformat nama lengkap (hindari email instansi yang bisa kedaluwarsa).",
-    example: "budi.santoso@alumni.ui.ac.id",
-    pitfall: "Typo satu huruf pada domain email mengakibatkan Anda kehilangan akses tautan aktivasi tes.",
-    vaultKey: "email",
-    fallbackValue: "budi.santoso@alumni.ui.ac.id",
-  },
-];
+function getDefaultFields(isId: boolean): FieldItem[] {
+  return [
+    {
+      id: "nik",
+      name: "nik",
+      label: isId ? "Nomor Induk Kependudukan (NIK)" : "National ID Number (NIK)",
+      badgeType: "official",
+      badgeLabel: isId ? "🟢 Panduan Resmi" : "🟢 Official Guidance",
+      meaning: isId
+        ? "Nomor identitas kependudukan tunggal 16 digit yang diterbitkan resmi oleh Dinas Dukcapil."
+        : "A 16-digit continuous citizen identification number issued by the civil registry.",
+      howTo: isId
+        ? "Ketik 16 digit angka tanpa spasi, titik, atau tanda hubung (-). Wajib persis sesuai e-KTP fisik terbaru."
+        : "Enter 16 continuous digits without spaces or dashes. Must match your latest physical ID card.",
+      example: "3271041908980002",
+      pitfall: isId
+        ? "Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili."
+        : "Do not use an outdated identification number if you have recently relocated your registered residence.",
+      vaultKey: "nik",
+      fallbackValue: "3271041908980002",
+    },
+    {
+      id: "nama_lengkap",
+      name: "nama_lengkap",
+      label: isId ? "Nama Lengkap (Sesuai e-KTP)" : "Full Legal Name",
+      badgeType: "official",
+      badgeLabel: isId ? "🟢 Panduan Resmi" : "🟢 Official Guidance",
+      meaning: isId
+        ? "Nama sah pendaftar yang tercatat pada sistem administrasi kependudukan negara."
+        : "Full official legal name as recorded in national civil administration systems.",
+      howTo: isId
+        ? "Tuliskan nama lengkap tanpa gelar akademik/keagamaan, kecuali formulir memiliki kolom gelar tersendiri."
+        : "Enter your full legal name without academic titles, unless a dedicated field is provided.",
+      example: "Budi Santoso",
+      pitfall: isId
+        ? "Perbedaan satu huruf antara KTP dan Ijazah dapat menyebabkan verifikasi manual tertolak."
+        : "A single letter mismatch with educational diplomas may cause manual verification rejection.",
+      vaultKey: "nama",
+      fallbackValue: "Budi Santoso",
+    },
+    {
+      id: "tanggal_lahir",
+      name: "tanggal_lahir",
+      label: isId ? "Tanggal Lahir" : "Date of Birth",
+      badgeType: "curated",
+      badgeLabel: isId ? "🔵 Owly Curated" : "🔵 Owly Curated",
+      meaning: isId
+        ? "Tanggal kelahiran sesuai akta kelahiran resmi dan e-KTP."
+        : "Official date of birth matching civil birth records and government identity cards.",
+      howTo: isId
+        ? "Pilih tanggal dari kalender atau gunakan format YYYY-MM-DD sesuai standar portal."
+        : "Select your birth date from calendar picker or enter ISO format YYYY-MM-DD.",
+      example: "1998-08-19",
+      pitfall: isId
+        ? "Pastikan batas usia pendaftaran belum melewati ketentuan maksimal per 31 Desember tahun berjalan."
+        : "Ensure you do not exceed the maximum cut-off age as of December 31 of current year.",
+      vaultKey: "tanggal_lahir",
+      fallbackValue: "1998-08-19",
+    },
+    {
+      id: "alamat_ktp",
+      name: "alamat",
+      label: isId ? "Alamat Domisili KTP" : "Residential Address",
+      badgeType: "curated",
+      badgeLabel: isId ? "🔵 Owly Curated" : "🔵 Owly Curated",
+      meaning: isId
+        ? "Alamat tempat tinggal resmi yang tertera pada kartu identitas penduduk."
+        : "Official registered residential address printed on government identification documents.",
+      howTo: isId
+        ? "Ketik nama jalan, nomor rumah, RT/RW, kelurahan, dan kecamatan secara lengkap."
+        : "Enter complete street address, house/unit number, neighborhood, and city.",
+      example: "Jl. Sudirman No. 45 RT 02/RW 04, Jakarta Pusat",
+      pitfall: isId
+        ? "Jangan hanya menuliskan nama kota, kelengkapan RT/RW sering menjadi syarat verifikasi kurir dokumen."
+        : "Do not only specify the city; postal code and neighborhood details are required for courier delivery.",
+      vaultKey: "alamat",
+      fallbackValue: "Jl. Sudirman No. 45, Jakarta Pusat",
+    },
+    {
+      id: "no_hp",
+      name: "no_hp",
+      label: isId ? "Nomor WhatsApp / Seluler" : "Mobile / WhatsApp Number",
+      badgeType: "curated",
+      badgeLabel: isId ? "🔵 Owly Curated" : "🔵 Owly Curated",
+      meaning: isId
+        ? "Nomor telepon aktif yang terhubung dengan layanan pesan singkat dan WhatsApp."
+        : "Active mobile phone number connected to SMS messaging and WhatsApp channels.",
+      howTo: isId
+        ? "Gunakan format nomor nasional diawali 08 atau format internasional (+62)."
+        : "Use national phone format starting with 08 or international format (+62).",
+      example: "081234567890",
+      pitfall: isId
+        ? "Nomor yang tidak aktif saat proses wawancara atau verifikasi OTP akan menggugurkan pendaftaran."
+        : "An inactive mobile number during OTP verification or interview calls will forfeit your application.",
+      vaultKey: "no_hp",
+      fallbackValue: "081234567890",
+    },
+    {
+      id: "email",
+      name: "email",
+      label: isId ? "Alamat Email Aktif" : "Active Email Address",
+      badgeType: "curated",
+      badgeLabel: isId ? "🔵 Owly Curated" : "🔵 Owly Curated",
+      meaning: isId
+        ? "Surat elektronik utama untuk penerimaan aktivasi akun, verifikasi, dan pengumuman kelulusan."
+        : "Primary email address for account activation links, verification codes, and final results.",
+      howTo: isId
+        ? "Gunakan email pribadi permanen berformat nama lengkap (hindari email instansi yang bisa kedaluwarsa)."
+        : "Use a permanent personal email address with your full name (avoid temporary school/work emails).",
+      example: "budi.santoso@alumni.ui.ac.id",
+      pitfall: isId
+        ? "Typo satu huruf pada domain email mengakibatkan Anda kehilangan akses tautan aktivasi tes."
+        : "A single typo in your email domain causes permanent loss of login credentials and test links.",
+      vaultKey: "email",
+      fallbackValue: "budi.santoso@alumni.ui.ac.id",
+    },
+  ];
+}
 
 interface FormsGuideTabProps {
   isVaultUnlocked: boolean;
@@ -656,7 +698,7 @@ export function FormsGuideTab({
   const isId = language === "id";
 
   const [rawScannedFields, setRawScannedFields] = useState<any[]>([]);
-  const [fields, setFields] = useState<FieldItem[]>(DEFAULT_FIELDS);
+  const [fields, setFields] = useState<FieldItem[]>(() => getDefaultFields(isId));
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
   const [hasAutofilled, setHasAutofilled] = useState(false);
   const [vaultData, setVaultData] = useState<Record<string, string>>({
@@ -683,7 +725,7 @@ export function FormsGuideTab({
   useEffect(() => {
     if (!isFormAnalyzed) {
       setRawScannedFields([]);
-      setFields(DEFAULT_FIELDS);
+      setFields(getDefaultFields(isId));
       setCurrentFieldIndex(0);
       return;
     }
@@ -694,7 +736,7 @@ export function FormsGuideTab({
         }
       });
     }
-  }, [isFormAnalyzed]);
+  }, [isFormAnalyzed, isId]);
 
   // Whenever scanned fields or language change, classify fields semantically
   useEffect(() => {
@@ -702,7 +744,7 @@ export function FormsGuideTab({
       const classified = rawScannedFields.map((f) => classifyFieldGuidance(f, isId));
       setFields(classified);
     } else {
-      setFields(DEFAULT_FIELDS);
+      setFields(getDefaultFields(isId));
     }
   }, [rawScannedFields, isId]);
 
@@ -726,7 +768,7 @@ export function FormsGuideTab({
     }
   }, [fields.length]);
 
-  const currentField = fields[currentFieldIndex] || DEFAULT_FIELDS[0];
+  const currentField = fields[currentFieldIndex] || getDefaultFields(isId)[0];
   const hasVaultKey = !!(currentField.vaultKey && vaultData[currentField.vaultKey]);
 
   // Helper function to navigate between fields (Before / Next)
@@ -834,41 +876,41 @@ export function FormsGuideTab({
 
         {/* 4-Element Guidance Card */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3.5 text-xs text-left">
-          {/* 1. Arti Istilah */}
+          {/* 1. Arti Istilah / Field Meaning */}
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-              ARTI ISTILAH:
+              {isId ? "ARTI ISTILAH:" : "FIELD MEANING:"}
             </span>
             <p className="text-slate-900 font-semibold mt-1 leading-snug">
               {currentField.meaning}
             </p>
           </div>
 
-          {/* 2. Cara Mengisi */}
+          {/* 2. Cara Mengisi / How to Fill */}
           <div>
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-              CARA MENGISI:
+              {isId ? "CARA MENGISI:" : "HOW TO FILL:"}
             </span>
             <p className="text-slate-600 mt-1 leading-snug">
               {currentField.howTo}
             </p>
           </div>
 
-          {/* 3. Contoh Valid */}
+          {/* 3. Contoh Valid / Valid Example */}
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-              CONTOH VALID:
+              {isId ? "CONTOH VALID:" : "VALID EXAMPLE:"}
             </span>
             <code className="text-savvy-blue font-mono font-bold text-xs mt-1 block">
               {currentField.example}
             </code>
           </div>
 
-          {/* 4. Jebakan Umum (Pitfall) */}
+          {/* 4. Jebakan Umum / Common Pitfall */}
           <div className="bg-amber-50/80 p-3 rounded-xl border border-amber-200/90">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 flex items-center gap-1">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>JEBAKAN UMUM (PITFALL):</span>
+              <span>{isId ? "JEBAKAN UMUM (PITFALL):" : "COMMON PITFALL:"}</span>
             </span>
             <p className="text-[11px] text-amber-950 mt-1 leading-snug">
               {currentField.pitfall}
@@ -880,7 +922,7 @@ export function FormsGuideTab({
             <div>
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-savvy-blue" />
-                <span>{hasVaultKey ? "DATA ANDA (DARI VAULT):" : (isId ? "STATUS PENGISIAN:" : "INPUT STATUS:")}</span>
+                <span>{hasVaultKey ? (isId ? "DATA ANDA (DARI VAULT):" : "YOUR DATA (FROM VAULT):") : (isId ? "STATUS PENGISIAN:" : "INPUT STATUS:")}</span>
               </span>
               <div className="font-mono font-bold text-xs text-slate-800 mt-0.5">
                 {hasVaultKey
@@ -925,7 +967,7 @@ export function FormsGuideTab({
             ) : (
               <>
                 <Zap className="w-3.5 h-3.5" />
-                <span>{isId ? `Isi Kolom Ini dari Vault (${displayVaultVal.slice(0, 8)}...)` : "Fill This Field from Vault"}</span>
+                <span>{isId ? `Isi Kolom Ini dari Vault (${displayVaultVal.slice(0, 8)}...)` : `Fill Field from Vault (${displayVaultVal.slice(0, 8)}...)`}</span>
               </>
             )}
           </button>
@@ -957,7 +999,7 @@ export function FormsGuideTab({
             }`}
           >
             <ChevronLeft className="w-4 h-4" />
-            <span>Before</span>
+            <span>{isId ? "Sebelumnya" : "Previous"}</span>
           </button>
 
           <button
@@ -969,7 +1011,7 @@ export function FormsGuideTab({
                 : "bg-white text-savvy-blue border-blue-200 hover:bg-blue-50/50 hover:border-savvy-blue shadow-2xs"
             }`}
           >
-            <span>Next</span>
+            <span>{isId ? "Selanjutnya" : "Next"}</span>
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>

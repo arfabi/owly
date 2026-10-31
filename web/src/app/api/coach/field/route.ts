@@ -102,7 +102,26 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Panggil Muse Spark Open di Baseten dengan Structured Output JSON
-    const prompt = `Kamu adalah Savvy Field Coach AI — pakar birokrasi & formulir publik resmi.
+    const isEn = language === 'en';
+    const prompt = isEn
+      ? `You are Owly Field Coach AI — an expert in bureaucracy and official public forms.
+Task: Generate a 4-element guidance card for this form field in clear American English:
+- Field Name: "${fieldName || fieldKey}" (fieldKey: "${fieldKey}")
+- Portal: "${portalDomain}"
+- Form Context: "${contextText || 'Public Form Registration'}"
+
+${ragContext ? `${ragContext}\n(IMPORTANT: Prioritize the official guideline citation above!)` : 'Use accurate, official standards.'}
+
+Format output MUST be valid strictly formatted JSON without markdown:
+{
+  "meaning": "Clear 1-2 sentence explanation of what this field means.",
+  "how_to_fill": "Step-by-step instructions on how to fill this field correctly.",
+  "example": "A concrete valid format example.",
+  "pitfalls": "Common traps or pitfalls that cause application disqualification.",
+  "confirmation_ref": "${officialCitation || 'Official Portal Guidelines'}",
+  "source_type": "${officialCitation ? 'official' : 'ai_guidance'}"
+}`
+      : `Kamu adalah Owly Field Coach AI — pakar birokrasi & formulir publik resmi.
 Tugas: Buat kartu panduan 4-elemen untuk kolom formulir berikut:
 - Nama Kolom: "${fieldName || fieldKey}" (fieldKey: "${fieldKey}")
 - Portal: "${portalDomain}"
