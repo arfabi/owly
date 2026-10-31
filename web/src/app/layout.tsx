@@ -15,15 +15,25 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Owly.AI - Your AI Browser Companion for Forms & Web",
   description:
-    "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
+    "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Baseten Muse Spark Open.",
   keywords: [
     "Owly.AI",
-    "Meta Global AI Hackathon",
+    "Baseten Muse Spark Open",
+    "AI Browser Companion",
     "Form Assistant",
     "LPDP Form Coach",
     "Visa Assistant",
     "Accessibility Hub",
   ],
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/owly.png", type: "image/png" },
+    ],
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
+  },
 };
 
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
@@ -36,7 +46,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="id"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-white text-slate-900 selection:bg-blue-500/10 selection:text-blue-700">

@@ -154,9 +154,9 @@ export function App() {
   }, []);
 
   const tabs = [
-    { id: "guide", label: "Ask Owly", icon: Sparkles },
-    { id: "vault", label: "Auto Fill", icon: Zap },
-    { id: "audit", label: "Audit Form", icon: ShieldCheck },
+    { id: "guide", label: t.tabs.guide, icon: Sparkles },
+    { id: "vault", label: t.tabs.vault, icon: Zap },
+    { id: "audit", label: t.tabs.audit, icon: ShieldCheck },
   ] as const;
 
   return (
@@ -231,7 +231,7 @@ export function App() {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-savvy-blue" />
                 <h3 className="font-extrabold text-xs text-slate-900">
-                  Accessibility HUB (14 Tools)
+                  {t.a11y.title}
                 </h3>
               </div>
               <button
@@ -247,7 +247,7 @@ export function App() {
           </div>
         )}
 
-        {/* Live Execution Log Console Modal (Dev & Hackathon Judges) */}
+        {/* Live Execution Log Console Modal */}
         <LogConsoleModal
           isOpen={isLogConsoleOpen}
           onClose={() => setIsLogConsoleOpen(false)}
@@ -257,7 +257,7 @@ export function App() {
       {/* Footer: Privacy Notice */}
       <div className="bg-white border-t border-slate-200 px-3 py-2 flex items-center justify-center text-[10px] text-slate-500 font-medium shrink-0 gap-1.5">
         <ShieldCheck className="w-3.5 h-3.5 text-savvy-blue shrink-0" />
-        <span>Your data stays in your private device</span>
+        <span>{t.common.privacyFooter}</span>
       </div>
     </div>
   );

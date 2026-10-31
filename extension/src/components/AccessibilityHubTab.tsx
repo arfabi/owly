@@ -18,7 +18,7 @@ interface ToolItem {
 }
 
 export function AccessibilityHubTab() {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const isId = language === "id";
 
   // Level index for each tool (0 = Normal / Off)
@@ -304,11 +304,11 @@ export function AccessibilityHubTab() {
             <Accessibility className="w-4 h-4" />
           </div>
           <h3 className="font-extrabold text-xs text-slate-900 leading-tight">
-            Selamat Datang di Savvy Accessibility HUB
+            {t.a11y.welcomeTitle}
           </h3>
         </div>
         <p className="text-[11px] text-slate-500 leading-relaxed">
-          Gunakan fitur-fitur untuk memudahkan Anda untuk mendapatkan pengalaman pengguna yang terbaik sesuai dengan kebutuhan.
+          {t.a11y.welcomeDesc}
         </p>
       </div>
 
@@ -318,7 +318,7 @@ export function AccessibilityHubTab() {
       <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-700">
-            QUICK ACCESSIBILITY PROFILES
+            {t.a11y.quickProfilesTitle}
           </span>
           {activeCount > 0 && (
             <button
@@ -326,7 +326,7 @@ export function AccessibilityHubTab() {
               className="text-[10px] font-bold text-slate-500 hover:text-rose-600 flex items-center gap-1 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" />
-              <span>Reset</span>
+              <span>{t.a11y.resetBtn}</span>
             </button>
           )}
         </div>
@@ -342,7 +342,7 @@ export function AccessibilityHubTab() {
             }`}
           >
             <span className="text-lg select-none">🧠</span>
-            <span className="text-[11px] font-bold leading-tight">ADHD Friendly</span>
+            <span className="text-[11px] font-bold leading-tight">{t.a11y.profileAdhd}</span>
           </button>
 
           {/* Profile 2: Dyslexia Friendly */}
@@ -355,7 +355,7 @@ export function AccessibilityHubTab() {
             }`}
           >
             <span className="text-lg select-none">📖</span>
-            <span className="text-[11px] font-bold leading-tight">Dyslexia Friendly</span>
+            <span className="text-[11px] font-bold leading-tight">{t.a11y.profileDyslexia}</span>
           </button>
 
           {/* Profile 3: Low Vision / High Contrast */}
@@ -368,7 +368,7 @@ export function AccessibilityHubTab() {
             }`}
           >
             <span className="text-lg select-none">👁️</span>
-            <span className="text-[11px] font-bold leading-tight">Low Vision</span>
+            <span className="text-[11px] font-bold leading-tight">{t.a11y.profileLowVision}</span>
           </button>
 
           {/* Profile 4: Senior Friendly */}
@@ -381,7 +381,7 @@ export function AccessibilityHubTab() {
             }`}
           >
             <span className="text-lg select-none">👴</span>
-            <span className="text-[11px] font-bold leading-tight">Senior Comfort</span>
+            <span className="text-[11px] font-bold leading-tight">{t.a11y.profileSenior}</span>
           </button>
         </div>
       </div>
@@ -404,7 +404,7 @@ export function AccessibilityHubTab() {
                   ? "bg-blue-50/70 border-blue-500 text-blue-900 shadow-xs"
                   : "bg-white border-slate-200/90 text-slate-800 hover:border-blue-300 hover:bg-slate-50/60"
               }`}
-              title={`Klik untuk ubah opsi (Opsi: ${tool.options.join(" → ")})`}
+              title={`Click to cycle options: ${tool.options.join(" → ")}`}
             >
               {/* Large Centered Icon */}
               <div className="flex items-center justify-center h-9">{tool.icon}</div>
@@ -434,7 +434,7 @@ export function AccessibilityHubTab() {
       {/* ==================================================================== */}
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 flex items-center justify-between gap-2 shadow-lg z-30">
         <div className="text-[11px] font-semibold text-slate-500">
-          <span className="text-blue-600 font-bold">{activeCount}</span> fitur aktif
+          <span className="text-blue-600 font-bold">{activeCount}</span> {t.a11y.activeCountSuffix}
         </div>
 
         <div className="flex items-center gap-2">
@@ -445,7 +445,7 @@ export function AccessibilityHubTab() {
             className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <Undo2 className="w-3.5 h-3.5" />
-            <span>Urungkan</span>
+            <span>{t.a11y.undoBtn}</span>
           </button>
 
           {/* Reset All Button */}
@@ -455,7 +455,7 @@ export function AccessibilityHubTab() {
             className="px-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Semua</span>
+            <span>{t.a11y.resetBtn}</span>
           </button>
         </div>
       </div>

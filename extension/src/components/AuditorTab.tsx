@@ -31,7 +31,7 @@ interface AuditorTabProps {
 }
 
 export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const isId = language === "id";
 
   const [isAuditing, setIsAuditing] = useState(false);
@@ -205,27 +205,27 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
 
         {/* Traffic Light 3 Counters */}
         <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
-          {/* Lolos / Hijau */}
+          {/* Passed / Green */}
           <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 mx-auto mb-1" />
             <span className="text-[11px] font-extrabold text-emerald-800 block">
-              {report ? `${report.passedCount} Lolos` : "0 Lolos"}
+              {report ? `${report.passedCount} ${t.audit.greenCount}` : `0 ${t.audit.greenCount}`}
             </span>
           </div>
 
-          {/* Peringatan / Kuning */}
+          {/* Warning / Yellow */}
           <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80">
             <AlertTriangle className="w-4 h-4 text-amber-600 mx-auto mb-1" />
             <span className="text-[11px] font-extrabold text-amber-800 block">
-              {report ? `${report.warningCount} Peringatan` : "0 Peringatan"}
+              {report ? `${report.warningCount} ${t.audit.yellowCount}` : `0 ${t.audit.yellowCount}`}
             </span>
           </div>
 
-          {/* Fatal / Merah */}
+          {/* Danger / Red */}
           <div className="p-2.5 rounded-xl bg-red-50 border border-red-200/80">
             <AlertCircle className="w-4 h-4 text-red-600 mx-auto mb-1" />
             <span className="text-[11px] font-extrabold text-red-800 block">
-              {report ? `${report.dangerCount} Fatal` : "0 Fatal"}
+              {report ? `${report.dangerCount} ${t.audit.redCount}` : `0 ${t.audit.redCount}`}
             </span>
           </div>
         </div>
@@ -242,12 +242,12 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
         {isAuditing ? (
           <>
             <RefreshCw className="w-4 h-4 animate-spin text-white" />
-            <span>{isId ? "Memindai & Mengaudit Kolom Halaman..." : "Scanning & Auditing Page Fields..."}</span>
+            <span>{t.audit.auditingProgress}</span>
           </>
         ) : (
           <>
             <Search className="w-4 h-4" />
-            <span>{report ? (isId ? "Audit Ulang Formulir Web" : "Re-Audit Web Form") : (isId ? "Audit Form Sekarang" : "Audit Form Now")}</span>
+            <span>{report ? t.audit.reAuditBtn : t.audit.auditNowBtn}</span>
           </>
         )}
       </button>
@@ -260,19 +260,17 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
           <Lightbulb className="w-4 h-4 text-savvy-blue shrink-0 mt-0.5" />
           <div className="text-[11px] text-slate-700 leading-relaxed">
             <span className="font-bold text-savvy-blue block mb-0.5">
-              {isId ? "Tips: Hubungkan Vault untuk Typo Guard" : "Tip: Connect Vault for Typo Guard"}
+              {t.audit.tipVaultTypoTitle}
             </span>
             <span>
-              {isId
-                ? "Anda belum menyimpan dokumen ke Vault. Audit tetap berjalan normal, namun fitur pencocokan otomatis salah ketik (typo guard) nama & NIK dinonaktifkan."
-                : "No Vault documents detected. Audit runs normally, but automatic typo matching for names & NIKs is inactive."}
+              {t.audit.tipVaultTypoDesc}
             </span>
             {onNavigateTab && (
               <button
                 onClick={() => onNavigateTab("vault")}
                 className="mt-1.5 text-[10.5px] font-bold text-savvy-blue hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>{isId ? "Buka Tab Auto Fill / Vault" : "Open Auto Fill / Vault Tab"}</span>
+                <span>{t.audit.btnOpenVault}</span>
                 <ArrowRight className="w-3 h-3" />
               </button>
             )}
@@ -287,10 +285,10 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
         <div className="space-y-2.5 text-left">
           <div className="flex items-center justify-between px-1">
             <span className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">
-              {isId ? "Daftar Hasil Temuan" : "Audit Findings"}
+              {t.audit.findingsTitle}
             </span>
             <span className="text-[10px] font-bold text-slate-400">
-              {report.totalFieldsScanned} Kolom Terdeteksi
+              {report.totalFieldsScanned} {t.audit.fieldsDetectedSuffix}
             </span>
           </div>
 
@@ -353,7 +351,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
                     {/* Hint / Reference */}
                     {issue.hint && !isApplied && (
                       <div className="text-[10.5px] text-slate-500 bg-white/70 p-2 rounded-lg border border-slate-200/60 leading-snug">
-                        <span className="font-bold text-slate-700">Panduan: </span>
+                        <span className="font-bold text-slate-700">{t.audit.guideLabel} </span>
                         <span>{issue.hint}</span>
                       </div>
                     )}
@@ -372,7 +370,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
                             }
                             className="py-1 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-[10.5px] font-bold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
                           >
-                            <span>👉 Sorot Kolom di Web</span>
+                            <span>{t.audit.btnHighlightField}</span>
                           </button>
                         )}
 
@@ -404,12 +402,10 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
                 <Check className="w-6 h-6 stroke-[3]" />
               </div>
               <h4 className="font-extrabold text-sm text-emerald-950">
-                {isId ? "Formulir Sempurna & Siap Dikirim!" : "Form is Perfect & Ready to Submit!"}
+                {t.audit.allClearTitle}
               </h4>
               <p className="text-xs text-emerald-800 leading-relaxed max-w-[280px] mx-auto">
-                {isId
-                  ? "Seluruh kolom wajib telah terisi, format baku sesuai standar nasional, dan tidak ditemukan kontradiksi data."
-                  : "All required fields are completed, standard formats verified, and no data contradictions found."}
+                {t.audit.allClearDesc}
               </p>
 
               {/* Reverse Onboarding Button */}
@@ -419,7 +415,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
                   className="py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-colors cursor-pointer mx-auto"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span>{isId ? "Simpan Data Form Ini ke Vault" : "Save Form Data to Vault"}</span>
+                  <span>{t.audit.btnSaveFormToVault}</span>
                 </button>
               </div>
             </div>
@@ -430,9 +426,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
       {/* Success Toast for Reverse Onboarding */}
       {saveToVaultToast && (
         <div className="p-3 bg-emerald-600 text-white font-bold text-xs rounded-xl text-center shadow-lg animate-in fade-in">
-          {isId
-            ? "Data formulir berhasil disimpan ke Vault lokal terenkripsi Anda!"
-            : "Form data successfully saved into your local encrypted Vault!"}
+          {t.audit.saveVaultToast}
         </div>
       )}
 
@@ -442,26 +436,26 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
           <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
             <Sparkles className="w-3.5 h-3.5 text-savvy-blue" />
             <h4 className="font-extrabold text-xs text-slate-900">
-              {isId ? "Cakupan 4 Lapisan Audit Savvy" : "Savvy 4-Layer Audit Scope"}
+              {t.audit.scopeCardTitle}
             </h4>
           </div>
 
           <div className="space-y-2 text-xs text-slate-600">
             <div className="flex items-start gap-2">
               <span className="font-mono font-bold text-savvy-blue text-[11px] shrink-0">L1</span>
-              <span><strong>Aturan Form:</strong> Kolom bertanda bintang (*), panjang minimum, dan placeholder bawaan web.</span>
+              <span><strong>{t.audit.scopeL1Label}:</strong> {t.audit.scopeL1Desc}</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="font-mono font-bold text-savvy-blue text-[11px] shrink-0">L2</span>
-              <span><strong>Format Baku:</strong> NIK 16 digit (algoritma wanita +40), No HP 08/+62, Email RFC, dan paspor ICAO.</span>
+              <span><strong>{t.audit.scopeL2Label}:</strong> {t.audit.scopeL2Desc}</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="font-mono font-bold text-savvy-blue text-[11px] shrink-0">L3</span>
-              <span><strong>Typo Guard:</strong> Membandingkan ejaan nama/kontak dengan data resmi Vault secara 100% lokal.</span>
+              <span><strong>{t.audit.scopeL3Label}:</strong> {t.audit.scopeL3Desc}</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="font-mono font-bold text-savvy-blue text-[11px] shrink-0">L4</span>
-              <span><strong>Instruksi Berkas:</strong> Membaca catatan batasan ukuran (KB/MB) dan format ekstensi file di halaman.</span>
+              <span><strong>{t.audit.scopeL4Label}:</strong> {t.audit.scopeL4Desc}</span>
             </div>
           </div>
         </div>

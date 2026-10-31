@@ -9,6 +9,24 @@
     return;
   }
   (window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__ = true;
+  try {
+    document.documentElement.dataset.owlyExtension = "installed";
+    (window as any).__OWLY_EXTENSION_INSTALLED__ = true;
+  } catch (_) {}
+
+  // Web simulator communication bridge
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "OWLY_PING") {
+      window.postMessage({ type: "OWLY_PONG", version: "1.0.0", installed: true }, "*");
+    }
+    if (event.data?.type === "OWLY_OPEN_SIDEPANEL") {
+      try {
+        if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+          chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL_REQUEST" }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+  });
 
   // Bersihkan observer lama jika di-injeksi ulang setelah extension reload
   if ((window as any).__SAVVY_OBSERVER__) {

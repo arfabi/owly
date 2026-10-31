@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       { source: "/simulator", destination: "/landingpage/simulator" },
-      { source: "/mock-portal", destination: "/landingpage/mock-portal" },
     ];
   },
 };

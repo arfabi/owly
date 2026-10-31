@@ -1,13 +1,13 @@
-# Savvy.AI — Pitch Deck (10 Slides)
+# Owly.AI — Pitch Deck (10 Slides)
 
 > **Meta Global AI Developer Hackathon 2026**  
 > Track: **Indie Developer** · Theme: **Build for Your World**  
-> Live Showcase: [https://savvy-plum.vercel.app](https://savvy-plum.vercel.app)
+> Live Showcase: [https://owly-ai.vercel.app](https://owly-ai.vercel.app)
 
 ---
 
 ### Slide 1: Cover & Vision
-**Title:** Savvy.AI - Your AI Browser Companion for Forms & Web
+**Title:** Owly.AI - Your AI Browser Companion for Forms & Web
 **Subtitle:** Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark
 **Tagline:** *"Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark"*
 **Track:** Indie Developer (Meta Global AI Developer Hackathon 2026)

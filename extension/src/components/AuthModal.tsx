@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Sparkles, Shield, X, Check, LogOut, Loader2, User } from "lucide-react";
+import { Sparkles, Shield, X, LogOut, Loader2 } from "lucide-react";
+import { useLanguage } from "../lib/i18n/LanguageContext";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -16,17 +17,18 @@ export function AuthModal({
   onLoginSuccess,
   onLogout,
 }: AuthModalProps) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleDemoJudgeLogin = async () => {
+  const handleDemoLogin = async () => {
     setLoading(true);
-    // Simulate Supabase Demo Judge auth login for extension
+    // Simulate Supabase Demo auth login for extension
     setTimeout(() => {
       onLoginSuccess({
-        name: "Meta Hackathon Judge",
-        email: "judge@savvy.ai",
+        name: "Demo Evaluator",
+        email: "demo@owly.ai",
       });
       setLoading(false);
       onClose();
@@ -37,7 +39,7 @@ export function AuthModal({
     setLoading(true);
     // In chrome extension, open the web callback login url
     window.open(
-      `https://savvy-plum.vercel.app/api/auth/login?provider=${provider}`,
+      `https://owly-ai.vercel.app/api/auth/login?provider=${provider}`,
       "_blank"
     );
     setLoading(false);
@@ -62,9 +64,9 @@ export function AuthModal({
           />
           <div>
             <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
-              Owly<span className="text-savvy-blue">.AI</span> Auth
+              {t.auth.title}
             </h3>
-            <p className="text-[10px] text-slate-500">Zero-Knowledge Public Form Assistant</p>
+            <p className="text-[10px] text-slate-500">{t.auth.subtitle}</p>
           </div>
         </div>
 
@@ -84,7 +86,7 @@ export function AuthModal({
             </div>
 
             <div className="text-[11px] text-slate-600 leading-snug">
-              Akun Anda telah terverifikasi dengan Supabase Free Tier (50.000 MAU). Vault data Anda tersinkronisasi terenkripsi AES-256-GCM.
+              {t.auth.accountDesc}
             </div>
 
             <button
@@ -92,39 +94,39 @@ export function AuthModal({
                 onLogout();
                 onClose();
               }}
-              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>Keluar dari Akun</span>
+              <span>{t.auth.btnLogout}</span>
             </button>
           </div>
         ) : (
           <div className="space-y-3.5 pt-2">
-            {/* 1-Click Demo Judge Button */}
+            {/* 1-Click Demo Login Button */}
             <div className="p-3 rounded-xl bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200 text-center space-y-2">
               <span className="text-[11px] font-bold text-blue-900 block">
-                Pintu Masuk Khusus Dewan Juri
+                {t.auth.demoUserTitle}
               </span>
               <button
-                onClick={handleDemoJudgeLogin}
+                onClick={handleDemoLogin}
                 disabled={loading}
-                className="w-full py-2.5 px-3 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-98 disabled:opacity-75"
+                className="w-full py-2.5 px-3 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all active:scale-98 disabled:opacity-75 cursor-pointer"
               >
                 {loading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 )}
-                <span>1-Click Masuk Demo Juri</span>
+                <span>{t.auth.btnDemoLogin}</span>
               </button>
               <span className="text-[9px] text-slate-500 block">
-                Akun: judge@savvy.ai • Vault KTP/Ijazah Otomatis Terisi
+                {t.auth.demoAccountHint}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
               <div className="h-px bg-slate-200 flex-1" />
-              <span>Atau Masuk via Meta / Google</span>
+              <span>{t.auth.orSocial}</span>
               <div className="h-px bg-slate-200 flex-1" />
             </div>
 
@@ -132,14 +134,14 @@ export function AuthModal({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 onClick={() => handleSocialLogin("facebook")}
-                className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 font-semibold text-slate-800 flex items-center justify-center gap-1.5 transition-colors"
+                className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 font-semibold text-slate-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span className="font-black text-blue-600 text-sm">f</span>
                 <span>Facebook</span>
               </button>
               <button
                 onClick={() => handleSocialLogin("google")}
-                className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 font-semibold text-slate-800 flex items-center justify-center gap-1.5 transition-colors"
+                className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 font-semibold text-slate-800 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span className="font-bold text-red-500 text-xs">G</span>
                 <span>Google</span>
@@ -148,9 +150,7 @@ export function AuthModal({
 
             <div className="p-2 rounded-lg bg-slate-50 border border-slate-200/80 flex items-start gap-2 text-[10px] text-slate-500 leading-tight">
               <Shield className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
-              <span>
-                Jaminan UU PDP No. 27/2022: Data rahasia (NIK/NPWP/Foto) tidak pernah dikirim atau disimpan secara terbuka.
-              </span>
+              <span>{t.auth.pdpNotice}</span>
             </div>
           </div>
         )}

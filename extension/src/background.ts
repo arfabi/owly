@@ -112,6 +112,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Log event untuk debugging ekstensi
   // console.log("[Savvy.AI Background] Message received:", message.type, "from tab:", sender.tab?.id);
 
+  if (message.type === "OPEN_SIDEPANEL_REQUEST") {
+    if (sender.tab?.windowId && (chrome as any).sidePanel?.open) {
+      (chrome as any).sidePanel.open({ windowId: sender.tab.windowId }).catch((err: any) => {
+        console.warn("[Owly Background] Failed to open side panel:", err);
+      });
+    }
+    sendResponse({ status: "opening" });
+    return true;
+  }
+
   if (message.type === "FIELD_FOCUSED") {
     // Forward info field yang sedang aktif ke sidepanel via storage atau runtime broadcast
     chrome.storage.local.set({

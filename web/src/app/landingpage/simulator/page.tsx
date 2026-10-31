@@ -1,1307 +1,1018 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { DemoAuthButton } from "@/components/DemoAuthButton";
+import { Navbar } from "@/components/Navbar";
 import {
-  Compass,
-  Lock,
-  Unlock,
-  ShieldCheck,
-  Sliders,
-  CheckCircle2,
-  AlertTriangle,
-  AlertCircle,
-  Volume2,
-  Mic,
-  Camera,
-  Layers,
-  ArrowRight,
-  ArrowLeft,
-  RotateCcw,
   Sparkles,
-  Loader2,
-  FileCheck2,
-  Copy,
+  Download,
+  CheckCircle2,
+  Upload,
+  CreditCard,
+  GraduationCap,
+  BookOpen,
+  ArrowRight,
+  X,
+  Laptop,
   Check,
   RefreshCw,
-  Upload,
-  Eye,
-  Type,
-  Pause,
-  Contrast,
-  Maximize2,
-  Minimize2,
-  FileText,
-  Zap,
 } from "lucide-react";
 
 export default function SimulatorPage() {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
+  const isId = language === "id";
 
-  // Mode View: Docked in Browser vs Side Panel Only
-  const [viewMode, setViewMode] = useState<"docked" | "sidepanel">("docked");
+  // Extension Detection States
+  const [isExtensionDetected, setIsExtensionDetected] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+  const [connectedToast, setConnectedToast] = useState(false);
 
-  // Shared Form State (Left Panel)
+  // Form Field States across all input types
+  // 1. Text & Masked Inputs
   const [nik, setNik] = useState("");
   const [nama, setNama] = useState("");
+  const [tempatLahir, setTempatLahir] = useState("");
   const [tglLahir, setTglLahir] = useState("");
-  const [essay, setEssay] = useState("");
+  const [gender, setGender] = useState("L");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [npwp, setNpwp] = useState("");
+
+  // 2. Number & Select Inputs
+  const [jenjang, setJenjang] = useState("magister_luar");
+  const [negaraTujuan, setNegaraTujuan] = useState("United Kingdom");
+  const [universitas, setUniversitas] = useState("");
   const [toefl, setToefl] = useState("");
-  const [activeField, setActiveField] = useState<"nik" | "nama" | "tgl" | "toefl" | "photo" | "essay">("nik");
-  const [auditResult, setAuditResult] = useState<{
-    status: "idle" | "green" | "yellow" | "red";
-    message: string;
-  }>({ status: "idle", message: "" });
+  const [ipk, setIpk] = useState("");
+  const [usia, setUsia] = useState("");
 
-  // Dynamic Live API States
-  const [coachCard, setCoachCard] = useState<{
-    meaning: string;
-    how_to_fill: string;
-    example: string;
-    pitfalls: string;
-    confirmation_ref: string;
-    source_type: string;
-    cached?: boolean;
-  }>({
-    meaning: "Nomor identitas kependudukan tunggal 16 digit yang diterbitkan oleh Dinas Dukcapil.",
-    how_to_fill: "Ketik 16 digit angka tanpa spasi atau tanda strip. Wajib sesuai fisik e-KTP terbaru.",
-    example: "3271041908980002",
-    pitfalls: "Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili.",
-    confirmation_ref: "Buku Panduan LPDP 2026, Bab IV, Hlm. 14",
-    source_type: "official"
-  });
-  const [isCoachLoading, setIsCoachLoading] = useState(false);
-  const [voiceReplyText, setVoiceReplyText] = useState("");
-  const [isEssayLoading, setIsEssayLoading] = useState(false);
+  // 3. File & Image Upload Inputs
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoName, setPhotoName] = useState<string | null>(null);
+  const [ktpFileName, setKtpFileName] = useState<string | null>(null);
+  const [ijazahFileName, setIjazahFileName] = useState<string | null>(null);
+  const [rekomendasiFileName, setRekomendasiFileName] = useState<string | null>(null);
 
-  // Extension Side Panel State (Right Panel)
-  const [activeTab, setActiveTab] = useState<"coach" | "vault" | "audit" | "a11y">("coach");
-  const [isVaultUnlocked, setIsVaultUnlocked] = useState(true);
-  const [activeProfile, setActiveProfile] = useState<"pribadi" | "pasangan" | "pekerjaan">("pribadi");
-  const [showUndoBar, setShowUndoBar] = useState(false);
-  const [previousFormSnapshot, setPreviousFormSnapshot] = useState<{
-    nik: string;
-    nama: string;
-    tglLahir: string;
-    essay: string;
-  } | null>(null);
+  // 4. Textarea Inputs
+  const [essay, setEssay] = useState("");
+  const [researchSummary, setResearchSummary] = useState("");
 
-  // Coach Tab States
-  const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
-  const [snipActive, setSnipActive] = useState(false);
+  // 5. Agreement Checkbox
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
-  // Efek Panggilan API Cerdas /api/coach/field saat kolom aktif berubah
-  React.useEffect(() => {
-    if (activeField === "photo") return;
+  // Active Field tracking for visual focus
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-    const fieldKeyMap: Record<string, { key: string; name: string }> = {
-      nik: { key: "nik", name: "Nomor Induk Kependudukan (NIK)" },
-      nama: { key: "nama", name: "Nama Lengkap Sesuai KTP & Ijazah" },
-      tgl: { key: "tglLahir", name: "Tanggal Lahir" },
-      toefl: { key: "toefl", name: "Sertifikat Kemampuan Bahasa Inggris (TOEFL/IELTS)" },
-      essay: { key: "essay", name: "Esai Komitmen Kembali ke Indonesia & Rencana Kontribusi" }
+  // Detect extension presence on mount & via message listener
+  useEffect(() => {
+    const checkExtension = () => {
+      // Check DOM dataset attribute injected by extension content script
+      if (document.documentElement.dataset.owlyExtension === "installed") {
+        setIsExtensionDetected(true);
+        return;
+      }
+      // Check global window object injected by content script
+      if ((window as any).__OWLY_EXTENSION_INSTALLED__) {
+        setIsExtensionDetected(true);
+        return;
+      }
+      // Ping via window.postMessage
+      window.postMessage({ type: "OWLY_PING" }, "*");
     };
 
-    const current = fieldKeyMap[activeField] || { key: activeField, name: activeField };
-
-    async function fetchCoach() {
-      setIsCoachLoading(true);
-      try {
-        const res = await fetch("/api/coach/field", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            portalDomain: "beasiswalpdp.kemenkeu.go.id",
-            fieldKey: current.key,
-            fieldName: current.name,
-            language: language === "en" ? "en" : "id"
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setCoachCard(data);
-        }
-      } catch (err) {
-        console.error("Gagal memuat Field Coach live:", err);
-      } finally {
-        setIsCoachLoading(false);
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "OWLY_PONG") {
+        setIsExtensionDetected(true);
       }
-    }
+    };
 
-    fetchCoach();
-  }, [activeField, language]);
+    window.addEventListener("message", handleMessage);
+    checkExtension();
 
-  // Vault Tab States
-  const [ocrStatus, setOcrStatus] = useState<"idle" | "processing" | "done">("idle");
-  const [essayDraft, setEssayDraft] = useState("");
-  const [copied, setCopied] = useState(false);
+    // Check again after a short delay in case content script initializes slightly after DOM
+    const timer = setTimeout(checkExtension, 600);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      clearTimeout(timer);
+    };
+  }, []);
 
-  // Auditor Tab States
-  const [isScanningPhoto, setIsScanningPhoto] = useState(false);
-  const [photoFixed, setPhotoFixed] = useState(false);
+  // Handler for "Access with Owly" button
+  const handleAccessWithOwly = () => {
+    const isInstalled =
+      isExtensionDetected ||
+      document.documentElement.dataset.owlyExtension === "installed" ||
+      (window as any).__OWLY_EXTENSION_INSTALLED__;
 
-  // A11y Hub States (14 Tools)
-  const [activeTools, setActiveTools] = useState<Record<string, boolean>>({
-    spotlight: true,
-    tts: false,
-    contrast: false,
-    links: false,
-    textSize: false,
-    textSpacing: false,
-    pauseAnim: false,
-    hideImages: false,
-    dyslexiaFont: false,
-    bigCursor: false,
-    liveTooltips: false,
-    lineHeight: false,
-    textAlign: false,
-    colorSat: false,
-  });
-
-  const toggleTool = (id: string) => {
-    setActiveTools((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const resetTools = () => {
-    setActiveTools({
-      spotlight: false,
-      tts: false,
-      contrast: false,
-      links: false,
-      textSize: false,
-      textSpacing: false,
-      pauseAnim: false,
-      hideImages: false,
-      dyslexiaFont: false,
-      bigCursor: false,
-      liveTooltips: false,
-      lineHeight: false,
-      textAlign: false,
-      colorSat: false,
-    });
-  };
-
-  // Actions
-  const handleSingleAutofill = () => {
-    setNik("3271041908980002");
-  };
-
-  const handleBatchAutofill = () => {
-    setPreviousFormSnapshot({ nik, nama, tglLahir, essay });
-    setNik("3271041908980002");
-    setNama("Budi Santoso");
-    setTglLahir("1998-08-19");
-    setEssay(
-      language === "en"
-        ? "Upon completing my Master of Public Policy, my strategic plan is to serve at Bappenas to lead green economy research initiatives."
-        : "Pasca menyelesaikan studi Magister Kebijakan Publik, rencana strategis saya adalah kembali mengabdi di Badan Perencanaan Pembangunan Nasional (Bappenas) untuk memimpin riset kebijakan ekonomi hijau."
-    );
-    setShowUndoBar(true);
-  };
-
-  const handleUndo = () => {
-    if (previousFormSnapshot) {
-      setNik(previousFormSnapshot.nik);
-      setNama(previousFormSnapshot.nama);
-      setTglLahir(previousFormSnapshot.tglLahir);
-      setEssay(previousFormSnapshot.essay);
+    if (isInstalled) {
+      window.postMessage({ type: "OWLY_OPEN_SIDEPANEL" }, "*");
+      setConnectedToast(true);
+      setTimeout(() => setConnectedToast(false), 4000);
     } else {
-      setNik("");
-      setNama("");
-      setTglLahir("");
-      setEssay("");
-    }
-    setShowUndoBar(false);
-  };
-
-  const handleVoiceToggle = async () => {
-    if (voiceStatus !== "idle") {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      setVoiceStatus("idle");
-      return;
-    }
-
-    setVoiceStatus("listening");
-    const fieldKeyMap: Record<string, string> = {
-      nik: "Nomor Induk Kependudukan (NIK)",
-      nama: "Nama Lengkap",
-      tgl: "Tanggal Lahir",
-      toefl: "Sertifikat TOEFL atau IELTS",
-      essay: "Esai Komitmen Kontribusi"
-    };
-    const currentFieldName = fieldKeyMap[activeField] || "kolom formulir ini";
-    const userPrompt = `Jelaskan secara singkat aturan resmi untuk ${currentFieldName} di LPDP 2026.`;
-
-    setTimeout(async () => {
-      setVoiceStatus("thinking");
-      try {
-        const res = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message: userPrompt,
-            portalDomain: "beasiswalpdp.kemenkeu.go.id"
-          })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const reply = data.reply || "";
-          setVoiceReplyText(reply);
-          setVoiceStatus("speaking");
-
-          if (typeof window !== "undefined" && "speechSynthesis" in window) {
-            const utterance = new SpeechSynthesisUtterance(reply.substring(0, 180));
-            utterance.lang = language === "en" ? "en-US" : "id-ID";
-            utterance.rate = 1.05;
-            utterance.onend = () => setVoiceStatus("idle");
-            utterance.onerror = () => setVoiceStatus("idle");
-            window.speechSynthesis.speak(utterance);
-          } else {
-            setTimeout(() => setVoiceStatus("idle"), 5000);
-          }
-        } else {
-          setVoiceStatus("idle");
-        }
-      } catch (err) {
-        console.error("Voice chat error:", err);
-        setVoiceStatus("idle");
-      }
-    }, 800);
-  };
-
-  const handleSimulateOcr = () => {
-    setOcrStatus("processing");
-    setTimeout(() => {
-      setOcrStatus("done");
-      setIsVaultUnlocked(true);
-    }, 1200);
-  };
-
-  const handleGenerateEssay = async () => {
-    setIsEssayLoading(true);
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: "Susun 1 paragraf draf esai komitmen kontribusi LPDP yang padat, terstruktur, akademik dan formal dari 3 poin ini: 1) Lulusan teknik elektro dengan minat energi baru terbarukan, 2) Riset baterai surya untuk daerah tertinggal, 3) Rencana pasca studi mengabdi di BRIN atau Bappenas.",
-          portalDomain: "beasiswalpdp.kemenkeu.go.id"
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setEssayDraft(data.reply || "");
-      }
-    } catch (err) {
-      console.error("Gagal generate esai live:", err);
-    } finally {
-      setIsEssayLoading(false);
+      setShowInstallModal(true);
     }
   };
 
-  const handleCopyEssay = () => {
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // Masking helpers
+  const handleNikChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+    setNik(raw);
   };
 
-  const handleScanPhoto = () => {
-    setIsScanningPhoto(true);
-    setTimeout(() => {
-      setIsScanningPhoto(false);
-      setPhotoFixed(true);
-    }, 1500);
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^\d+]/g, "").slice(0, 15);
+    setPhone(raw);
   };
 
-  const handleAudit = () => {
-    if (!nik || !nama || !tglLahir || !essay) {
-      setAuditResult({
-        status: "red",
-        message: language === "en" ? "Audit Failed (Red): Required fields remain unfilled." : "Audit Gagal (Lampu Merah): Masih ada kolom wajib yang belum diisi.",
-      });
-      return;
+  const handleNpwpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 15);
+    setNpwp(raw);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoName(file.name);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setPhotoPreview(ev.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-    if (nik.length !== 16 || !/^\d+$/.test(nik)) {
-      setAuditResult({
-        status: "red",
-        message: language === "en" ? "Audit Failed (Red): NIK must be exactly 16 numeric digits." : "Audit Gagal (Lampu Merah): NIK wajib tepat 16 digit angka.",
-      });
-      return;
-    }
-    setAuditResult({
-      status: "green",
-      message: language === "en" ? "Audit Cleared (Green Light): All fields valid per LPDP 2026 Guidelines. Ready to submit!" : "Audit Berhasil (Lampu Hijau): Semua field valid sesuai Juknis LPDP 2026. Siap dikirim!",
-    });
   };
 
-  const activeA11yCount = Object.values(activeTools).filter(Boolean).length;
+  const formatNikDisplay = (val: string) => {
+    if (!val) return "";
+    const chunks = val.match(/.{1,4}/g);
+    return chunks ? chunks.join("-") : val;
+  };
+
+  const essayWordCount = essay.trim() ? essay.trim().split(/\s+/).length : 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500/20">
-      {/* Top Navigation Bar */}
-      <nav className="bg-slate-900 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between text-xs shrink-0">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white font-semibold transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Beranda</span>
-          </Link>
-          <div className="h-4 w-[1px] bg-slate-800" />
-          <div className="flex items-center gap-2">
-            <img
-              src="/owly.png"
-              alt="Owly.AI Logo"
-              className="w-6 h-6 object-contain drop-shadow-xs"
-            />
-            <span className="font-extrabold text-sm tracking-tight text-white">
-              Owly<span className="text-[#398CF5]">.AI</span>
-            </span>
-            <span className="px-2 py-0.5 rounded-full bg-[#398CF5]/10 text-[#398CF5] text-[10px] font-bold border border-[#398CF5]/20">
-              Interactive Simulator
-            </span>
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-500/15 selection:text-blue-700 relative flex flex-col justify-between">
+      {/* Background Ambient Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[450px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(59,130,246,0.1),rgba(255,255,255,0))] pointer-events-none -z-10" />
+
+      {/* Unified Navbar */}
+      <Navbar />
+
+      {/* Connected Toast Notification */}
+      {connectedToast && (
+        <div className="fixed top-20 right-5 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-5 h-5 shrink-0" />
+          <div className="text-xs">
+            <p className="font-bold">
+              {isId ? "Ekstensi Owly Terhubung!" : "Owly Extension Connected!"}
+            </p>
+            <p className="text-emerald-100 text-[11px]">
+              {isId
+                ? "Side panel otomatis aktif mendampingi pengisian form ini."
+                : "Side panel is now actively accompanying this form."}
+            </p>
           </div>
         </div>
+      )}
 
-        <div className="flex items-center gap-3">
-          {/* Mode Switcher */}
-          <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-[11px] font-bold">
-            <button
-              onClick={() => setViewMode("docked")}
-              className={`px-3 py-1 rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === "docked"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Maximize2 className="w-3 h-3" />
-              <span>Simulasi Browser Portal</span>
-            </button>
-            <button
-              onClick={() => setViewMode("sidepanel")}
-              className={`px-3 py-1 rounded-md transition-all flex items-center gap-1.5 ${
-                viewMode === "sidepanel"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <Minimize2 className="w-3 h-3" />
-              <span>Side Panel Saja</span>
-            </button>
+      {/* Main Workspace: Real Form + Right Sticky Access Controller */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-24 w-full">
+        {/* Top Header Banner */}
+        <div className="mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100/70 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider mb-3">
+            <Laptop className="w-3.5 h-3.5" />
+            <span>
+              {isId
+                ? "Portal Pengujian Lengkap: Formulir Beasiswa Resmi 2026"
+                : "Official Form Testing & Companion Portal 2026"}
+            </span>
           </div>
-
-          <div className="flex items-center gap-2">
-            <DemoAuthButton />
-            <LanguageSwitcher />
-          </div>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            {isId
+              ? "Pendaftaran Beasiswa & Dokumen Pelayanan Publik"
+              : "Scholarship Application & Public Service Form"}
+          </h1>
+          <p className="text-slate-600 text-xs sm:text-sm mt-2 max-w-3xl leading-relaxed">
+            {isId
+              ? "Halaman ini menyediakan seluruh variasi input formulir nyata (teks, masked NIK/telepon, tanggal, angka, upload pasfoto biometrik, dokumen PDF, dan esai). Uji kehebatan ekstensi browser Owly untuk membimbing, menjelaskan syarat, autofill dari Vault, dan mengaudit berkas langsung dari browser Anda."
+              : "This page provides all standard real-world input types (text, masked NIK/phone, dates, numbers, biometric photo upload, PDF documents, and essays). Test Owly's live extension capabilities directly on this form."}
+          </p>
         </div>
-      </nav>
 
-      {/* Main Simulator Workspace */}
-      <main className="flex-1 flex overflow-hidden p-3 sm:p-5 justify-center items-center">
-        {viewMode === "sidepanel" ? (
-          /* Standalone Side Panel View */
-          <div className="w-[390px] h-[720px] bg-slate-50 border border-slate-300 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left text-slate-800">
-            {renderSidePanelContent()}
-          </div>
-        ) : (
-          /* Docked Browser Simulator (Left: Mock Form, Right: Savvy Extension) */
-          <div className="max-w-6xl w-full h-[760px] bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden flex flex-col">
-            {/* Browser Chrome URL Bar */}
-            <div className="bg-slate-900 px-4 py-2.5 border-b border-slate-800 flex items-center gap-3 shrink-0">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-amber-500/80" />
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
-              </div>
-              <div className="flex-1 max-w-lg mx-auto bg-slate-950 rounded-md px-3 py-1 text-xs text-slate-400 font-mono flex items-center gap-2 border border-slate-800">
-                <Lock className="w-3 h-3 text-emerald-400" />
-                <span className="text-slate-300 text-[11px] truncate">
-                  https://beasiswalpdp.kemenkeu.go.id/pendaftaran/form
-                </span>
-              </div>
-              <span className="text-[11px] font-bold text-blue-400 px-2 py-0.5 rounded bg-blue-950/60 border border-blue-800">
-                Ekstensi Aktif di Side Panel
-              </span>
-            </div>
+        {/* 2-Column Layout: Left Form (flex-1), Right Controller (w-80 / 340px) */}
+        <div className="flex flex-col lg:flex-row items-start gap-8">
+          {/* Left Column: Full Comprehensive Form */}
+          <div className="flex-1 w-full bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-10">
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-10">
+              {/* Section 1: Identitas Diri (Text, Masked, Date, Radio) */}
+              <div>
+                <div className="flex items-center gap-2 pb-3 mb-6 border-b border-slate-100">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                    {isId ? "1. Identitas Pribadi & Kependudukan" : "1. Personal Identity & Civil Records"}
+                  </h2>
+                </div>
 
-            {/* Browser Body */}
-            <div className="flex-1 flex overflow-hidden">
-              {/* Left: Interactive Simulated Form Portal */}
-              <div className="flex-1 bg-[#f8fafc] text-slate-800 p-6 overflow-y-auto text-left relative">
-                <div className="max-w-xl mx-auto bg-white rounded-xl shadow-xs border border-slate-200 p-6 space-y-4">
-                  <div className="border-b pb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
-                      Portal Simulasi Resmi
-                    </span>
-                    <h2 className="text-base font-bold text-slate-900 mt-1">
-                      Pendaftaran Beasiswa LPDP 2026
-                    </h2>
-                    <p className="text-xs text-slate-500">
-                      Klik kolom di bawah untuk memicu respon cerdas dari Side Panel Savvy di sebelah kanan.
-                    </p>
-                  </div>
-
-                  {/* Field NIK with Beacon Spotlight */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {/* Field NIK (Masked 16 Digit) */}
                   <div
-                    className={`p-3.5 rounded-xl transition-all cursor-pointer ${
-                      activeField === "nik"
-                        ? "bg-blue-50/50 border-2 border-blue-500 shadow-xs"
-                        : "border border-slate-200 hover:border-slate-300"
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "nik"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
-                    onClick={() => {
-                      setActiveField("nik");
-                      setActiveTab("coach");
-                    }}
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs font-bold text-slate-900">
-                        Nomor Induk Kependudukan (NIK) <span className="text-red-500">*</span>
-                      </label>
-                      {activeField === "nik" && (
-                        <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                          Spotlight Aktif
-                        </span>
-                      )}
-                    </div>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Nomor Induk Kependudukan (NIK)" : "National Identification Number (NIK)"}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
-                      maxLength={16}
-                      value={nik}
-                      onChange={(e) => setNik(e.target.value)}
-                      placeholder="16 digit angka sesuai e-KTP"
-                      className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      name="nik"
+                      id="nik-field"
+                      value={formatNikDisplay(nik)}
+                      onChange={handleNikChange}
+                      onFocus={() => setFocusedField("nik")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="3271-XXXX-XXXX-XXXX"
+                      maxLength={19}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
-                    {nik && nik.length === 16 && (
-                      <span className="text-[10px] text-emerald-700 font-semibold block mt-1">
-                        ✓ Format 16 digit valid
-                      </span>
-                    )}
+                    <p className="text-[11px] text-slate-500 mt-1.5 flex items-center justify-between">
+                      <span>{isId ? "Wajib tepat 16 digit angka e-KTP." : "Must be exactly 16 valid digits."}</span>
+                      <span className="font-mono font-semibold text-blue-600">{nik.length}/16</span>
+                    </p>
                   </div>
 
                   {/* Field Nama Lengkap */}
                   <div
-                    className={`p-3.5 rounded-xl transition-all cursor-pointer ${
-                      activeField === "nama"
-                        ? "bg-blue-50/50 border-2 border-blue-500 shadow-xs"
-                        : "border border-slate-200 hover:border-slate-300"
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "nama"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
-                    onClick={() => {
-                      setActiveField("nama");
-                      setActiveTab("coach");
-                    }}
                   >
-                    <label className="text-xs font-bold text-slate-800 block mb-1">
-                      Nama Lengkap (Sesuai Ijazah &amp; KTP) <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Nama Lengkap (Sesuai Ijazah & KTP)" : "Full Legal Name"}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
+                      name="fullName"
+                      id="fullname-field"
                       value={nama}
                       onChange={(e) => setNama(e.target.value)}
+                      onFocus={() => setFocusedField("nama")}
+                      onBlur={() => setFocusedField(null)}
                       placeholder="Contoh: Budi Santoso"
-                      className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {isId ? "Tanpa gelar akademik atau singkatan." : "Without academic titles or prefixes."}
+                    </p>
+                  </div>
+
+                  {/* Field Tempat Lahir */}
+                  <div
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "tempatLahir"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
+                    }`}
+                  >
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Tempat Lahir (Kota/Kabupaten)" : "Place of Birth"}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="birthPlace"
+                      value={tempatLahir}
+                      onChange={(e) => setTempatLahir(e.target.value)}
+                      onFocus={() => setFocusedField("tempatLahir")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="Contoh: Jakarta Selatan"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
 
-                  {/* Field Tanggal Lahir */}
+                  {/* Field Tanggal Lahir (Date Input) */}
                   <div
-                    className={`p-3.5 rounded-xl transition-all cursor-pointer ${
-                      activeField === "tgl"
-                        ? "bg-blue-50/50 border-2 border-blue-500 shadow-xs"
-                        : "border border-slate-200 hover:border-slate-300"
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "tglLahir"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
-                    onClick={() => {
-                      setActiveField("tgl");
-                      setActiveTab("coach");
-                    }}
                   >
-                    <label className="text-xs font-bold text-slate-800 block mb-1">
-                      Tanggal Lahir <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Tanggal Lahir" : "Date of Birth"} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="date"
+                      name="birthDate"
+                      id="birthdate-field"
                       value={tglLahir}
                       onChange={(e) => setTglLahir(e.target.value)}
-                      className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onFocus={() => setFocusedField("tglLahir")}
+                      onBlur={() => setFocusedField(null)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {isId ? "Format: YYYY-MM-DD" : "Format: YYYY-MM-DD"}
+                    </p>
                   </div>
 
-                  {/* Field Kemampuan Bahasa Inggris (TOEFL / IELTS) */}
-                  <div
-                    className={`p-3.5 rounded-xl transition-all cursor-pointer ${
-                      activeField === "toefl"
-                        ? "bg-blue-50/50 border-2 border-blue-500 shadow-xs"
-                        : "border border-slate-200 hover:border-slate-300"
-                    }`}
-                    onClick={() => {
-                      setActiveField("toefl");
-                      setActiveTab("coach");
-                    }}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs font-bold text-slate-800">
-                        Sertifikat Bahasa Inggris (TOEFL/IELTS) <span className="text-red-500">*</span>
+                  {/* Field Jenis Kelamin (Radio Input) */}
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/30">
+                    <label className="block text-xs font-bold text-slate-800 mb-2">
+                      {isId ? "Jenis Kelamin" : "Gender"} <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-6 pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-slate-700">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="L"
+                          checked={gender === "L"}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span>{isId ? "Laki-laki" : "Male"}</span>
                       </label>
-                      {activeField === "toefl" && (
-                        <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                          Spotlight Aktif
-                        </span>
-                      )}
+                      <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-slate-700">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value="P"
+                          checked={gender === "P"}
+                          onChange={(e) => setGender(e.target.value)}
+                          className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span>{isId ? "Perempuan" : "Female"}</span>
+                      </label>
                     </div>
+                  </div>
+
+                  {/* Field Nomor WhatsApp (Masked Phone) */}
+                  <div
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "phone"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
+                    }`}
+                  >
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Nomor Telepon / WhatsApp" : "Mobile / WhatsApp Number"}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
-                      value={toefl}
-                      onChange={(e) => setToefl(e.target.value)}
-                      placeholder="Contoh: IELTS 7.0 atau TOEFL iBT 95"
-                      className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      name="phoneNumber"
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      onFocus={() => setFocusedField("phone")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="+62 812-3456-7890"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
 
-                  {/* Field Upload Pasfoto */}
+                  {/* Field Email (RFC 5322) */}
                   <div
-                    className={`p-3.5 rounded-xl transition-all cursor-pointer ${
-                      activeField === "photo"
-                        ? "bg-blue-50/50 border-2 border-blue-500 shadow-xs"
-                        : "border border-slate-200 hover:border-slate-300"
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "email"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
-                    onClick={() => {
-                      setActiveField("photo");
-                      setActiveTab("audit");
-                    }}
                   >
-                    <label className="text-xs font-bold text-slate-800 block mb-1">
-                      Unggah Pasfoto Biometrik 2x2 Inci <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Alamat Email Aktif" : "Active Email Address"}{" "}
+                      <span className="text-red-500">*</span>
                     </label>
-                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-3 text-center text-xs text-slate-500">
-                      Format 35x45 mm berlatar polos (klik untuk uji audit pasfoto di side panel)
+                    <input
+                      type="email"
+                      name="emailAddress"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setFocusedField("email")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="nama@domain.com"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+
+                  {/* Field NPWP (Masked NPWP) */}
+                  <div
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "npwp"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
+                    }`}
+                  >
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Nomor Pokok Wajib Pajak (NPWP)" : "Tax Identification Number (NPWP)"}
+                    </label>
+                    <input
+                      type="text"
+                      name="npwpNumber"
+                      value={npwp}
+                      onChange={handleNpwpChange}
+                      onFocus={() => setFocusedField("npwp")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="00.000.000.0-000.000"
+                      maxLength={15}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {isId ? "Opsional bagi pelamar fresh graduate." : "Optional for fresh graduates."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Kualifikasi Pendidikan & Nilai (Select, Number) */}
+              <div>
+                <div className="flex items-center gap-2 pb-3 mb-6 border-b border-slate-100">
+                  <GraduationCap className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                    {isId ? "2. Jenjang Studi, Universitas, & Skor Bahasa" : "2. Academic Degree, Destination & Test Scores"}
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {/* Select Jenjang */}
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/30">
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Jenjang Beasiswa" : "Target Degree"} <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={jenjang}
+                      onChange={(e) => setJenjang(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="magister_dalam">Magister (S2) Dalam Negeri</option>
+                      <option value="magister_luar">Magister (S2) Luar Negeri</option>
+                      <option value="doktoral_dalam">Doktoral (S3) Dalam Negeri</option>
+                      <option value="doktoral_luar">Doktoral (S3) Luar Negeri</option>
+                    </select>
+                  </div>
+
+                  {/* Select Negara Tujuan */}
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/30">
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Negara Tujuan Studi" : "Destination Country"} <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={negaraTujuan}
+                      onChange={(e) => setNegaraTujuan(e.target.value)}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="United Kingdom">United Kingdom (UK)</option>
+                      <option value="United States">United States (USA)</option>
+                      <option value="Australia">Australia</option>
+                      <option value="Netherlands">Netherlands (Belanda)</option>
+                      <option value="Japan">Japan (Jepang)</option>
+                      <option value="Indonesia">Indonesia</option>
+                    </select>
+                  </div>
+
+                  {/* Text Universitas */}
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/30">
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Universitas Tujuan" : "Target University"} <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={universitas}
+                      onChange={(e) => setUniversitas(e.target.value)}
+                      placeholder="Contoh: University of Oxford"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Number Skor TOEFL / IELTS */}
+                  <div
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "toefl"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
+                    }`}
+                  >
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Skor Resmi TOEFL ITP / iBT" : "Official TOEFL Score"}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="toeflScore"
+                      id="toefl-field"
+                      min={310}
+                      max={677}
+                      value={toefl}
+                      onChange={(e) => setToefl(e.target.value)}
+                      onFocus={() => setFocusedField("toefl")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="Contoh: 550"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {isId ? "Syarat Magister Luar Negeri: min. 500." : "Minimum required for overseas: 500."}
+                    </p>
+                  </div>
+
+                  {/* Number IPK Skala 4.00 */}
+                  <div
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "ipk"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
+                    }`}
+                  >
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "IPK Jenjang Sebelumnya (Skala 4.00)" : "Cumulative GPA (4.00 Scale)"}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="gpaScore"
+                      min={0}
+                      max={4.0}
+                      step={0.01}
+                      value={ipk}
+                      onChange={(e) => setIpk(e.target.value)}
+                      onFocus={() => setFocusedField("ipk")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="Contoh: 3.75"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  {/* Number Usia Pelamar */}
+                  <div
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "usia"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
+                    }`}
+                  >
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                      {isId ? "Usia per 31 Desember 2026" : "Age by Dec 31, 2026"}{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="applicantAge"
+                      min={18}
+                      max={60}
+                      value={usia}
+                      onChange={(e) => setUsia(e.target.value)}
+                      onFocus={() => setFocusedField("usia")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="Contoh: 26"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {isId ? "Batas Magister: maks. 35 tahun." : "Master age limit: max 35 years."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Upload Image & Dokumen Berkas (File Uploads) */}
+              <div>
+                <div className="flex items-center gap-2 pb-3 mb-6 border-b border-slate-100">
+                  <Upload className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                    {isId ? "3. Unggah Berkas & Pasfoto Biometrik" : "3. Biometric Photo & Official Documents"}
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {/* Upload Image: Pasfoto Biometrik */}
+                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                        {isId ? "Pasfoto Biometrik Resmi (2x2 Inci / 35x45 mm)" : "Official Biometric Passport Photo"}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <p className="text-[11px] text-slate-500 mb-3">
+                        {isId
+                          ? "Format JPG/PNG, maks. 200 KB. Wajah menghadap lurus tanpa kacamata gelap."
+                          : "JPG/PNG format, max 200 KB. Frontal face view per ICAO 9303 standards."}
+                      </p>
+
+                      <div className="flex items-center gap-4">
+                        {photoPreview ? (
+                          <div className="w-16 h-20 rounded-xl overflow-hidden border-2 border-blue-500 shadow-xs shrink-0 relative">
+                            <img
+                              src={photoPreview}
+                              alt="Biometric Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-16 h-20 rounded-xl border-2 border-dashed border-slate-300 bg-white flex items-center justify-center text-slate-400 shrink-0">
+                            <Upload className="w-6 h-6" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            id="photo-upload"
+                            onChange={handlePhotoUpload}
+                            className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
+                          />
+                          {photoName && (
+                            <p className="text-[10px] text-emerald-600 font-semibold mt-1 truncate">
+                              ✓ {photoName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Field Esai */}
-                  <div
-                    className={`p-3.5 rounded-xl transition-all cursor-pointer ${
-                      activeField === "essay"
-                        ? "bg-blue-50/50 border-2 border-blue-500 shadow-xs"
-                        : "border border-slate-200 hover:border-slate-300"
-                    }`}
-                    onClick={() => {
-                      setActiveField("essay");
-                      setActiveTab("vault");
-                    }}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs font-bold text-slate-800">
-                        Esai Komitmen Kembali &amp; Kontribusi <span className="text-red-500">*</span>
+                  {/* Upload File: Scan KTP Fisik */}
+                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                        {isId ? "Scan Kartu Tanda Penduduk (e-KTP Asli)" : "Scanned National ID Card"}{" "}
+                        <span className="text-red-500">*</span>
                       </label>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {essay.split(/\s+/).filter(Boolean).length} kata
+                      <p className="text-[11px] text-slate-500 mb-3">
+                        {isId ? "Format PDF atau JPG berwarna terang, tidak terpotong." : "Color PDF or JPG format, fully legible."}
+                      </p>
+
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => setKtpFileName(e.target.files?.[0]?.name || null)}
+                        className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
+                      />
+                      {ktpFileName && (
+                        <p className="text-[10px] text-emerald-600 font-semibold mt-1 truncate">
+                          ✓ {ktpFileName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Upload File: Ijazah & Transkrip Terlegalisir (PDF) */}
+                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                        {isId ? "Ijazah & Transkrip Terlegalisir (PDF)" : "Certified Diploma & Transcript (PDF)"}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <p className="text-[11px] text-slate-500 mb-3">
+                        {isId ? "Wajib legalisir basah atau ttd elektronik barcode BSrE." : "Must have official university certification seal."}
+                      </p>
+
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(e) => setIjazahFileName(e.target.files?.[0]?.name || null)}
+                        className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
+                      />
+                      {ijazahFileName && (
+                        <p className="text-[10px] text-emerald-600 font-semibold mt-1 truncate">
+                          ✓ {ijazahFileName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Upload File: Surat Rekomendasi (PDF) */}
+                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-800 mb-1">
+                        {isId ? "Surat Rekomendasi Tokoh / Akademisi (PDF)" : "Academic Recommendation Letter (PDF)"}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <p className="text-[11px] text-slate-500 mb-3">
+                        {isId ? "Diterbitkan dalam kurun waktu 1 tahun terakhir." : "Issued within the last 12 months."}
+                      </p>
+
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(e) => setRekomendasiFileName(e.target.files?.[0]?.name || null)}
+                        className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
+                      />
+                      {rekomendasiFileName && (
+                        <p className="text-[10px] text-emerald-600 font-semibold mt-1 truncate">
+                          ✓ {rekomendasiFileName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Esai Komitmen & Rencana Studi (Textarea) */}
+              <div>
+                <div className="flex items-center gap-2 pb-3 mb-6 border-b border-slate-100">
+                  <BookOpen className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                    {isId ? "4. Esai Komitmen Pasca-Studi & Proposal" : "4. Post-Study Commitment Essay & Abstract"}
+                  </h2>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Textarea Esai */}
+                  <div
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "essay"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-slate-800">
+                        {isId ? "Esai Komitmen Kembali ke Indonesia & Rencana Kontribusi" : "Return Commitment & Contribution Plan Essay"}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[11px] font-mono text-slate-500">
+                        {essayWordCount} {isId ? "kata (min. 50 kata)" : "words (min. 50 words)"}
                       </span>
                     </div>
                     <textarea
-                      rows={3}
+                      rows={5}
+                      name="essayContribution"
+                      id="essay-field"
                       value={essay}
                       onChange={(e) => setEssay(e.target.value)}
-                      placeholder="Deskripsikan rencana kontribusi pasca-studi..."
-                      className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      onFocus={() => setFocusedField("essay")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder={
+                        isId
+                          ? "Deskripsikan rencana konkret kontribusi Anda bagi bangsa pasca menyelesaikan studi. Jelaskan peran strategis Anda dalam 5 tahun ke depan..."
+                          : "Describe your concrete post-study contributions and 5-year career roadmap..."
+                      }
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
                     />
                   </div>
 
-                  {/* Audit Alert */}
-                  {auditResult.status !== "idle" && (
-                    <div
-                      className={`p-3 rounded-lg text-xs font-medium flex items-start gap-2 ${
-                        auditResult.status === "green"
-                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                          : "bg-red-50 text-red-800 border border-red-200"
-                      }`}
-                    >
-                      {auditResult.status === "green" ? (
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                      )}
-                      <div>{auditResult.message}</div>
-                    </div>
-                  )}
-
-                  {/* Actions Bar */}
-                  <div className="pt-2 border-t flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={handleAudit}
-                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      <span>Uji Pre-Submit Audit</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled
-                      className="px-4 py-2 rounded-lg bg-slate-200 text-slate-400 font-bold text-xs cursor-not-allowed"
-                    >
-                      Kirim (Submit)
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Savvy Chrome Side Panel */}
-              <div className="w-[390px] border-l border-slate-800 bg-slate-900 flex flex-col justify-center items-center p-2">
-                <div className="w-full h-full bg-slate-50 rounded-xl border border-slate-700 flex flex-col overflow-hidden text-left text-slate-800">
-                  {renderSidePanelContent()}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-
-  // Helper render side panel content (Used in both docked & standalone)
-  function renderSidePanelContent() {
-    return (
-      <>
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img
-                src="/owly.png"
-                alt="Owly.AI"
-                className="w-7 h-7 object-contain drop-shadow-xs"
-              />
-              <div>
-                <span className="font-extrabold text-xs text-slate-900 tracking-tight">
-                  Owly<span className="text-[#398CF5]">.AI</span>
-                </span>
-                <span className="text-[10px] text-slate-400 block -mt-0.5 truncate max-w-[170px]" title="Your AI Browser Companion for Forms & Web">
-                  Your AI Browser Companion for Forms & Web
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsVaultUnlocked(!isVaultUnlocked)}
-              className={`px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all flex items-center gap-1 ${
-                isVaultUnlocked
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-slate-100 text-slate-600 border-slate-200"
-              }`}
-            >
-              {isVaultUnlocked ? (
-                <>
-                  <Unlock className="w-2.5 h-2.5" />
-                  <span>Vault Unlocked</span>
-                </>
-              ) : (
-                <>
-                  <Lock className="w-2.5 h-2.5" />
-                  <span>Buka Vault</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-100">
-            <span className="text-slate-500 font-mono truncate max-w-[180px]">
-              beasiswalpdp.kemenkeu.go.id
-            </span>
-            <span className="text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
-              🎯 LPDP 2026
-            </span>
-          </div>
-        </div>
-
-        {/* 4 Tabs */}
-        <div className="grid grid-cols-4 bg-white border-b border-slate-200 text-xs font-bold text-center">
-          {[
-            { id: "coach", label: "Field Coach", icon: Compass },
-            { id: "vault", label: "Vault & Esai", icon: Lock },
-            { id: "audit", label: "Pre-Audit", icon: ShieldCheck },
-            { id: "a11y", label: "A11y (14)", icon: Sliders },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`py-2 px-1 flex flex-col items-center justify-center gap-0.5 transition-all border-b-2 ${
-                  isActive
-                    ? "border-blue-600 text-blue-600 bg-blue-50/30"
-                    : "border-transparent text-slate-500 hover:text-slate-900"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span className="text-[10px] truncate">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Body */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-3 text-xs">
-          {/* TAB 1: FIELD COACH */}
-          {activeTab === "coach" && (
-            <div className="space-y-3">
-              {/* Active Field Banner */}
-              <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-2.5 flex items-center justify-between">
-                <div>
-                  <div className="text-blue-800 font-bold text-xs flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                    <span>
-                      {activeField === "nik" && "Nomor Induk Kependudukan (NIK)"}
-                      {activeField === "nama" && "Nama Lengkap (KTP & Ijazah)"}
-                      {activeField === "tgl" && "Tanggal Lahir"}
-                      {activeField === "toefl" && "Sertifikat Bahasa Inggris (TOEFL/IELTS)"}
-                      {activeField === "photo" && "Pasfoto Biometrik 2x2 Inci"}
-                      {activeField === "essay" && "Esai Komitmen Kontribusi"}
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
-                    Kolom aktif yang sedang disorot Spotlight
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200 shrink-0">
-                  {coachCard.source_type === "official" ? "🟢 Resmi LPDP" : "💡 Panduan AI"}
-                </span>
-              </div>
-
-              {/* 4-Element Card (Live Baseten / Two-Tier Cache) */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs space-y-2.5 relative">
-                {isCoachLoading && (
-                  <div className="absolute inset-0 bg-white/85 backdrop-blur-2xs rounded-xl flex items-center justify-center z-10">
-                    <div className="flex items-center gap-2 text-blue-600 font-bold text-xs">
-                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                      <span>Muse Spark menalar juknis...</span>
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Arti Istilah:
-                  </span>
-                  <p className="text-slate-800 font-medium mt-0.5 leading-snug">
-                    {coachCard.meaning}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Cara Mengisi:
-                  </span>
-                  <p className="text-slate-700 mt-0.5 leading-snug">
-                    {coachCard.how_to_fill}
-                  </p>
-                </div>
-
-                <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                    Contoh Valid:
-                  </span>
-                  <code className="text-blue-700 font-mono font-bold text-xs mt-0.5 block">
-                    {coachCard.example}
-                  </code>
-                </div>
-
-                <div className="bg-amber-50/70 p-2 rounded-lg border border-amber-200">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">
-                    Jebakan Umum (Pitfall):
-                  </span>
-                  <p className="text-[11px] text-amber-900 mt-0.5 leading-snug">
-                    {coachCard.pitfalls}
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
-                  <span className="truncate max-w-[210px]" title={coachCard.confirmation_ref}>
-                    {coachCard.confirmation_ref}
-                  </span>
-                  <span className="text-blue-600 font-semibold shrink-0">
-                    {coachCard.cached ? "L1/L2 Cache (0ms)" : "Baseten Muse Spark"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Single-Field Autofill Button */}
-              <button
-                onClick={handleSingleAutofill}
-                disabled={!isVaultUnlocked}
-                className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all ${
-                  !isVaultUnlocked
-                    ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                    : nik === "3271041908980002"
-                    ? "bg-emerald-600 text-white"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
-              >
-                {nik === "3271041908980002" ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Telah Terisi dari Vault</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Isi Kolom Ini dari Vault</span>
-                  </>
-                )}
-              </button>
-
-              {/* Handsfree Voicebot */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2">
-                <div className="flex items-center justify-between font-bold text-xs text-slate-800">
-                  <div className="flex items-center gap-1.5">
-                    <Volume2 className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Handsfree Voicebot (Web Speech)</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 font-medium">Native TTS</span>
-                </div>
-
-                {/* Waveform */}
-                <div className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 text-center">
-                  <div className="flex items-center justify-center gap-1 h-5 mb-1">
-                    {[4, 10, 16, 22, 14, 8, 18, 12, 6].map((h, i) => (
-                      <div
-                        key={i}
-                        className={`w-1 rounded-full transition-all duration-300 ${
-                          voiceStatus === "listening"
-                            ? "bg-emerald-500 animate-pulse"
-                            : voiceStatus === "thinking"
-                            ? "bg-amber-500 animate-bounce"
-                            : voiceStatus === "speaking"
-                            ? "bg-blue-600 animate-pulse"
-                            : "bg-slate-300"
-                        }`}
-                        style={{ height: voiceStatus !== "idle" ? `${h}px` : "5px" }}
-                      />
-                    ))}
-                  </div>
-                  <div className="text-[10px] font-semibold text-slate-600">
-                    {voiceStatus === "listening" && "Mendengarkan ucapan Anda..."}
-                    {voiceStatus === "thinking" && "Muse Spark sedang menalar juknis di Baseten..."}
-                    {voiceStatus === "speaking" && "Menjelaskan aturan suara..."}
-                    {voiceStatus === "idle" && "Klik tombol di bawah untuk bertanya pada Savvy"}
-                  </div>
-                  {voiceReplyText && (
-                    <div className="mt-2 p-2 bg-blue-50/80 border border-blue-200/80 rounded-lg text-[11px] text-blue-900 text-left leading-snug">
-                      <strong className="text-blue-700 block text-[10px] mb-0.5">Savvy Voice:</strong>
-                      {voiceReplyText}
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={handleVoiceToggle}
-                  className="w-full py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
-                >
-                  <Mic className="w-3 h-3 text-blue-600" />
-                  <span>Bicara dengan Savvy</span>
-                </button>
-              </div>
-
-              {/* Explain This Snip */}
-              <div className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-2xs">
-                <div>
-                  <div className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                    <Camera className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Explain This (Vision Snip)</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
-                    Sensor otomatis DOM Masking lokal
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSnipActive(!snipActive)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                    snipActive
-                      ? "bg-purple-600 text-white"
-                      : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
-                  }`}
-                >
-                  {snipActive ? "Aktif" : "Mulai Snip"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: VAULT & ESSAY */}
-          {activeTab === "vault" && (
-            <div className="space-y-3">
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-slate-900 flex items-center gap-1">
-                    <Lock className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Multiple Vault (AES-256)</span>
-                  </span>
-                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                    Zero-Knowledge
-                  </span>
-                </div>
-
-                {/* Profiles */}
-                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] font-bold">
-                  {(["pribadi", "pasangan", "pekerjaan"] as const).map((prof) => (
-                    <button
-                      key={prof}
-                      onClick={() => setActiveProfile(prof)}
-                      className={`flex-1 py-1 rounded-md transition-all capitalize ${
-                        activeProfile === prof
-                          ? "bg-white text-blue-600 shadow-2xs font-extrabold"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      {prof}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Stored Credentials */}
-                <div className="space-y-1 text-[11px] font-mono">
-                  <div className="p-1.5 rounded bg-slate-50 border border-slate-100 flex justify-between">
-                    <span className="text-slate-400 font-sans font-bold">NIK:</span>
-                    <span className="font-bold text-slate-900">{isVaultUnlocked ? "3271041908980002" : "••••••••••••••••"}</span>
-                  </div>
-                  <div className="p-1.5 rounded bg-slate-50 border border-slate-100 flex justify-between">
-                    <span className="text-slate-400 font-sans font-bold">Nama:</span>
-                    <span className="font-bold text-slate-900">{isVaultUnlocked ? "Budi Santoso" : "•••••••••••••"}</span>
-                  </div>
-                  <div className="p-1.5 rounded bg-slate-50 border border-slate-100 flex justify-between">
-                    <span className="text-slate-400 font-sans font-bold">Tgl Lahir:</span>
-                    <span className="font-bold text-slate-900">{isVaultUnlocked ? "19-08-1998" : "••-••-••••"}</span>
-                  </div>
-                </div>
-
-                {/* Batch Autofill */}
-                <button
-                  onClick={handleBatchAutofill}
-                  disabled={!isVaultUnlocked}
-                  className={`w-full py-2 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs ${
-                    isVaultUnlocked
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                  }`}
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>1-Click Autofill Semua Kolom</span>
-                </button>
-              </div>
-
-              {/* UndoBar */}
-              {showUndoBar && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center justify-between text-xs shadow-xs">
-                  <span className="font-bold text-emerald-800 text-[11px]">
-                    ✓ 4 kolom diisi dari Vault
-                  </span>
-                  <button
-                    onClick={handleUndo}
-                    className="px-2 py-0.5 bg-white text-emerald-800 hover:bg-emerald-100 border border-emerald-300 rounded font-bold text-[10px] flex items-center gap-1"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Undo</span>
-                  </button>
-                </div>
-              )}
-
-              {/* OCR KTP Upload */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2">
-                <div className="text-left">
-                  <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                    <Upload className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Multimodal KTP Extractor</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500">
-                    Muse Spark Open in-RAM (Zero Retention)
-                  </p>
-                </div>
-                <button
-                  onClick={handleSimulateOcr}
-                  className="w-full py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                >
-                  <FileCheck2 className="w-3.5 h-3.5 text-blue-600" />
-                  <span>
-                    {ocrStatus === "processing"
-                      ? "Mengekstrak KTP..."
-                      : ocrStatus === "done"
-                      ? "✓ Data KTP Masuk ke Vault"
-                      : "Uji Coba Ekstraksi KTP"}
-                  </span>
-                </button>
-              </div>
-
-              {/* Essay Coach */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2">
-                <div className="text-left">
-                  <div className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Essay Coach (3-Bullet Drafting)</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500">
-                    Merapikan fakta kasar menjadi esai formal tanpa halusinasi
-                  </p>
-                </div>
-                <button
-                  onClick={handleGenerateEssay}
-                  disabled={isEssayLoading}
-                  className="w-full py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs disabled:opacity-75"
-                >
-                  {isEssayLoading ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Muse Spark Merumuskan Esai...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Rancang Draf Narasi Esai (Live AI)</span>
-                    </>
-                  )}
-                </button>
-
-                {essayDraft && (
-                  <div className="p-2.5 rounded-lg bg-purple-50 border border-purple-200 text-left space-y-1">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-purple-800">
-                      <span>Draf Narasi (Siap Salin):</span>
-                      <button
-                        onClick={handleCopyEssay}
-                        className="flex items-center gap-1 text-purple-700 hover:text-purple-900"
-                      >
-                        {copied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                        <span>{copied ? "Tersalin" : "Salin"}</span>
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-slate-800 leading-snug">
-                      {essayDraft}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: AUDITOR */}
-          {activeTab === "audit" && (
-            <div className="space-y-3">
-              {/* Traffic Light Summary */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2">
-                <div className="flex items-center justify-between font-bold text-xs text-slate-900">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Traffic Light Auditor</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400">Pre-Submit FSM</span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
-                  <div className="p-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mx-auto mb-0.5" />
-                    <span className="text-[10px] font-bold text-emerald-800 block">3 Siap</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-amber-50 border border-amber-200">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 mx-auto mb-0.5" />
-                    <span className="text-[10px] font-bold text-amber-800 block">1 Ambigu</span>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-red-50 border border-red-200">
-                    <AlertCircle className="w-3.5 h-3.5 text-red-600 mx-auto mb-0.5" />
-                    <span className="text-[10px] font-bold text-red-800 block">
-                      {photoFixed ? "0 Fatal" : "1 Fatal"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Photo Compliance Inspector */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                      <Camera className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Audit Pasfoto (ICAO 9303)</span>
-                    </h4>
-                    <p className="text-[10px] text-slate-500">
-                      In-memory sharp deterministik (0% manipulasi piksel)
-                    </p>
-                  </div>
-                </div>
-
-                {/* Simulated Photo Box with Border Beam */}
-                <div className="relative mx-auto w-24 h-24 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center overflow-hidden">
-                  <div className="w-16 h-20 rounded-full border border-dashed border-blue-400 flex flex-col items-center justify-center text-[9px] text-slate-500 font-bold bg-white/40">
-                    <span>2x2 Inci</span>
-                    <span className="text-[8px] text-blue-600">58% Head</span>
-                  </div>
-                  {isScanningPhoto && (
-                    <div className="absolute inset-0 bg-blue-500/20 border-2 border-blue-500 animate-ping rounded-lg pointer-events-none" />
-                  )}
-                </div>
-
-                {/* Chips */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center justify-between p-1.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800">
-                    <span className="text-[10px] font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      <span>Rasio 2x2 Inci: Sah</span>
-                    </span>
-                    <span className="text-[9px] font-mono">1:1 Ratio</span>
-                  </div>
-
+                  {/* Textarea Proposal Ringkas */}
                   <div
-                    className={`flex items-center justify-between p-1.5 rounded border ${
-                      photoFixed
-                        ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                        : "bg-red-50 border-red-200 text-red-800"
+                    className={`p-4 rounded-2xl transition-all border ${
+                      focusedField === "proposal"
+                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
+                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <span className="text-[10px] font-bold flex items-center gap-1">
-                      {photoFixed ? (
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                      ) : (
-                        <AlertCircle className="w-3 h-3 text-red-600" />
-                      )}
-                      <span>{photoFixed ? "Ketajaman Laplacian: Baik" : "Blur Rendah (48 < 100)"}</span>
-                    </span>
-                    <span className="text-[9px] font-mono">
-                      {photoFixed ? "Var: 142" : "Gagal ICAO"}
-                    </span>
+                    <label className="block text-xs font-bold text-slate-800 mb-2">
+                      {isId ? "Ringkasan Rencana Riset / Studi (Research Abstract)" : "Research Proposal Abstract"}
+                    </label>
+                    <textarea
+                      rows={3}
+                      name="researchAbstract"
+                      value={researchSummary}
+                      onChange={(e) => setResearchSummary(e.target.value)}
+                      onFocus={() => setFocusedField("proposal")}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder={
+                        isId
+                          ? "Jelaskan judul rencana tesis, topik utama, metodologi, dan dampaknya bagi pembangunan nasional..."
+                          : "Outline your proposed thesis topic, methodology, and expected national impact..."
+                      }
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
+                    />
                   </div>
                 </div>
+              </div>
 
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={handleScanPhoto}
-                    disabled={isScanningPhoto}
-                    className="flex-1 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1 transition-all"
-                  >
-                    <RefreshCw className={`w-3 h-3 ${isScanningPhoto ? "animate-spin text-blue-600" : ""}`} />
-                    <span>Pindai Foto</span>
-                  </button>
-                  <button
-                    onClick={() => setPhotoFixed(true)}
-                    className="py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all"
-                  >
-                    Perbaiki
-                  </button>
+              {/* Section 5: Persetujuan Integritas (Checkbox) */}
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded-md focus:ring-blue-500 mt-0.5"
+                  />
+                  <span className="text-xs text-slate-700 leading-relaxed">
+                    {isId
+                      ? "Saya menyatakan dengan sebenar-benarnya bahwa seluruh informasi dan dokumen yang saya unggah pada formulir ini adalah benar, sah, dan dapat dipertanggungjawabkan secara hukum."
+                      : "I hereby certify under penalty of perjury that all submitted information and uploaded credentials are true, authentic, and legally valid."}
+                  </span>
+                </label>
+              </div>
+
+              {/* Actions Footer */}
+              <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <button
+                  type="button"
+                  disabled={!agreeTerms}
+                  className={`w-full sm:w-auto px-7 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all ${
+                    agreeTerms
+                      ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                      : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  }`}
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{isId ? "Kirim Berkas Pendaftaran (Submit)" : "Submit Application"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNik("");
+                    setNama("");
+                    setTempatLahir("");
+                    setTglLahir("");
+                    setPhone("");
+                    setEmail("");
+                    setNpwp("");
+                    setToefl("");
+                    setIpk("");
+                    setUsia("");
+                    setPhotoPreview(null);
+                    setPhotoName(null);
+                    setKtpFileName(null);
+                    setIjazahFileName(null);
+                    setRekomendasiFileName(null);
+                    setEssay("");
+                    setResearchSummary("");
+                    setAgreeTerms(false);
+                  }}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>{isId ? "Reset Seluruh Form" : "Reset Form"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Column: Sticky "Access with Owly" Controller Card */}
+          <div className="w-full lg:w-80 shrink-0 sticky top-24 space-y-4">
+            <div className="bg-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/20 blur-[60px] pointer-events-none -z-10" />
+
+              {/* Header Card */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <img src="/owly.png" alt="Owly Logo" className="w-7 h-7 object-contain drop-shadow-xs" />
+                  <span className="font-extrabold text-base tracking-tight text-white">
+                    Owly<span className="text-blue-400">.AI</span>
+                  </span>
+                </div>
+
+                {/* Status Indicator */}
+                <div className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700">
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      isExtensionDetected ? "bg-emerald-400 animate-pulse" : "bg-slate-500"
+                    }`}
+                  />
+                  <span className={isExtensionDetected ? "text-emerald-400" : "text-slate-400"}>
+                    {isExtensionDetected ? "Connected" : "Standby"}
+                  </span>
                 </div>
               </div>
 
-              {/* Consistency Checker */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-1.5 text-left">
-                <div className="font-bold text-xs text-slate-900 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Consistency Checker Agent</span>
+              <p className="text-xs text-slate-300 leading-relaxed mb-6">
+                {isId
+                  ? "Buka side panel ekstensi Owly untuk mendampingi pengisian form ini dengan AI guidance, visual snip, autofill terenkripsi, dan audit pra-kirim."
+                  : "Connect with Owly browser extension to access AI field guidance, visual snip explain, encrypted autofill, and pre-submit auditing on this form."}
+              </p>
+
+              {/* Big Access Button */}
+              <button
+                type="button"
+                onClick={handleAccessWithOwly}
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all transform active:scale-95 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-white" />
+                <span>{isId ? "Access with Owly" : "Access with Owly"}</span>
+              </button>
+
+              {/* Extension Feature Checklist */}
+              <div className="mt-6 pt-5 border-t border-slate-800/80 space-y-2.5 text-xs text-slate-300">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>{isId ? "Field-by-Field Coach Otomatis" : "Automatic Field-by-Field Coach"}</span>
                 </div>
-                <p className="text-[10px] text-slate-600">
-                  Nama di Form ('Budi Santoso') vs Nama di Paspor ('BUDI SANTOSO')
-                </p>
-                <div className="p-1.5 rounded bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-emerald-800 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                  <span>Konsistensi Data: 100% Selaras</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>{isId ? "Hands-Free Voice Companion" : "Hands-Free Voice Companion"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>{isId ? "Lightshot Visual Snip Reasoning" : "Lightshot Visual Snip Reasoning"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>{isId ? "1-Click Local Vault Autofill" : "1-Click Local Vault Autofill"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span>{isId ? "Pre-Submit Traffic Light Auditor" : "Pre-Submit Traffic Light Auditor"}</span>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* TAB 4: ACCESSIBILITY HUB (14 TOOLS) */}
-          {activeTab === "a11y" && (
-            <div className="space-y-2.5">
-              <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-slate-900 flex items-center gap-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Accessibility HUB (14 Tools)</span>
-                  </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    {activeA11yCount} Aktif
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="text-emerald-700 font-mono font-semibold">
-                    0 Token LLM • Instan &lt;10ms
-                  </span>
-                  <button
-                    onClick={resetTools}
-                    className="text-slate-500 hover:text-slate-800 flex items-center gap-0.5 font-bold"
-                  >
-                    <RotateCcw className="w-2.5 h-2.5" />
-                    <span>Reset</span>
-                  </button>
-                </div>
+            {/* Quick Install Help Pill */}
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs text-xs text-slate-600 flex items-center justify-between">
+              <span className="text-[11px]">
+                {isId ? "Belum menginstal ekstensi?" : "Haven't installed extension?"}
+              </span>
+              <Link
+                href="/download"
+                className="font-bold text-blue-600 hover:text-blue-700 text-[11px] flex items-center gap-1"
+              >
+                <span>{isId ? "Panduan Download" : "Download Guide"}</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* MODAL: Looks like you haven't installed the extension */}
+      {showInstallModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowInstallModal(false)}
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Modal Icon */}
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mb-5">
+              <Download className="w-7 h-7" />
+            </div>
+
+            {/* Modal Title */}
+            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mb-2">
+              Looks like you haven&apos;t installed the extension
+            </h3>
+
+            {/* Modal Description */}
+            <p className="text-slate-600 text-xs sm:text-sm leading-relaxed mb-6">
+              {isId
+                ? "Untuk mengakses panduan cerdas, bantuan suara hands-free, visual snip explainer, dan audit berkas anti-gagal secara otomatis di formulir ini, silakan pasang ekstensi browser Owly terlebih dahulu."
+                : "To access real-time AI guidance, hands-free voice companion, visual snip reasoning, and pre-submit auditing on this form, please install the Owly AI browser extension."}
+            </p>
+
+            {/* 3 Quick Steps */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs text-slate-700 mb-6 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                  1
+                </span>
+                <span>{isId ? "Download file owly-extension.zip" : "Download owly-extension.zip"}</span>
               </div>
-
-              {/* 14 Tools Grid */}
-              <div className="grid grid-cols-2 gap-1.5 text-xs">
-                {[
-                  { id: "spotlight", title: "Reading Spotlight", icon: Eye },
-                  { id: "tts", title: "Text to Speech (TTS)", icon: Volume2 },
-                  { id: "contrast", title: "Contrast Mode", icon: Contrast },
-                  { id: "links", title: "Highlight Links", icon: ArrowRight },
-                  { id: "textSize", title: "Bigger Text Size", icon: Type },
-                  { id: "textSpacing", title: "Text Spacing", icon: Sliders },
-                  { id: "pauseAnim", title: "Pause Animations", icon: Pause },
-                  { id: "hideImages", title: "Hide All Images", icon: Layers },
-                  { id: "dyslexiaFont", title: "Dyslexia Font", icon: Type },
-                  { id: "bigCursor", title: "Big Cursor", icon: Maximize2 },
-                  { id: "liveTooltips", title: "Live Tooltips", icon: FileText },
-                  { id: "lineHeight", title: "Line Height", icon: Sliders },
-                  { id: "textAlign", title: "Text Alignment", icon: Type },
-                  { id: "colorSat", title: "Color Saturation", icon: Contrast },
-                ].map((tool) => {
-                  const Icon = tool.icon;
-                  const isActive = activeTools[tool.id];
-                  return (
-                    <button
-                      key={tool.id}
-                      onClick={() => toggleTool(tool.id)}
-                      className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-1 shadow-2xs ${
-                        isActive
-                          ? "bg-blue-50 border-blue-400 text-blue-900"
-                          : "bg-white border-slate-200 text-slate-800 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div
-                          className={`w-6 h-6 rounded flex items-center justify-center ${
-                            isActive ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          <Icon className="w-3 h-3" />
-                        </div>
-                        <span
-                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
-                            isActive ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {isActive ? "On" : "Off"}
-                        </span>
-                      </div>
-                      <div className="font-bold text-[11px] leading-tight line-clamp-1 mt-0.5">
-                        {tool.title}
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                  2
+                </span>
+                <span>
+                  {isId
+                    ? "Buka chrome://extensions & aktifkan Developer Mode"
+                    : "Open chrome://extensions & toggle Developer Mode"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                  3
+                </span>
+                <span>
+                  {isId ? "Ekstrak & drag folder ke browser" : "Extract & drag folder into browser"}
+                </span>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Footer Ribbon */}
-        <div className="bg-white border-t border-slate-200 px-3 py-1.5 flex items-center justify-between text-[10px] text-slate-400">
-          <span className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>Manifest V3</span>
-          </span>
-          <span>Closed Shadow DOM Active</span>
+            {/* Modal Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <Link
+                href="/download"
+                className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-blue-500/20 transition-all text-center"
+              >
+                <Download className="w-4 h-4 text-white" />
+                <span>{isId ? "Buka Halaman Download" : "Go to Download Page"}</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowInstallModal(false)}
+                className="w-full sm:w-auto py-3 px-5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                {isId ? "Tutup" : "Close"}
+              </button>
+            </div>
+          </div>
         </div>
-      </>
-    );
-  }
+      )}
+
+      {/* Footer */}
+      <footer className="py-8 border-t border-slate-200 text-center text-xs text-slate-500 bg-white">
+        <p>© 2026 Owly.AI • Official Form Sandbox & Companion Testing</p>
+      </footer>
+    </div>
+  );
 }

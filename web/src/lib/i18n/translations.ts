@@ -14,14 +14,16 @@ export interface TranslationDictionary {
     mockPortal: string;
     simulator: string;
     installExt: string;
+    download: string;
     demo: string;
   };
   hero: {
-    hackathonBadge: string;
+    aiBadge: string;
     titleLine1: string;
     titleHighlight: string;
     description: string;
     ctaMockPortal: string;
+    ctaDownload: string;
     ctaLearnSecurity: string;
   };
   browserMockup: {
@@ -55,7 +57,7 @@ export interface TranslationDictionary {
     tag: string;
     title: string;
     subtitle: string;
-    pillar1: {
+    guidance: {
       tag: string;
       title: string;
       quote: string;
@@ -67,7 +69,7 @@ export interface TranslationDictionary {
       point3Desc: string;
       footer: string;
     };
-    pillar2: {
+    assistance: {
       tag: string;
       title: string;
       quote: string;
@@ -79,7 +81,7 @@ export interface TranslationDictionary {
       point3Desc: string;
       footer: string;
     };
-    pillar3: {
+    explain: {
       tag: string;
       title: string;
       quote: string;
@@ -91,6 +93,36 @@ export interface TranslationDictionary {
       point3Desc: string;
       footer: string;
     };
+    autofill: {
+      tag: string;
+      title: string;
+      quote: string;
+      point1Title: string;
+      point1Desc: string;
+      point2Title: string;
+      point2Desc: string;
+      point3Title: string;
+      point3Desc: string;
+      footer: string;
+    };
+    auditor: {
+      tag: string;
+      title: string;
+      quote: string;
+      point1Title: string;
+      point1Desc: string;
+      point2Title: string;
+      point2Desc: string;
+      point3Title: string;
+      point3Desc: string;
+      footer: string;
+    };
+  };
+  agentConsole: {
+    badge: string;
+    title: string;
+    desc: string;
+    features: string[];
   };
   accessibility: {
     badge: string;
@@ -103,10 +135,20 @@ export interface TranslationDictionary {
     title: string;
     steps: { step: string; title: string; desc: string }[];
   };
+  downloadSection: {
+    title: string;
+    subtitle: string;
+    chromiumBadge: string;
+    btnDownloadZip: string;
+    guideTitle: string;
+    steps: { number: string; title: string; desc: string; tip?: string }[];
+    browsers: { name: string; url: string; note: string }[];
+  };
   ctaBanner: {
     title: string;
     description: string;
     btnDemo: string;
+    btnDownload: string;
     btnDocs: string;
   };
   footer: {
@@ -147,22 +189,24 @@ export interface TranslationDictionary {
 export const translations: Record<SupportedLanguage, TranslationDictionary> = {
   id: {
     nav: {
-      pillars: "Pilar Solusi",
+      pillars: "Pilar Fitur",
       features: "Fitur Utama",
       accessibility: "Accessibility Hub",
       howItWorks: "Cara Kerja",
       mockPortal: "Mock Portal",
       simulator: "Simulator",
       installExt: "Pasang Ekstensi",
+      download: "Download",
       demo: "Demo",
     },
     hero: {
-      hackathonBadge: "Meta Global AI Developer Hackathon 2026 • Build for Your World",
+      aiBadge: "Didukung Baseten Muse Spark Open • Real-Time Multimodal AI",
       titleLine1: "Your AI Browser Companion",
       titleHighlight: "for Forms & Web",
       description:
-        "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
-      ctaMockPortal: "Uji Coba di Mock Portal LPDP",
+        "Bimbingan cerdas formulir publik bertenaga model penalaran Baseten Muse Spark Open dengan 3-Agent compound profiler, asistensi suara hands-free, visual snip explain, autofill terenkripsi lokal, dan auditor pra-kirim anti-gagal.",
+      ctaMockPortal: "Uji Coba di Simulator LPDP",
+      ctaDownload: "Unduh Ekstensi (.ZIP)",
       ctaLearnSecurity: "Pelajari Arsitektur & Keamanan",
     },
     browserMockup: {
@@ -204,45 +248,80 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       ],
     },
     pillars: {
-      tag: "3 Pilar Solusi",
-      title: "Dirancang Khusus untuk Rasa Aman Warga",
-      subtitle: "Menggabungkan kecerdasan reasoning Meta Muse Spark dengan penjaga deterministik lokal tanpa halusinasi.",
-      pillar1: {
-        tag: "Pilar 1",
-        title: "UNDERSTAND",
-        quote: '"Kolom ini maksudnya apa dan apa aturannya?"',
-        point1Title: "Field Coach:",
-        point1Desc: "RAG resmi via Meta Vector Store dengan sitasi bab & halaman sah.",
-        point2Title: "Explain This:",
-        point2Desc: "Snip area membingungkan dengan penutup sensor DOM Masking lokal.",
-        point3Title: "Handsfree Voicebot:",
-        point3Desc: "Tanya jawab suara handsfree via Silero VAD & Muse Voice.",
-        footer: "Didukung: Meta Vector Store (`file_search`)",
+      tag: "5 Pilar Fitur Unggulan",
+      title: "Solusi Komprehensif Berteknologi Multi-Agent",
+      subtitle: "Menggabungkan penalaran multimodal Baseten Muse Spark Open dengan validasi deterministik lokal nol-halusinasi dan privasi Zero-Knowledge.",
+      guidance: {
+        tag: "Pilar 1: Guidance",
+        title: "Analyze This Form & Smart Roadmap",
+        quote: '"Pahami struktur form, syarat tersembunyi, dan checklist sebelum mulai mengisi"',
+        point1Title: "3-Agent Collaborative Chain:",
+        point1Desc: "Perception Agent menganalisis DOM & screenshot WebP, Regulation RAG Agent mencocokkan juknis resmi, Decision Agent menyusun roadmap.",
+        point2Title: "Field-by-Field Coach:",
+        point2Desc: "Menampilkan kartu panduan di samping input aktif berisi aturan resmi, contoh format, jebakan umum (pitfall), dan sitasi halaman.",
+        point3Title: "Trap Checklist & Anti-Blunder:",
+        point3Desc: "Daftar verifikasi otomatis hal-hal krusial yang sering menggugurkan pendaftar di seleksi berkas administratif.",
+        footer: "Didukung: Baseten & Neural Vector Store (`file_search`) & Multi-Agent Chain",
       },
-      pillar2: {
-        tag: "Pilar 2",
-        title: "FILL",
-        quote: '"Bagaimana mengisinya dengan benar, konsisten, dan cepat?"',
-        point1Title: "Multiple Vault:",
-        point1Desc: "Terenkripsi lokal AES-256-GCM (Zero-Knowledge, data tidak pernah ke server).",
-        point2Title: "Dual Autofill & Undo:",
-        point2Desc: "Single-field per kartu panduan atau batch 1-click dengan tombol undo instan.",
-        point3Title: "Essay Coach:",
-        point3Desc: "Merapikan 3 bullet fakta kasar menjadi draf narasi formal tanpa halusinasi.",
-        footer: "Didukung: WebCrypto AES-256-GCM & Muse Spark 1.3",
+      assistance: {
+        tag: "Pilar 2: Assistance",
+        title: "Voice Companion & Ghost Cursor",
+        quote: '"Asisten ramah suara dua arah dan navigasi kursor visual yang memandu langsung"',
+        point1Title: "Hands-Free Voice Companion:",
+        point1Desc: "Bicara santai menggunakan PTT (Push-to-Talk) atau Live Talk hands-free dengan Web Speech API dan RMS Voice Activity Detection.",
+        point2Title: "Show Me 4-Level Navigator:",
+        point2Desc: "Menemukan tombol atau seksi tersembunyi lewat 4 tingkat pencocokan (Exact Match 0ms, Kamus Sinonim 0ms, AI Semantik, dan Multimodal Vision).",
+        point3Title: "Virtual AI Ghost Cursor:",
+        point3Desc: "Animasi kursor virtual visual meluncur mulus ke elemen target di layar disertai efek ripple click yang memukau pengguna.",
+        footer: "Didukung: RMS VAD, Web Speech API & Virtual Ghost Cursor Engine",
       },
-      pillar3: {
-        tag: "Pilar 3",
-        title: "AUDIT",
-        quote: '"Apakah ada yang salah atau berpotensi ditolak?"',
-        point1Title: "Traffic Light Auditor:",
-        point1Desc: "Evaluasi regex instan (<300ms) untuk format NIK, tanggal, dan email.",
-        point2Title: "Audit Kepatuhan Foto (Zero-Pixel):",
-        point2Desc: "Uji rasio, blur Laplacian, dan biometrik tanpa manipulasi piksel (ICAO).",
-        point3Title: "Consistency Checker:",
-        point3Desc: "Agen penalaran pemeriksa keselarasan data silang antar-kolom form.",
-        footer: "Didukung: Sharp in-memory deterministik + FSM",
+      explain: {
+        tag: "Pilar 3: Explain",
+        title: "Lightshot Snip & Vision Reasoning",
+        quote: '"Potong area rumit di layar, dan AI akan menjelaskannya dalam bahasa yang mudah dipahami"',
+        point1Title: "Lightshot-Style Visual Crop:",
+        point1Desc: "Tarik kotak seleksi pada tabel syarat, diagram alur, atau klausul berbelit di halaman web mana pun.",
+        point2Title: "Multimodal Vision Reasoning:",
+        point2Desc: "AI memproses tangkapan layar beresolusi tinggi dengan Baseten Muse Spark Open untuk membaca konteks visual dan teks kecil.",
+        point3Title: "Penjelas Birokrasi Humanis:",
+        point3Desc: "Menerjemahkan bahasa hukum dan aturan kaku menjadi instruksi praktis langkah-demi-langkah ramah warga.",
+        footer: "Didukung: Baseten Muse Spark Open Multimodal Vision",
       },
+      autofill: {
+        tag: "Pilar 4: Autofill",
+        title: "Zero-Knowledge Vault & 100% Undo",
+        quote: '"Pengisian formulir secepat kilat dengan jaminan privasi mutlak dan keamanan data"',
+        point1Title: "Enkripsi Lokal AES-256-GCM:",
+        point1Desc: "Vault dokumen (KTP, Paspor, Ijazah, CV) disimpan dan didekripsi lokal di browser Anda. Plaintext tidak pernah dikirim ke server.",
+        point2Title: "UU PDP PII Masking Scrubber:",
+        point2Desc: "Secara otomatis menyensor NIK dan data pribadi sensitif sebelum dikomunikasikan dengan model AI.",
+        point3Title: "Dual Mode & Instant 100% Undo:",
+        point3Desc: "Isi per-kartu atau sekaligus 1-klik dengan tombol rollback instan yang mengembalikan form ke kondisi semula tanpa merusak input manual.",
+        footer: "Didukung: WebCrypto AES-256-GCM & In-Memory Redux Undo Stack",
+      },
+      auditor: {
+        tag: "Pilar 5: Auditor",
+        title: "Pre-Submit Traffic Light FSM",
+        quote: '"Audit menyeluruh tanpa kompromi sebelum tombol kirim formulir ditekan"',
+        point1Title: "Audit Buta Sumber (Source-Agnostic):",
+        point1Desc: "Mengaudit kondisi riil nilai form tanpa peduli apakah diketik manual satu per satu atau diisi otomatis via Vault.",
+        point2Title: "4 Lapisan Validasi Non-Blocking:",
+        point2Desc: "Cek tanda bintang (*), NIK Kemendagri 16 digit & rumus gender wanita (Tgl+40), nomor HP Indonesia (+62/08), email RFC 5322, dan Paspor ICAO.",
+        point3Title: "Audit Biometrik Pasfoto (Zero-Pixel):",
+        point3Desc: "Menguji ketajaman Laplacian Blur, rasio kepala standar ICAO 9303, batas ukuran KB, dan konsistensi data silang antar-kolom form.",
+        footer: "Didukung: Client-Side Sharp In-Memory Engine & Finite State Machine",
+      },
+    },
+    agentConsole: {
+      badge: "Transparansi Penuh Penalaran AI & Developer Console",
+      title: "Live Agentic Execution Console",
+      desc: "Lihat langsung bagaimana model Baseten Muse Spark Open menalar formulir secara real-time. Owly.AI dilengkapi Terminal Console bergaya Cyberpunk dark IDE di header ekstensi untuk menginspeksi alur penalaran, event perception, dan pemanggilan tool calling secara transparan.",
+      features: [
+        "Inference super cepat berbasis Baseten Muse Spark Open",
+        "Trace penalaran langkah demi langkah (chain-of-thought)",
+        "Inspeksi perception event dan ekstraksi DOM",
+        "Eksekusi visual tool calling 2-turn capture_current_screen",
+      ],
     },
     accessibility: {
       badge: "Kenyamanan Sensorik & Kognitif",
@@ -292,16 +371,74 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
         },
       ],
     },
+    downloadSection: {
+      title: "Pasang Ekstensi Owly.AI",
+      subtitle: "Kompatibel penuh dengan seluruh browser berbasis Chromium. Instalasi mudah dalam 1 menit tanpa setup rumit.",
+      chromiumBadge: "Mendukung Semua Browser Berbasis Chromium",
+      btnDownloadZip: "Unduh owly-extension.zip (v1.0.0)",
+      guideTitle: "Panduan Instalasi Langkah-demi-Langkah",
+      steps: [
+        {
+          number: "01",
+          title: "Unduh & Ekstrak File ZIP",
+          desc: "Klik tombol unduh di atas untuk mendapatkan file owly-extension.zip. Klik kanan file lalu pilih 'Extract All' (Ekstrak Semua) ke folder pilihan Anda.",
+          tip: "Pastikan folder hasil ekstrak berisi file manifest.json dan background.js.",
+        },
+        {
+          number: "02",
+          title: "Buka Halaman Ekstensi Browser",
+          desc: "Buka tab baru di browser Anda dan ketik URL ekstensi sesuai browser yang Anda gunakan.",
+          tip: "Chrome: chrome://extensions • Edge: edge://extensions • Opera: opera://extensions",
+        },
+        {
+          number: "03",
+          title: "Aktifkan 'Developer Mode'",
+          desc: "Di pojok kanan atas halaman ekstensi, geser tombol switch 'Developer mode' (Mode pengembang) menjadi Aktif (ON).",
+        },
+        {
+          number: "04",
+          title: "Klik 'Load Unpacked'",
+          desc: "Klik tombol 'Load unpacked' (Muat yang belum dibongkar) di pojok kiri atas, lalu arahkan dan pilih folder ekstensi hasil ekstrak tadi.",
+        },
+        {
+          number: "05",
+          title: "Sematkan & Buka Owly.AI",
+          desc: "Klik ikon puzzle di toolbar browser, klik ikon pin pada Owly.AI, lalu klik ikon Owly.AI untuk membuka AI Side Panel kapan saja!",
+        },
+      ],
+      browsers: [
+        {
+          name: "Google Chrome",
+          url: "chrome://extensions",
+          note: "Browser resmi Google, rekomendasi utama untuk performa Side Panel terbaik.",
+        },
+        {
+          name: "Microsoft Edge",
+          url: "edge://extensions",
+          note: "Browser bawaan Windows, mendukung ekstensi Chromium secara native.",
+        },
+        {
+          name: "Opera / Opera GX",
+          url: "opera://extensions",
+          note: "Mendukung Manifest V3 Chrome Extension tanpa konfigurasi tambahan.",
+        },
+        {
+          name: "Brave Browser",
+          url: "brave://extensions",
+          note: "Browser privasi berbasis Chromium, kompatibel 100% dengan Owly.AI.",
+        },
+      ],
+    },
     ctaBanner: {
-      title: "Siap Mengisi Formulir Tanpa Cemas?",
-      description:
-        "Uji coba Owly.AI sekarang di Mock Portal resmi atau pasang ekstensi Chrome untuk pengalaman pendaftaran publik yang lebih manusiawi.",
-      btnDemo: "Buka Demo Mock Portal",
-      btnDocs: "Dokumentasi GitHub",
+      title: "Siap Mencoba Pengalaman Formulir Generasi Baru?",
+      description: "Unduh ekstensi sekarang atau coba langsung di simulator interaktif kami tanpa perlu instalasi.",
+      btnDemo: "Buka Simulator LPDP",
+      btnDownload: "Unduh Ekstensi (.ZIP)",
+      btnDocs: "Lihat Source Code di GitHub",
     },
     footer: {
-      copyright: "© 2026 Owly.AI • Dibuat untuk Meta Global AI Developer Hackathon 2026 • Track: Indie Developer",
-      subline: "Built for Your World with Meta Muse Spark, Responses API, and Native Web Accessibility.",
+      copyright: "© 2026 Owly.AI • AI-Powered Browser Companion for Forms & Web",
+      subline: "Arsitektur Zero-Knowledge, perlindungan data lokal UU PDP, dan penalaran multimodal Baseten Muse Spark Open.",
     },
     mockPortal: {
       topBannerTag: "Simulasi Resmi",
@@ -335,22 +472,24 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
   },
   en: {
     nav: {
-      pillars: "Solution Pillars",
+      pillars: "Features",
       features: "Features",
       accessibility: "Accessibility Hub",
       howItWorks: "How It Works",
       mockPortal: "Mock Portal",
       simulator: "Simulator",
       installExt: "Install Extension",
+      download: "Download",
       demo: "Demo",
     },
     hero: {
-      hackathonBadge: "Meta Global AI Developer Hackathon 2026 • Build for Your World",
+      aiBadge: "Powered by Baseten Muse Spark Open • Real-Time Multimodal AI",
       titleLine1: "Your AI Browser Companion",
       titleHighlight: "for Forms & Web",
       description:
-        "Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Muse Spark",
-      ctaMockPortal: "Test in LPDP Mock Portal",
+        "Understand any page, fill forms with guidance, and catch mistakes before you submit. Powered by high-speed Baseten Muse Spark Open reasoning, hands-free voice companion, visual snip reasoning, client-encrypted vault, and pre-submit traffic light auditor.",
+      ctaMockPortal: "Test in LPDP Simulator",
+      ctaDownload: "Download Extension (.ZIP)",
       ctaLearnSecurity: "Explore Architecture & Security",
     },
     browserMockup: {
@@ -392,45 +531,80 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       ],
     },
     pillars: {
-      tag: "3 Solution Pillars",
+      tag: "5 Solution Pillars",
       title: "Engineered for Citizen Peace of Mind",
-      subtitle: "Combining Meta Muse Spark reasoning with deterministic local guardrails without hallucinations.",
-      pillar1: {
-        tag: "Pillar 1",
-        title: "UNDERSTAND",
-        quote: '"What does this field mean and what are the rules?"',
-        point1Title: "Field Coach:",
-        point1Desc: "Official RAG via Meta Vector Store with exact chapter & page citations.",
-        point2Title: "Explain This:",
-        point2Desc: "Visual snippet inspection with client-side DOM Blackout Masking.",
-        point3Title: "Handsfree Voicebot:",
-        point3Desc: "Two-way voice Q&A powered by on-device Silero VAD & Muse Voice.",
-        footer: "Powered by: Meta Vector Store (`file_search`)",
+      subtitle: "Combining Baseten Muse Spark Open multimodal reasoning with deterministic local guardrails without hallucinations and Zero-Knowledge client privacy.",
+      guidance: {
+        tag: "Pillar 1: Guidance",
+        title: "Analyze This Form & Smart Roadmap",
+        quote: '"Understand complex form structures and requirements before typing"',
+        point1Title: "3-Agent Compound Profiler:",
+        point1Desc: "Perception Agent processes DOM & full-page WebP screenshots, Regulation RAG matches official rules, and Decision Agent builds step roadmap.",
+        point2Title: "Field-by-Field Coach:",
+        point2Desc: "Interactive card docked next to the active input with official rules, format examples, pitfall warnings, and verified page citations.",
+        point3Title: "Trap Checklist & Anti-Blunder:",
+        point3Desc: "Proactive verification of disqualification traps commonly overlooked by applicants during initial administrative screening.",
+        footer: "Powered by: Baseten & Neural Vector Store (`file_search`) & Multi-Agent Chain",
       },
-      pillar2: {
-        tag: "Pillar 2",
-        title: "FILL",
-        quote: '"How do I fill this accurately, consistently, and fast?"',
-        point1Title: "Multiple Vault:",
-        point1Desc: "Locally encrypted AES-256-GCM (Zero-Knowledge, data never touches servers).",
-        point2Title: "Dual Autofill & Undo:",
-        point2Desc: "Granular per-card autofill or 1-click batch fill with instant 100% undo.",
-        point3Title: "Essay Coach:",
-        point3Desc: "Transforms 3 raw fact bullets into formal compliant narrative without hallucinating.",
-        footer: "Powered by: WebCrypto AES-256-GCM & Muse Spark 1.3",
+      assistance: {
+        tag: "Pillar 2: Assistance",
+        title: "Voice Companion & Ghost Cursor",
+        quote: '"Hands-free two-way voice companion with visual ghost cursor guidance"',
+        point1Title: "Hands-Free Voice Companion:",
+        point1Desc: "Converse naturally via Push-to-Talk (PTT) or hands-free Live Talk powered by Web Speech API and client-side RMS Voice Activity Detection.",
+        point2Title: "Show Me 4-Level Navigator:",
+        point2Desc: "Finds hidden buttons and sections using 4-tier cascade (Exact Match 0ms, Synonym Heuristics 0ms, Semantic Reasoning, and Multimodal Vision).",
+        point3Title: "Virtual AI Ghost Cursor:",
+        point3Desc: "A sleek animated virtual cursor glides smoothly across the screen to pinpoint target elements with an interactive ripple effect.",
+        footer: "Powered by: RMS VAD, Web Speech API & Virtual Ghost Cursor Engine",
       },
-      pillar3: {
-        tag: "Pillar 3",
-        title: "AUDIT",
-        quote: '"Are there any mistakes or rejection risks?"',
-        point1Title: "Traffic Light Auditor:",
-        point1Desc: "Instant (<300ms) regex evaluation for ID formats, dates, and email syntax.",
-        point2Title: "Photo Compliance Audit (Zero-Pixel):",
-        point2Desc: "Checks aspect ratio, Laplacian blur, and biometrics without altering pixels (ICAO).",
-        point3Title: "Consistency Checker:",
-        point3Desc: "Reasoning agent validating cross-field logical sanity across inputs.",
-        footer: "Powered by: Sharp in-memory deterministic + FSM",
+      explain: {
+        tag: "Pillar 3: Explain",
+        title: "Lightshot Snip & Vision Reasoning",
+        quote: '"Crop confusing sections, tables, or diagrams for instant human-friendly clarity"',
+        point1Title: "Lightshot-Style Visual Crop:",
+        point1Desc: "Draw a custom bounding box over any ambiguous table, requirement clause, or complex flowchart on the webpage.",
+        point2Title: "Multimodal Vision Reasoning:",
+        point2Desc: "Baseten Muse Spark Open processes high-resolution visual snips to reason over complex layout, fine print, and contextual instructions.",
+        point3Title: "Human-Centric Explainer:",
+        point3Desc: "Translates rigid legal and bureaucratic jargon into clear, actionable, citizen-friendly guidance in seconds.",
+        footer: "Powered by: Baseten Muse Spark Open Multimodal Vision",
       },
+      autofill: {
+        tag: "Pillar 4: Autofill",
+        title: "Zero-Knowledge Vault & 100% Undo",
+        quote: '"Blazing-fast form completion with absolute client privacy and undo peace of mind"',
+        point1Title: "Local AES-256-GCM Encryption:",
+        point1Desc: "Sensitive citizen vaults (ID, Passport, Diplomas) remain encrypted locally in browser storage. Plaintext credentials never hit any server.",
+        point2Title: "UU PDP Compliant PII Masking:",
+        point2Desc: "Automatically scrubs and masks national ID numbers and sensitive personal data before any AI interaction.",
+        point3Title: "Dual Mode & Instant 100% Undo:",
+        point3Desc: "Autofill per-card or in 1-click batch with guaranteed rollback capability that preserves user manual typing untouched.",
+        footer: "Powered by: WebCrypto AES-256-GCM & In-Memory Undo Stack",
+      },
+      auditor: {
+        tag: "Pillar 5: Auditor",
+        title: "Pre-Submit Traffic Light FSM",
+        quote: '"Zero-compromise pre-submission audit before you hit the submit button"',
+        point1Title: "Source-Agnostic Audit:",
+        point1Desc: "Audits live web form ground-truth values without caring whether fields were filled manually by hand or via 1-Click Vault Autofill.",
+        point2Title: "4-Layer Non-Blocking Validation:",
+        point2Desc: "Validates asterisk required fields, 16-digit Kemendagri NIK & female date calculation (+40), phone numbers, RFC emails, and ICAO passports.",
+        point3Title: "Biometric Photo & Cross-Field Audit:",
+        point3Desc: "Inspects Laplacian Blur sharpness, ICAO 9303 head proportion, file extension/size limits, and cross-field date/gender consistency.",
+        footer: "Powered by: Client-Side Sharp In-Memory Engine & Finite State Machine",
+      },
+    },
+    agentConsole: {
+      badge: "Full AI Reasoning Transparency & Developer Console",
+      title: "Live Agentic Execution Console",
+      desc: "Experience full transparency into how Baseten Muse Spark Open reasons through complex forms in real-time. Owly.AI features an embedded Cyberpunk dark IDE Terminal Console in the extension header allowing developers to inspect real-time reasoning chains, perception events, and tool calls live.",
+      features: [
+        "Ultra-low latency inference via Baseten Muse Spark Open",
+        "Real-time step-by-step reasoning logs (chain-of-thought)",
+        "DOM extraction & perception event stream",
+        "Visual 2-turn capture_current_screen tool call inspection",
+      ],
     },
     accessibility: {
       badge: "Sensory & Cognitive Comfort",
@@ -455,41 +629,99 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       ],
     },
     howItWorks: {
-      tag: "Citizen Journey",
-      title: "From Ambiguity to Confident Submission in 4 Steps",
+      tag: "User Journey",
+      title: "From Ambiguity to Submission-Ready in 4 Steps",
       steps: [
         {
           step: "01",
-          title: "Open Official Form",
-          desc: "Extension passively detects form fields without reading private input values.",
+          title: "Open Any Public Form",
+          desc: "The extension passively detects the form without reading any confidential citizen input.",
         },
         {
           step: "02",
-          title: "Official Guideline RAG",
-          desc: "Field Coach & Voicebot provide real-time verified context from Meta Vector Store.",
+          title: "Get Official Guidance",
+          desc: "Click 'Analyze This Form' to receive step roadmap, field-by-field guidelines, and pitfall alerts.",
         },
         {
           step: "03",
-          title: "Controlled Autofill",
-          desc: "Fill per-field or all at once from encrypted local Vault with 1-click safe undo.",
+          title: "Fill Fast & Consistently",
+          desc: "Leverage locally encrypted AES-256 Vault autofill with guaranteed 100% undo capability.",
         },
         {
           step: "04",
-          title: "Pre-Submit Audit",
-          desc: "Ensure green light status for regex syntax, photo compliance, and data consistency.",
+          title: "Traffic Light Pre-Submit Audit",
+          desc: "Execute pre-submission check to detect ID typos, photo biometric flaws, and missing attachments.",
+        },
+      ],
+    },
+    downloadSection: {
+      title: "Install Owly.AI Extension",
+      subtitle: "Compatible with all Chromium-based browsers. Easy 1-minute setup with zero technical prerequisites.",
+      chromiumBadge: "Supports All Chromium Browsers",
+      btnDownloadZip: "Download owly-extension.zip (v1.0.0)",
+      guideTitle: "Step-by-Step Installation Guide",
+      steps: [
+        {
+          number: "01",
+          title: "Download & Extract ZIP",
+          desc: "Click the download button above to save owly-extension.zip. Right-click the file and select 'Extract All' to a local folder.",
+          tip: "Ensure the extracted folder contains manifest.json and background.js.",
+        },
+        {
+          number: "02",
+          title: "Open Browser Extension Page",
+          desc: "Open a new tab in your browser and enter the extension management URL.",
+          tip: "Chrome: chrome://extensions • Edge: edge://extensions • Opera: opera://extensions",
+        },
+        {
+          number: "03",
+          title: "Enable 'Developer Mode'",
+          desc: "In the top-right corner of the extensions page, toggle the 'Developer mode' switch to ON.",
+        },
+        {
+          number: "04",
+          title: "Click 'Load Unpacked'",
+          desc: "Click the 'Load unpacked' button in the top-left corner and select the extracted extension folder.",
+        },
+        {
+          number: "05",
+          title: "Pin & Launch Owly.AI",
+          desc: "Click the puzzle icon in your browser toolbar, pin Owly.AI, and click the logo to launch your AI Side Panel on any website!",
+        },
+      ],
+      browsers: [
+        {
+          name: "Google Chrome",
+          url: "chrome://extensions",
+          note: "Official Google browser, best performance and native Side Panel support.",
+        },
+        {
+          name: "Microsoft Edge",
+          url: "edge://extensions",
+          note: "Default Windows browser, natively supports Chromium extensions.",
+        },
+        {
+          name: "Opera / Opera GX",
+          url: "opera://extensions",
+          note: "Full support for Manifest V3 Chrome Extensions out-of-the-box.",
+        },
+        {
+          name: "Brave Browser",
+          url: "brave://extensions",
+          note: "Privacy-focused Chromium browser, 100% compatible with Owly.AI.",
         },
       ],
     },
     ctaBanner: {
-      title: "Ready to Fill Important Forms Without Anxiety?",
-      description:
-        "Test Owly.AI today on our official Mock Portal or install the Chrome Extension for a more humane digital citizen experience.",
-      btnDemo: "Open Mock Portal Demo",
-      btnDocs: "GitHub Documentation",
+      title: "Ready to Experience Next-Gen Form Assistance?",
+      description: "Download the extension now or test it right away on our interactive simulator without installing.",
+      btnDemo: "Open LPDP Simulator",
+      btnDownload: "Download Extension (.ZIP)",
+      btnDocs: "View Source on GitHub",
     },
     footer: {
-      copyright: "© 2026 Owly.AI • Built for Meta Global AI Developer Hackathon 2026 • Track: Indie Developer",
-      subline: "Built for Your World with Meta Muse Spark, Responses API, and Native Web Accessibility.",
+      copyright: "© 2026 Owly.AI • AI-Powered Browser Companion for Forms & Web",
+      subline: "Zero-Knowledge client architecture, strict local privacy, and Baseten Muse Spark Open multimodal reasoning.",
     },
     mockPortal: {
       topBannerTag: "Official Simulation",

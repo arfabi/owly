@@ -374,7 +374,7 @@ export function classifyFieldGuidance(raw: any, isId: boolean): FieldItem {
       label: raw.label || (isId ? "Nomor Telepon / WhatsApp" : "Phone Number"),
       localizedLabel: isId ? "Nomor Telepon / WhatsApp" : "Phone / WhatsApp Number",
       badgeType: "curated",
-      badgeLabel: "Savvy Curated",
+      badgeLabel: "Owly Curated",
       meaning: isId
         ? "Nomor telepon seluler aktif yang dapat menerima panggilan, SMS, atau WhatsApp."
         : "Active mobile telephone number that can receive voice calls, SMS, and WhatsApp.",
@@ -495,7 +495,7 @@ export function classifyFieldGuidance(raw: any, isId: boolean): FieldItem {
       label: raw.label || (isId ? "Alamat Domisili" : "Residential Address"),
       localizedLabel: isId ? "Alamat Domisili / Tempat Tinggal" : "Residential / Domicile Address",
       badgeType: "curated",
-      badgeLabel: "Savvy Curated",
+      badgeLabel: "Owly Curated",
       meaning: isId
         ? "Alamat tempat tinggal resmi saat ini."
         : "Official current residential address.",
@@ -589,7 +589,7 @@ const DEFAULT_FIELDS: FieldItem[] = [
     name: "tanggal_lahir",
     label: "Tanggal Lahir",
     badgeType: "curated",
-    badgeLabel: "Savvy Curated",
+    badgeLabel: "Owly Curated",
     meaning: "Tanggal kelahiran sesuai akta kelahiran resmi dan e-KTP.",
     howTo: "Pilih tanggal dari kalender atau gunakan format YYYY-MM-DD sesuai standar portal.",
     example: "1998-08-19",
@@ -602,7 +602,7 @@ const DEFAULT_FIELDS: FieldItem[] = [
     name: "alamat",
     label: "Alamat Domisili KTP",
     badgeType: "curated",
-    badgeLabel: "Savvy Curated",
+    badgeLabel: "Owly Curated",
     meaning: "Alamat tempat tinggal resmi yang tertera pada kartu identitas penduduk.",
     howTo: "Ketik nama jalan, nomor rumah, RT/RW, kelurahan, dan kecamatan secara lengkap.",
     example: "Jl. Sudirman No. 45 RT 02/RW 04, Jakarta Pusat",
@@ -615,7 +615,7 @@ const DEFAULT_FIELDS: FieldItem[] = [
     name: "no_hp",
     label: "Nomor WhatsApp / Seluler",
     badgeType: "curated",
-    badgeLabel: "Savvy Curated",
+    badgeLabel: "Owly Curated",
     meaning: "Nomor telepon aktif yang terhubung dengan layanan pesan singkat dan WhatsApp.",
     howTo: "Gunakan format nomor nasional diawali 08 atau format internasional (+62).",
     example: "081234567890",
@@ -628,7 +628,7 @@ const DEFAULT_FIELDS: FieldItem[] = [
     name: "email",
     label: "Alamat Email Aktif",
     badgeType: "curated",
-    badgeLabel: "Savvy Curated",
+    badgeLabel: "Owly Curated",
     meaning: "Surat elektronik utama untuk penerimaan aktivasi akun, verifikasi, dan pengumuman kelulusan.",
     howTo: "Gunakan email pribadi permanen berformat nama lengkap (hindari email instansi yang bisa kedaluwarsa).",
     example: "budi.santoso@alumni.ui.ac.id",
@@ -822,7 +822,7 @@ export function FormsGuideTab({
           )}
           {currentField.badgeType === "curated" && (
             <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[10px] border border-blue-300 shrink-0">
-              🔵 {currentField.badgeLabel || "Savvy Curated"}
+              🔵 {currentField.badgeLabel || "Owly Curated"}
             </span>
           )}
           {currentField.badgeType === "ai" && (

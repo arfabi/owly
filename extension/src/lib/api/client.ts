@@ -1,11 +1,11 @@
 // ============================================================================
 // SAVVY.AI — Cloud API Client (Next.js Backend Bridge)
-// Production endpoint: https://savvy-companion.vercel.app/
+// Production endpoint: https://owly-ai.vercel.app/
 // ============================================================================
 
 import { agentLog } from "../agentLogger";
 
-export const API_BASE_URL = "https://savvy-companion.vercel.app";
+export const API_BASE_URL = "https://owly-ai.vercel.app";
 
 export interface PageMetadata {
   description?: string;

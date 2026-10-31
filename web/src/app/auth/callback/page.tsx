@@ -58,7 +58,7 @@ export default function AuthCallbackPage() {
             </div>
             <h2 className="text-xl font-semibold text-slate-800">Berhasil Masuk!</h2>
             <p className="text-sm text-slate-600">
-              Selamat datang kembali, <strong className="text-blue-600">{userName}</strong>! Mengalihkan ke Savvy Assistant...
+              Selamat datang kembali, <strong className="text-blue-600">{userName}</strong>! Mengalihkan ke Owly Assistant...
             </p>
           </div>
         )}

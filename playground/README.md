@@ -1,4 +1,4 @@
-# Savvy.AI - Baseten & Muse Spark Open Playground (Node.js)
+# Owly.AI - Baseten & Muse Spark Open Playground (Node.js)
 
 Folder ini berisi kumpulan skrip modular untuk menguji kemampuan model **Muse Spark Open** (`meta-models/muse-spark-open-1026`) via Baseten Inference API menggunakan **Node.js murni (Zero external dependencies)**, berpedoman pada dokumentasi resmi [Meta Prompting Guide](https://dev.meta.ai/docs/muse-spark-open/prompting).
 

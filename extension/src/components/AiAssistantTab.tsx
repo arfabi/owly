@@ -124,7 +124,7 @@ export function AiAssistantTab({
   onNavigateTab,
   onOpenAccessibilityHub,
 }: AiAssistantTabProps) {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const isId = language === "id";
 
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
@@ -266,7 +266,7 @@ export function AiAssistantTab({
           }
         };
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const openPermissionTab = () => {
@@ -288,7 +288,7 @@ export function AiAssistantTab({
           recognitionRef.current.stop();
           recognitionRef.current = null;
         }
-      } catch (_) {}
+      } catch (_) { }
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
@@ -309,7 +309,7 @@ export function AiAssistantTab({
       });
       setPiiWarning(
         piiResult.warningMessage ||
-          (isId ? "Terdeteksi data rahasia (NIK/Kredensial)" : "Sensitive PII detected")
+        (isId ? "Terdeteksi data rahasia (NIK/Kredensial)" : "Sensitive PII detected")
       );
     } else {
       setPiiWarning(null);
@@ -362,7 +362,7 @@ export function AiAssistantTab({
           if (activeTabs[0].url) liveUrl = activeTabs[0].url;
           if (activeTabs[0].title) liveTitle = activeTabs[0].title || "";
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     const lower = text.toLowerCase();
@@ -414,8 +414,8 @@ export function AiAssistantTab({
             id: (Date.now() + 1).toString(),
             sender: "savvy",
             text: isId
-              ? `Formulir belum dianalisis! Klik tombol "Analyze This Form" di atas agar Savvy memetakan kolom dengan akurat.`
-              : `Form is not analyzed yet! Please click "Analyze This Form" above so Savvy can accurately map the fields.`,
+              ? `Formulir belum dianalisis! Klik tombol "Analyze This Form" di atas agar Owly memetakan kolom dengan akurat.`
+              : `Form is not analyzed yet! Please click "Analyze This Form" above so Owly can accurately map the fields.`,
             actionButtons: [
               {
                 label: isId ? "🔍 Analyze This Form Sekarang" : "🔍 Analyze This Form Now",
@@ -516,8 +516,8 @@ export function AiAssistantTab({
               ? `⚡ Ditemukan! Elemen **"${found.matchedText}"** telah disorot dengan Beacon Spotlight di layar.`
               : `⚡ Found! Element **"${found.matchedText}"** highlighted with Beacon Spotlight on screen.`
             : isId
-            ? `⚡ Ditemukan via sinonim! Elemen **"${found.matchedText}"** telah disorot dengan Beacon Spotlight di layar.`
-            : `⚡ Found via synonym! Element **"${found.matchedText}"** highlighted with Beacon Spotlight on screen.`;
+              ? `⚡ Ditemukan via sinonim! Elemen **"${found.matchedText}"** telah disorot dengan Beacon Spotlight di layar.`
+              : `⚡ Found via synonym! Element **"${found.matchedText}"** highlighted with Beacon Spotlight on screen.`;
 
         setMessages((prev) => [
           ...prev,
@@ -686,7 +686,7 @@ export function AiAssistantTab({
       }
     }
 
-    // 2. Live Hit to Cloud API (https://savvy-companion.vercel.app/api/chat)
+    // 2. Live Hit to Cloud API (https://owly-ai.vercel.app/api/chat)
     try {
       let activeDomain = "web-page";
       if (liveUrl) {
@@ -771,7 +771,7 @@ export function AiAssistantTab({
       let domainContext = "portal resmi";
       try {
         if (currentUrl) domainContext = new URL(currentUrl).hostname;
-      } catch (_) {}
+      } catch (_) { }
 
       const fallbackReply = isId
         ? `Berdasarkan panduan pada ${domainContext}: Pastikan data yang dimasukkan sesuai dokumen resmi dan format yang ditentukan. Bila ada istilah yang meragukan, gunakan fitur 'Explain This' (Lightshot snip) untuk memotong bagian yang membingungkan.`
@@ -823,7 +823,7 @@ export function AiAssistantTab({
                 }
               });
             });
-          } catch (_) {}
+          } catch (_) { }
         }
 
         let croppedBase64: string | null = null;
@@ -1057,7 +1057,7 @@ export function AiAssistantTab({
         recognitionRef.current.stop();
         recognitionRef.current = null;
       }
-    } catch (_) {}
+    } catch (_) { }
 
     const textFromSpeech = pttTranscriptRef.current.trim();
     if (textFromSpeech) {
@@ -1125,7 +1125,7 @@ export function AiAssistantTab({
                     try {
                       rec.start();
                       setVoiceStatus("listening");
-                    } catch (_) {}
+                    } catch (_) { }
                   }
                 }, 500);
               }
@@ -1148,7 +1148,7 @@ export function AiAssistantTab({
           if (isLiveTalkActiveRef.current && voiceStatus !== "speaking" && voiceStatus !== "thinking") {
             try {
               rec.start();
-            } catch (_) {}
+            } catch (_) { }
           }
         };
 
@@ -1169,7 +1169,7 @@ export function AiAssistantTab({
           recognitionRef.current.stop();
           recognitionRef.current = null;
         }
-      } catch (_) {}
+      } catch (_) { }
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
@@ -1186,7 +1186,7 @@ export function AiAssistantTab({
         recognitionRef.current.stop();
         recognitionRef.current = null;
       }
-    } catch (_) {}
+    } catch (_) { }
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
@@ -1207,7 +1207,7 @@ export function AiAssistantTab({
 
     // Clean up cached form analysis and page fields from local storage
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.remove(["savvy_form_analysis", "savvy_page_fields"]).catch(() => {});
+      chrome.storage.local.remove(["savvy_form_analysis", "savvy_page_fields"]).catch(() => { });
     }
 
     // Hide field number badges and clean up web page highlights
@@ -1248,10 +1248,10 @@ export function AiAssistantTab({
               </div>
               <div>
                 <h3 className="font-extrabold text-xs text-slate-900 leading-tight">
-                  {isId ? "Savvy AI Multi-Agent Sedang Bekerja..." : "Savvy AI Multi-Agent Running..."}
+                  {t.assistant.multiAgentRunning}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5">
-                  {isId ? "Memindai visual layar, struktur DOM, dan mencocokkan juknis resmi" : "Processing visual screen, DOM mapping, and regulation grounding"}
+                  {t.assistant.multiAgentScanningDesc}
                 </p>
               </div>
             </div>
@@ -1259,24 +1259,23 @@ export function AiAssistantTab({
             {/* Checklist items */}
             <div className="space-y-2 pt-1 border-t border-slate-100 text-xs">
               {[
-                { step: 1, label: isId ? "Upload Screenshot to Multimodal Vision Engine" : "Upload Screenshot to Multimodal Vision Engine" },
-                { step: 2, label: isId ? "DOM Extractor & Form Structure Mapping" : "DOM Extractor & Form Structure Mapping" },
-                { step: 3, label: isId ? "Official Regulation & Juknis Grounding Engine" : "Official Regulation & Juknis Grounding Engine" },
-                { step: 4, label: isId ? "Agen 1: Context & Bureaucracy Verifier" : "Agent 1: Context & Bureaucracy Verifier" },
-                { step: 5, label: isId ? "Agen 2: Field Rules & Anti-Disqualification Auditor" : "Agent 2: Field Rules & Anti-Disqualification Auditor" },
+                { step: 1, label: t.assistant.step1Vision },
+                { step: 2, label: t.assistant.step2Dom },
+                { step: 3, label: t.assistant.step3Grounding },
+                { step: 4, label: t.assistant.step4Agent1 },
+                { step: 5, label: t.assistant.step5Agent2 },
               ].map((item) => {
                 const isDone = scanStep > item.step;
                 const isCurrent = scanStep === item.step;
                 return (
                   <div
                     key={item.step}
-                    className={`flex items-center gap-2.5 p-2 rounded-xl transition-all ${
-                      isDone
+                    className={`flex items-center gap-2.5 p-2 rounded-xl transition-all ${isDone
                         ? "bg-emerald-50/70 text-emerald-900 font-semibold"
                         : isCurrent
-                        ? "bg-blue-50/80 text-blue-900 font-bold"
-                        : "text-slate-400"
-                    }`}
+                          ? "bg-blue-50/80 text-blue-900 font-bold"
+                          : "text-slate-400"
+                      }`}
                   >
                     {isDone ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -1315,10 +1314,10 @@ export function AiAssistantTab({
                 </span>
               </div>
               <h4 className="font-black text-base text-slate-900 tracking-tight">
-                Halo, Saya Owly AI
+                {t.assistant.greetingTitle}
               </h4>
               <p className="text-xs text-slate-500 mt-1 max-w-[280px] leading-relaxed">
-                Asisten cerdas pendamping Browsermu, ketik pertanyaan di bawah atau pilih bantuan cepat.
+                {t.assistant.greetingDesc}
               </p>
             </div>
 
@@ -1332,10 +1331,10 @@ export function AiAssistantTab({
                     </div>
                     <div>
                       <h5 className="font-extrabold text-xs text-slate-900 leading-tight">
-                        Pandu saya isi formulir ini
+                        {t.assistant.guideMeTitle}
                       </h5>
                       <p className="text-[10.5px] text-slate-500 mt-0.5 leading-relaxed">
-                        Owly akan memindai halaman ini dan membimbingmu untuk mengisi formulir ini.
+                        {t.assistant.guideMeDesc}
                       </p>
                     </div>
                   </div>
@@ -1345,7 +1344,7 @@ export function AiAssistantTab({
                     className="w-full py-2.5 px-3 rounded-xl bg-savvy-gradient text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-savvy-blue/20 hover:opacity-95 transition-all cursor-pointer"
                   >
                     <Search className="w-3.5 h-3.5" />
-                    <span>Analyze this Form</span>
+                    <span>{t.assistant.btnAnalyzeForm}</span>
                   </button>
                 </>
               ) : (
@@ -1354,13 +1353,13 @@ export function AiAssistantTab({
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <span className="text-[9px] font-black uppercase tracking-wider text-savvy-blue bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
-                        Form Analyzed & Ready
+                        {t.assistant.analyzedReadyBadge}
                       </span>
                       <h5 className="font-extrabold text-xs text-slate-900 mt-1 leading-tight">
-                        {scannedSummary?.title || "Pendaftaran Beasiswa LPDP 2026"}
+                        {scannedSummary?.title || (isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026")}
                       </h5>
                       <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
-                        {scannedSummary?.fieldCount || 14} Kolom Pertanyaan Terdeteksi
+                        {scannedSummary?.fieldCount || 14} {t.assistant.fieldsCountSuffix}
                       </div>
                     </div>
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400/50 shrink-0 mt-1" />
@@ -1376,7 +1375,7 @@ export function AiAssistantTab({
                       className="py-2 px-2.5 rounded-xl bg-savvy-gradient text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-95 transition-all cursor-pointer truncate"
                     >
                       <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">Guide Field by Field</span>
+                      <span className="truncate">{t.assistant.btnGuideStep}</span>
                     </button>
 
                     <button
@@ -1387,7 +1386,7 @@ export function AiAssistantTab({
                       className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-95 transition-all cursor-pointer truncate"
                     >
                       <Zap className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">1-Click Autofill</span>
+                      <span className="truncate">{t.assistant.btnAutofillQuick}</span>
                     </button>
                   </div>
                 </div>
@@ -1405,10 +1404,10 @@ export function AiAssistantTab({
                 </div>
                 <div className="min-w-0">
                   <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                    Explain This
+                    {t.assistant.explainThisTitle}
                   </div>
                   <div className="text-[9px] text-slate-400 font-medium truncate">
-                    Lightshot Snip
+                    {t.assistant.explainThisSub}
                   </div>
                 </div>
               </button>
@@ -1422,10 +1421,10 @@ export function AiAssistantTab({
                 </div>
                 <div className="min-w-0">
                   <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                    Show Me
+                    {t.assistant.showMeTitle}
                   </div>
                   <div className="text-[9px] text-slate-400 font-medium truncate">
-                    Cari Tombol / Teks
+                    {t.assistant.showMeSub}
                   </div>
                 </div>
               </button>
@@ -1434,29 +1433,29 @@ export function AiAssistantTab({
             {/* 4. Bagian Alat Bantu (Accessibility Chips) */}
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                Alat Bantu
+                {t.assistant.a11ySectionTitle}
               </span>
               <div className="flex flex-wrap items-center gap-1.5">
                 {[
                   {
-                    label: "👁️ Teks Kekecilan",
-                    query: "tulisannya kekecilan tolong perbesar",
-                    title: "Perbesar ukuran teks halaman",
+                    label: t.assistant.chipTextTooSmall,
+                    query: isId ? "tulisannya kekecilan tolong perbesar" : "text is too small please make it larger",
+                    title: isId ? "Perbesar ukuran teks halaman" : "Enlarge page text size",
                   },
                   {
-                    label: "🌗 Layar Silau",
-                    query: "layarnya silau tolong mode gelap",
-                    title: "Aktifkan kontras tinggi / gelap",
+                    label: t.assistant.chipGlareScreen,
+                    query: isId ? "layarnya silau tolong mode gelap" : "screen glare please high contrast dark mode",
+                    title: isId ? "Aktifkan kontras tinggi / gelap" : "Enable high contrast mode",
                   },
                   {
-                    label: "🔊 Bacakan Halaman",
-                    query: "tolong bacakan halaman ini",
-                    title: "Bacakan teks halaman via TTS",
+                    label: t.assistant.chipReadAloud,
+                    query: isId ? "tolong bacakan halaman ini" : "please read this page aloud",
+                    title: isId ? "Bacakan teks halaman via TTS" : "Read page text via TTS",
                   },
                   {
-                    label: "🧠 Susah Fokus",
-                    query: "susah fokus membaca tolong spotlight",
-                    title: "Aktifkan reading spotlight & jeda animasi",
+                    label: t.assistant.chipHardToFocus,
+                    query: isId ? "susah fokus membaca tolong spotlight" : "hard to focus please turn on reading spotlight",
+                    title: isId ? "Aktifkan reading spotlight & jeda animasi" : "Enable reading spotlight & pause animation",
                   },
                 ].map((chip) => (
                   <button
@@ -1477,7 +1476,7 @@ export function AiAssistantTab({
                   className="text-[10.5px] font-bold whitespace-nowrap bg-blue-50/80 hover:bg-blue-100 text-blue-700 hover:text-blue-800 px-2.5 py-1 rounded-full border border-blue-200 transition-all cursor-pointer select-none shadow-2xs flex items-center gap-1"
                 >
                   <Accessibility className="w-3 h-3 text-blue-600" />
-                  <span>Accessibility Lainnya</span>
+                  <span>{t.assistant.btnMoreA11y}</span>
                 </button>
               </div>
             </div>
@@ -1492,26 +1491,24 @@ export function AiAssistantTab({
             {messages.map((m) => (
               <div
                 key={m.id}
-                className={`flex gap-2.5 ${
-                  m.sender === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex gap-2.5 ${m.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
               >
                 {m.sender === "savvy" && (
                   <div className="w-7 h-7 rounded-lg bg-savvy-soft-blue flex items-center justify-center p-1 shrink-0 border border-savvy-blue/20">
                     <img
-                      src="logo.png"
-                      alt="Savvy"
+                      src="owly.png"
+                      alt="Owly"
                       className="w-5 h-5 object-contain"
                     />
                   </div>
                 )}
 
                 <div
-                  className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed ${
-                    m.sender === "user"
+                  className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed ${m.sender === "user"
                       ? "bg-savvy-blue text-white rounded-tr-xs shadow-xs"
                       : "bg-white border border-slate-200 rounded-tl-xs text-slate-800 shadow-2xs"
-                  }`}
+                    }`}
                 >
                   {m.badge && (
                     <span className="inline-block px-2 py-0.5 rounded-full bg-savvy-soft-green text-savvy-green border border-savvy-green/30 text-[9px] font-extrabold mb-1.5">
@@ -1525,9 +1522,9 @@ export function AiAssistantTab({
                       <div className="px-2 py-1 bg-slate-900/70 text-[10px] font-bold text-sky-200 flex items-center justify-between border-b border-white/10">
                         <span className="flex items-center gap-1.5">
                           <Crop className="w-3 h-3 text-sky-400" />
-                          <span>Area Cuplikan (Snip)</span>
+                          <span>{t.assistant.snipBoxTitle}</span>
                         </span>
-                        <span className="text-[9px] text-blue-200 font-mono">Multimodal Vision</span>
+                        <span className="text-[9px] text-blue-200 font-mono">{t.assistant.snipVisionBadge}</span>
                       </div>
                       <div className="p-1.5 bg-black/25 flex items-center justify-center">
                         <img
@@ -1549,11 +1546,10 @@ export function AiAssistantTab({
                         <button
                           key={idx}
                           onClick={btn.action}
-                          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 ${
-                            btn.variant === "primary"
+                          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 ${btn.variant === "primary"
                               ? "bg-savvy-blue text-white hover:bg-blue-600 shadow-2xs"
                               : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                          }`}
+                            }`}
                         >
                           <span>{btn.label}</span>
                           <ArrowRight className="w-3 h-3" />
@@ -1580,7 +1576,7 @@ export function AiAssistantTab({
                 <Mic className="w-3.5 h-3.5" />
               </div>
               <h4 className="font-extrabold text-xs text-slate-900">
-                Voice Companion
+                {t.assistant.voiceDrawerTitle}
               </h4>
             </div>
             <button
@@ -1593,7 +1589,7 @@ export function AiAssistantTab({
                     recognitionRef.current.stop();
                     recognitionRef.current = null;
                   }
-                } catch (_) {}
+                } catch (_) { }
                 if (typeof window !== "undefined" && "speechSynthesis" in window) {
                   window.speechSynthesis.cancel();
                 }
@@ -1607,63 +1603,58 @@ export function AiAssistantTab({
             </button>
           </div>
 
-          {/* Voice Mode Selector: PTT vs Live Talk (No VAD text) */}
+          {/* Voice Mode Selector: PTT vs Live Talk */}
           <div className="grid grid-cols-2 gap-2 text-left">
             <button
               onClick={() => setVoiceType("ptt")}
-              className={`p-2.5 rounded-xl border transition-all text-left cursor-pointer ${
-                voiceType === "ptt"
+              className={`p-2.5 rounded-xl border transition-all text-left cursor-pointer ${voiceType === "ptt"
                   ? "bg-purple-50 border-savvy-purple shadow-xs"
                   : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between mb-0.5">
                 <Mic className="w-3.5 h-3.5 text-savvy-purple" />
                 {voiceType === "ptt" && <CheckCircle2 className="w-3.5 h-3.5 text-savvy-purple" />}
               </div>
-              <div className="text-[11px] font-extrabold text-slate-900">PTT (Push-to-Talk)</div>
+              <div className="text-[11px] font-extrabold text-slate-900">{t.assistant.pttTitle}</div>
               <div className="text-[9px] text-slate-500 mt-0.5">
-                {isId ? "Tahan tombol saat bicara" : "Hold button while speaking"}
+                {t.assistant.pttDesc}
               </div>
             </button>
 
             <button
               onClick={() => setVoiceType("live")}
-              className={`p-2.5 rounded-xl border transition-all text-left cursor-pointer ${
-                voiceType === "live"
+              className={`p-2.5 rounded-xl border transition-all text-left cursor-pointer ${voiceType === "live"
                   ? "bg-purple-50 border-savvy-purple shadow-xs"
                   : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between mb-0.5">
                 <Radio className="w-3.5 h-3.5 text-emerald-500" />
                 {voiceType === "live" && <CheckCircle2 className="w-3.5 h-3.5 text-savvy-purple" />}
               </div>
-              <div className="text-[11px] font-extrabold text-slate-900">Live Talk</div>
+              <div className="text-[11px] font-extrabold text-slate-900">{t.assistant.liveTalkTitle}</div>
               <div className="text-[9px] text-slate-500 mt-0.5">
-                {isId ? "Deteksi suara otomatis" : "Auto speech detection"}
+                {t.assistant.liveTalkDesc}
               </div>
             </button>
           </div>
 
           {/* Mic Permission Status Bar */}
-          <div className={`rounded-xl p-2.5 text-xs flex items-center justify-between gap-2 shadow-2xs text-left border transition-all ${
-            micPermissionState === "granted"
+          <div className={`rounded-xl p-2.5 text-xs flex items-center justify-between gap-2 shadow-2xs text-left border transition-all ${micPermissionState === "granted"
               ? "bg-emerald-50/80 border-emerald-200/80 text-emerald-900"
               : "bg-slate-50 border-slate-200/90 text-slate-800"
-          }`}>
+            }`}>
             <div className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                micPermissionState === "granted"
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${micPermissionState === "granted"
                   ? "bg-emerald-500 shadow-sm shadow-emerald-400"
                   : "bg-amber-500"
-              }`} />
+                }`} />
               <span className="text-[11px] font-bold text-slate-700">
-                Izin Mikrofon:{" "}
-                <span className={`font-extrabold uppercase tracking-wide ${
-                  micPermissionState === "granted" ? "text-emerald-700" : "text-amber-600"
-                }`}>
-                  {micPermissionState === "granted" ? "Active" : "Tidak Aktif"}
+                {t.assistant.micPermissionLabel}{" "}
+                <span className={`font-extrabold uppercase tracking-wide ${micPermissionState === "granted" ? "text-emerald-700" : "text-amber-600"
+                  }`}>
+                  {micPermissionState === "granted" ? t.assistant.micActive : t.assistant.micInactive}
                 </span>
               </span>
             </div>
@@ -1677,7 +1668,7 @@ export function AiAssistantTab({
                 onClick={openPermissionTab}
                 className="bg-savvy-gradient text-white font-extrabold px-3 py-1 rounded-lg text-[10.5px] hover:opacity-95 shadow-2xs cursor-pointer shrink-0"
               >
-                Izinkan
+                {t.assistant.btnAllowMic}
               </button>
             )}
           </div>
@@ -1690,48 +1681,46 @@ export function AiAssistantTab({
                 onMouseUp={handlePttMouseUp}
                 onTouchStart={handlePttMouseDown}
                 onTouchEnd={handlePttMouseUp}
-                className={`w-20 h-20 mx-auto rounded-full flex flex-col items-center justify-center gap-1 transition-all shadow-md select-none cursor-pointer ${
-                  isPttPressed
+                className={`w-20 h-20 mx-auto rounded-full flex flex-col items-center justify-center gap-1 transition-all shadow-md select-none cursor-pointer ${isPttPressed
                     ? "bg-rose-600 text-white shadow-rose-300 scale-95"
                     : "bg-savvy-gradient text-white shadow-purple-200 hover:scale-102"
-                }`}
+                  }`}
               >
                 <Mic className={`w-6 h-6 ${isPttPressed ? "animate-pulse" : ""}`} />
                 <span className="text-[9px] font-black uppercase tracking-wider">
-                  {isPttPressed ? (isId ? "Lepas" : "Release") : (isId ? "Tahan" : "Hold")}
+                  {isPttPressed ? t.assistant.pttReleaseToSend : t.assistant.pttHoldToSpeak}
                 </span>
               </button>
               <p className="text-[10px] font-semibold text-slate-500">
                 {isPttPressed
-                  ? isId ? "Mendengarkan suara Anda..." : "Listening..."
-                  : isId ? "Tahan tombol untuk bicara" : "Hold button to speak"}
+                  ? t.assistant.pttListeningPrompt
+                  : t.assistant.pttIdlePrompt}
               </p>
             </div>
           ) : (
             <div className="space-y-2 text-center pt-1">
               <button
                 onClick={handleVadToggle}
-                className={`w-full py-2.5 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                  isLiveTalkActive
+                className={`w-full py-2.5 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${isLiveTalkActive
                     ? "bg-rose-50 text-rose-700 border border-rose-200"
                     : "bg-savvy-gradient text-white hover:opacity-95"
-                }`}
+                  }`}
               >
                 <Radio className={`w-3.5 h-3.5 ${isLiveTalkActive ? "animate-pulse text-rose-600" : ""}`} />
                 <span>
                   {isLiveTalkActive
-                    ? isId ? "Hentikan Live Talk" : "Stop Live Talk"
-                    : isId ? "Mulai Live Talk" : "Start Live Talk"}
+                    ? t.assistant.btnStopLiveTalk
+                    : t.assistant.btnStartLiveTalk}
                 </span>
               </button>
               <p className="text-[10px] font-semibold text-slate-500">
                 {isLiveTalkActive
                   ? voiceStatus === "speaking"
-                    ? isId ? "🔊 Savvy sedang menjawab dengan suara..." : "🔊 Savvy is speaking..."
+                    ? t.assistant.liveSpeakingStatus
                     : voiceStatus === "thinking"
-                    ? isId ? "🧠 Memproses jawaban..." : "🧠 Thinking..."
-                    : isId ? "🎙️ Savvy siap mendengarkan ucapan Anda..." : "🎙️ Savvy is listening..."
-                  : isId ? "Klik untuk mengaktifkan dialog suara dua arah" : "Click to enable two-way voice chat"}
+                      ? t.assistant.liveThinkingStatus
+                      : t.assistant.liveListeningStatus
+                  : t.assistant.liveIdleStatus}
               </p>
             </div>
           )}
@@ -1764,13 +1753,13 @@ export function AiAssistantTab({
                   handleSendMessage();
                 }
               }}
-              placeholder="Tanya Apapun, Atur Tampilan, atau 'Show me: ...'"
+              placeholder={t.assistant.inputPlaceholder}
               className="w-full bg-transparent px-1 py-0.5 text-[13px] text-slate-800 placeholder-slate-400 focus:outline-none font-sans leading-relaxed resize-none min-h-[48px]"
             />
 
             <div className="flex items-center justify-between pt-1 border-t border-slate-100/90">
               <span className="text-[10px] text-slate-400 font-medium pl-1">
-                Enter ↵ untuk kirim, Shift+Enter untuk baris baru
+                {t.assistant.keyboardHint}
               </span>
 
               <div className="flex items-center gap-1.5">
@@ -1778,11 +1767,10 @@ export function AiAssistantTab({
                 <button
                   type="button"
                   onClick={() => setIsVoiceModalOpen((prev) => !prev)}
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
-                    isVoiceModalOpen
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${isVoiceModalOpen
                       ? "bg-purple-100 text-savvy-purple shadow-2xs"
                       : "text-slate-500 hover:text-savvy-purple hover:bg-purple-50/80"
-                  }`}
+                    }`}
                   title="Voice Companion (PTT & Live Talk)"
                 >
                   <Mic className="w-4 h-4" />
@@ -1794,7 +1782,7 @@ export function AiAssistantTab({
                   onClick={() => handleSendMessage()}
                   disabled={!inputText.trim()}
                   className="w-8 h-8 rounded-xl bg-savvy-blue hover:bg-blue-600 disabled:opacity-40 disabled:hover:bg-savvy-blue text-white flex items-center justify-center shrink-0 transition-all shadow-xs cursor-pointer"
-                  title="Kirim Pesan"
+                  title={t.assistant.btnSendMessage}
                 >
                   <Send className="w-3.5 h-3.5 -mr-0.5" />
                 </button>
@@ -1808,8 +1796,8 @@ export function AiAssistantTab({
               onClick={handleNewConversation}
               className="text-[10px] font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1.5 py-1 px-3 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
             >
-              <RefreshCw className="w-3 h-3 text-slate-400" />
-              <span>Start New Conversation</span>
+              <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
+              <span>{t.assistant.btnStartNewChat}</span>
             </button>
           </div>
         </div>

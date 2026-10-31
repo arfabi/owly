@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Cpu,
 } from "lucide-react";
+import { useLanguage } from "../lib/i18n/LanguageContext";
 import { agentLog, AgentDomain, AgentLogEvent } from "../lib/agentLogger";
 
 interface LogConsoleModalProps {
@@ -66,6 +67,7 @@ const DOMAIN_CONFIG: Record<
 };
 
 export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
+  const { t } = useLanguage();
   const [logs, setLogs] = useState<AgentLogEvent[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<AgentDomain | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -75,14 +77,14 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
 
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  // 1. Inisialisasi awal log dari in-memory buffer
+  // 1. Initial load from in-memory log buffer
   useEffect(() => {
     if (isOpen) {
       setLogs(agentLog.getTrace());
     }
   }, [isOpen]);
 
-  // 2. Real-time Live Listener untuk pesan AGENT_LOG_EVENT dari Content/Sidepanel/Background
+  // 2. Real-time live listener for AGENT_LOG_EVENT
   useEffect(() => {
     if (!isOpen) return;
 
@@ -103,7 +105,7 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
     };
   }, [isOpen]);
 
-  // 3. Auto Scroll saat ada log baru
+  // 3. Auto Scroll
   useEffect(() => {
     if (autoScroll && logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -112,7 +114,7 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
 
   if (!isOpen) return null;
 
-  // Filter logs berdasarkan Domain dan Search Query
+  // Filter logs by Domain and Search Query
   const filteredLogs = logs.filter((log) => {
     const matchesDomain = selectedDomain === "ALL" || log.domain === selectedDomain;
     const matchesSearch =
@@ -152,14 +154,14 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-xs text-white tracking-tight flex items-center gap-1.5">
-                <span>Owly.AI • Agentic Log Console</span>
+                <span>{t.logConsole.title}</span>
               </h3>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-950 border border-emerald-600/50 text-emerald-400 text-[9px] font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                LIVE
+                {t.logConsole.liveBadge}
               </span>
             </div>
-            <p className="text-[10px] text-slate-400">Real-time reasoning, perception, & action trace</p>
+            <p className="text-[10px] text-slate-400">{t.logConsole.subtitle}</p>
           </div>
         </div>
 
@@ -168,16 +170,16 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
           <button
             onClick={handleCopyLogs}
             className="flex items-center gap-1 py-1 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[10px] font-semibold transition-all cursor-pointer"
-            title="Salin semua log dalam format JSON"
+            title={t.logConsole.copyTooltip}
           >
             {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-            <span>{isCopied ? "Copied" : "Copy JSON"}</span>
+            <span>{isCopied ? t.logConsole.copied : t.logConsole.copyJson}</span>
           </button>
 
           <button
             onClick={handleClearLogs}
             className="p-1 rounded-lg bg-slate-800 hover:bg-red-950/80 text-slate-400 hover:text-red-400 border border-slate-700 hover:border-red-800/60 transition-all cursor-pointer"
-            title="Bersihkan log saat ini"
+            title={t.logConsole.clearTooltip}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -185,19 +187,19 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Tutup Console"
+            title={t.logConsole.closeTooltip}
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* 2. Hackathon Judge Banner Info */}
+      {/* 2. Banner Info */}
       <div className="bg-slate-900/60 border-b border-slate-800/80 px-3 py-1.5 flex items-center justify-between text-[10px] text-slate-400 shrink-0">
         <div className="flex items-center gap-1.5 truncate">
           <span className="text-amber-400">💡</span>
           <span className="truncate">
-            <b className="text-slate-200">Panduan Juri:</b> Menampilkan jejak pemanggilan model Meta Muse Spark, VAD Voice, serta eksekusi AES-256 Vault.
+            <b className="text-slate-200">{t.logConsole.infoBannerTitle}:</b> {t.logConsole.infoBannerDesc}
           </span>
         </div>
         <span className="text-slate-500 font-mono text-[9px] hidden sm:inline shrink-0">
@@ -217,7 +219,7 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
                 : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
             }`}
           >
-            ALL ({logs.length})
+            {t.logConsole.allLogs} ({logs.length})
           </button>
 
           {(Object.keys(DOMAIN_CONFIG) as AgentDomain[]).map((dom) => {
@@ -250,7 +252,7 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari log (misal: 'Muse Spark', 'DOM', 'NIK', 'tool')..."
+              placeholder={t.logConsole.searchPlaceholder}
               className="w-full pl-7 pr-3 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[11px] text-slate-200 placeholder-slate-500 focus:outline-hidden focus:border-emerald-500/60 font-mono"
             />
           </div>
@@ -262,7 +264,7 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
                 ? "bg-slate-900 text-emerald-400 border-emerald-500/40"
                 : "bg-slate-900 text-slate-500 border-slate-800"
             }`}
-            title="Otomatis scroll ke baris terbawah saat log baru masuk"
+            title="Auto-scroll to bottom on new log arrival"
           >
             Auto-scroll: {autoScroll ? "ON" : "OFF"}
           </button>
@@ -274,9 +276,9 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
         {filteredLogs.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 py-12">
             <Cpu className="w-8 h-8 text-slate-700 mb-2 animate-pulse" />
-            <p className="font-bold text-xs text-slate-400">Belum ada trace log</p>
-            <p className="text-[10px] text-slate-600 max-w-[220px] mt-1">
-              Buka website, ketik chat, atau klik tombol tindakan untuk melihat alur proses agen AI secara live.
+            <p className="font-bold text-xs text-slate-400">No logs recorded yet</p>
+            <p className="text-[10px] text-slate-600 max-w-[240px] mt-1">
+              Interact with the extension, ask questions, or run Auto Fill to view agent actions in real time.
             </p>
           </div>
         ) : (
@@ -295,7 +297,7 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
                 key={idx}
                 className={`bg-slate-900/90 rounded-lg p-2.5 border ${cfg.borderClass} hover:border-slate-700 transition-colors space-y-1.5`}
               >
-                {/* Meta Header baris */}
+                {/* Meta Header */}
                 <div className="flex items-center justify-between text-[10px]">
                   <div className="flex items-center gap-1.5">
                     <span

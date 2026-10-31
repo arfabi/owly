@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Navbar } from "@/components/Navbar";
 import {
   ShieldCheck,
   Lock,
@@ -34,38 +34,8 @@ export default function PrivacyPage() {
       <div className="absolute top-[500px] right-[-100px] w-[500px] h-[500px] bg-blue-100/40 blur-[120px] pointer-events-none -z-10" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none -z-10" />
 
-      {/* Floating Pill Navbar */}
-      <header className="sticky top-5 z-50 max-w-5xl mx-auto px-4 w-full">
-        <nav className="magic-pill rounded-full px-5 py-2.5 flex items-center justify-between shadow-xs">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <img
-              src="/owly.png"
-              alt="Owly.AI Logo"
-              className="w-8 h-8 object-contain drop-shadow-xs group-hover:scale-105 transition-transform"
-            />
-            <span className="font-extrabold text-lg tracking-tight text-savvy-navy">
-              Owly<span className="text-savvy-blue">.AI</span>
-            </span>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
-            <Link href="/" className="hover:text-blue-600 transition-colors flex items-center gap-1.5">
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{isId ? "Kembali ke Beranda" : "Back to Home"}</span>
-            </Link>
-            <Link href="/mock-portal" className="hover:text-blue-600 transition-colors">
-              Mock Portal
-            </Link>
-            <Link href="/simulator" className="hover:text-blue-600 transition-colors">
-              Simulator
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-          </div>
-        </nav>
-      </header>
+      {/* Unified Navbar */}
+      <Navbar />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 pt-12 pb-24 w-full">
@@ -78,14 +48,14 @@ export default function PrivacyPage() {
 
           <h1 className="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight max-w-2xl mx-auto">
             {isId
-              ? "Bagaimana Savvy Melindungi Data Paling Sensitif Anda"
-              : "How Savvy protects your most sensitive data"}
+              ? "Bagaimana Owly Melindungi Data Paling Sensitif Anda"
+              : "How Owly protects your most sensitive data"}
           </h1>
 
           <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
             {isId
-              ? "Kami secara matematis memastikan kredensial identitas, kata sandi, dan dokumen paspor Anda tidak pernah dapat dibaca oleh staf pengembang Savvy, server database, maupun pihak ketiga."
-              : "We mathematically ensure your identity credentials, passwords, and passport documents can never be read by Savvy engineers, database servers, or third-party brokers."}
+              ? "Kami secara matematis memastikan kredensial identitas, kata sandi, dan dokumen paspor Anda tidak pernah dapat dibaca oleh staf pengembang Owly, server database, maupun pihak ketiga."
+              : "We mathematically ensure your identity credentials, passwords, and passport documents can never be read by Owly engineers, database servers, or third-party brokers."}
           </p>
 
           {/* 3 Core Highlights Badges */}
@@ -113,8 +83,8 @@ export default function PrivacyPage() {
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
               {isId
-                ? "Pengisian formulir resmi membutuhkan rasa saling percaya penuh. Berikut adalah rincian teknis bagaimana Savvy menangani setiap lapisan informasi."
-                : "Official forms demand total trust. Here is the technical breakdown of how Savvy handles each layer of information."}
+                ? "Pengisian formulir resmi membutuhkan rasa saling percaya penuh. Berikut adalah rincian teknis bagaimana Owly menangani setiap lapisan informasi."
+                : "Official forms demand total trust. Here is the technical breakdown of how Owly handles each layer of information."}
             </p>
           </div>
 
@@ -130,7 +100,7 @@ export default function PrivacyPage() {
               <p className="text-xs text-slate-600 leading-relaxed">
                 {isId
                   ? "Data profil tersimpan Anda (nama, alamat, tanggal lahir) dienkripsi langsung di dalam browser menggunakan Web Crypto API asli dengan PBKDF2 (100.000 iterasi) dan AES-256-GCM. Kunci dekripsi tidak pernah meninggalkan perangkat Anda. Server hanya menerima ciphertext yang tidak dapat dibuka."
-                  : "Your stored profile data (name, address, date of birth) is encrypted right inside your browser using the native Web Crypto API with PBKDF2 (100,000 iterations) and AES-256-GCM. The decryption keys never leave your device. Savvy servers only store ciphertext."}
+                  : "Your stored profile data (name, address, date of birth) is encrypted right inside your browser using the native Web Crypto API with PBKDF2 (100,000 iterations) and AES-256-GCM. The decryption keys never leave your device. Owly servers only store ciphertext."}
               </p>
             </div>
 
@@ -159,8 +129,8 @@ export default function PrivacyPage() {
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 {isId
-                  ? "Untuk menjelaskan pertanyaan formulir yang rumit, Savvy hanya mengirimkan label pertanyaan, petunjuk sekitar, dan struktur halaman ke Google Gemini. Seluruh nilai identitas pribadi (nomor paspor, NIK, nomor telepon) disamarkan (masked) di sisi klien sebelum paket jaringan dikirim."
-                  : "To explain a confusing form question, Savvy only transmits the question label, surrounding instructions, and page structure to Google Gemini. All personal identity values (passport numbers, phone numbers, NIK) are masked client-side before any network packet is dispatched."}
+                  ? "Untuk menjelaskan pertanyaan formulir yang rumit, Owly hanya mengirimkan label pertanyaan, petunjuk sekitar, dan struktur halaman ke Google Gemini. Seluruh nilai identitas pribadi (nomor paspor, NIK, nomor telepon) disamarkan (masked) di sisi klien sebelum paket jaringan dikirim."
+                  : "To explain a confusing form question, Owly only transmits the question label, surrounding instructions, and page structure to Google Gemini. All personal identity values (passport numbers, phone numbers, NIK) are masked client-side before any network packet is dispatched."}
               </p>
             </div>
 
@@ -174,8 +144,8 @@ export default function PrivacyPage() {
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 {isId
-                  ? "Savvy dikunci secara hard-coded untuk mengabaikan seluruh kolom autentikasi. Tag input dengan tipe 'password', kode CVV, nomor kartu kredit, kode OTP, dan PIN bank tidak pernah dibaca, tidak pernah disarankan untuk AutoFill, dan tidak pernah dicatat."
-                  : "Savvy is hard-coded to ignore authentication fields. Input tags with type=\"password\", CVV codes, credit card numbers, OTPs, and bank PINs are never captured, never suggested for AutoFill, and never logged."}
+                  ? "Owly dikunci secara hard-coded untuk mengabaikan seluruh kolom autentikasi. Tag input dengan tipe 'password', kode CVV, nomor kartu kredit, kode OTP, dan PIN bank tidak pernah dibaca, tidak pernah disarankan untuk AutoFill, dan tidak pernah dicatat."
+                  : "Owly is hard-coded to ignore authentication fields. Input tags with type=\"password\", CVV codes, credit card numbers, OTPs, and bank PINs are never captured, never suggested for AutoFill, and never logged."}
               </p>
             </div>
           </div>
@@ -185,12 +155,12 @@ export default function PrivacyPage() {
         <section className="bg-slate-50/80 border border-slate-200 rounded-3xl p-6 sm:p-10 text-left space-y-8 shadow-xs">
           <div className="border-b border-slate-200 pb-5">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
-              Privacy Policy for Savvy.ai & Browser Extension
+              Privacy Policy for Owly.AI & Browser Extension
             </h2>
             <div className="text-xs text-slate-500 mt-1.5 flex flex-wrap items-center gap-2">
               <span className="font-bold text-slate-700">Last Updated: October 2026</span>
               <span>•</span>
-              <span>Valid for Google Chrome, Microsoft Edge, Firefox, and Opera extensions.</span>
+              <span>Valid for Google Chrome, Microsoft Edge, Opera, and Brave extensions.</span>
             </div>
           </div>
 
@@ -238,14 +208,14 @@ export default function PrivacyPage() {
               1. Information We Collect and Process
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Savvy.ai operates as a browser extension and client-side assistance tool. To assist you with filling and auditing official forms, Savvy processes the following categories of information:
+              Owly.AI operates as a browser extension and client-side assistance tool. To assist you with filling and auditing official forms, Owly processes the following categories of information:
             </p>
             <ul className="space-y-2 pl-4 list-disc text-xs sm:text-sm text-slate-600 leading-relaxed">
               <li>
                 <span className="font-bold text-slate-800">Form Context & Field Labels:</span> HTML form field names, input descriptions, labels, and relevant on-screen instructions required to provide contextual explanations.
               </li>
               <li>
-                <span className="font-bold text-slate-800">Encrypted User Vault:</span> User-supplied details (such as full name, date of birth, and contact information) entered into the Savvy Smart Vault. This data is encrypted locally using the Web Crypto API prior to any cloud synchronization.
+                <span className="font-bold text-slate-800">Encrypted User Vault:</span> User-supplied details (such as full name, date of birth, and contact information) entered into the Owly Smart Vault. This data is encrypted locally using the Web Crypto API prior to any cloud synchronization.
               </li>
               <li>
                 <span className="font-bold text-slate-800">Temporary Document Extractions:</span> When you upload a passport or certificate to autofill forms, OCR extraction is executed ephemerally. The source document file is purged from memory once extraction completes.
@@ -262,7 +232,7 @@ export default function PrivacyPage() {
               In strict accordance with Google Chrome Web Store User Data FAQ and Mozilla AMO Add-on Policies:
             </p>
             <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-950 leading-relaxed">
-              Savvy.ai is engineered with hardcoded client-side filters that prevent access to input tags with <code className="bg-white px-1 py-0.5 rounded border border-amber-200 font-mono text-[11px]">type="password"</code>, credit card number patterns, security CVV numbers, bank PINs, and one-time authentication tokens (OTP). Such inputs are completely ignored and never processed.
+              Owly.AI is engineered with hardcoded client-side filters that prevent access to input tags with <code className="bg-white px-1 py-0.5 rounded border border-amber-200 font-mono text-[11px]">type="password"</code>, credit card number patterns, security CVV numbers, bank PINs, and one-time authentication tokens (OTP). Such inputs are completely ignored and never processed.
             </div>
           </div>
 
@@ -272,10 +242,10 @@ export default function PrivacyPage() {
               3. How Cloud AI Analysis Works
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              To provide natural language explanations and audio voice guidance, Savvy transmits non-sensitive form field questions and contextual descriptions to Google Gemini models via Google Cloud infrastructure.
+              To provide natural language explanations and audio voice guidance, Owly transmits non-sensitive form field questions and contextual descriptions to Meta Muse Spark Open models via secure infrastructure.
             </p>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Before any request leaves your device, Savvy runs a client-side regex scrubber that masks personal identifiers (such as national ID numbers, passport codes, and phone numbers). Google Cloud does not use data submitted through enterprise API endpoints to train underlying foundation models.
+              Before any request leaves your device, Owly runs a client-side regex scrubber that masks personal identifiers (such as national ID numbers, passport codes, and phone numbers). No personal identity credentials are used to train foundation models.
             </p>
           </div>
 
@@ -285,7 +255,7 @@ export default function PrivacyPage() {
               4. Permissions Used in Browser Extensions
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-              Savvy requests only permissions strictly necessary to deliver its core features in compliance with Chrome Web Store policies:
+              Owly requests only permissions strictly necessary to deliver its core features in compliance with Chrome Web Store policies:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs">
               <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
@@ -297,7 +267,7 @@ export default function PrivacyPage() {
               <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
                 <span className="font-mono font-bold text-blue-600 block">Host Permissions (&lt;all_urls&gt;)</span>
                 <span className="text-slate-600 leading-snug block">
-                  Strictly required so users can navigate arbitrary third-party application portals (e.g. government visa portals, university admission systems, scholarship sites) where Savvy detects form inputs, translates confusing instructions, and allows users to crop and explain ambiguous on-screen questions via the 'Explain This' visual snippet tool.
+                  Strictly required so users can navigate arbitrary third-party application portals (e.g. government visa portals, university admission systems, scholarship sites) where Owly detects form inputs, translates confusing instructions, and allows users to crop and explain ambiguous on-screen questions via the 'Explain This' visual snippet tool.
                 </span>
               </div>
               <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
@@ -335,18 +305,11 @@ export default function PrivacyPage() {
             </p>
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <a
-                href="mailto:privacy@savvy.id"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors"
+                href="mailto:fadlirobbi@gmail.com"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors shadow-2xs"
               >
                 <Mail className="w-3.5 h-3.5 text-blue-600" />
-                <span>privacy@savvy.id</span>
-              </a>
-              <a
-                href="mailto:support@savvy.id"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
-              >
-                <Mail className="w-3.5 h-3.5 text-slate-500" />
-                <span>support@savvy.id</span>
+                <span>fadlirobbi@gmail.com</span>
               </a>
             </div>
           </div>
@@ -356,16 +319,19 @@ export default function PrivacyPage() {
       {/* Footer */}
       <footer className="py-8 border-t border-slate-200 text-center text-xs text-slate-500 bg-slate-50">
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© 2026 Savvy.AI • Built for Meta Global AI Hackathon</p>
+          <p>© 2026 Owly.AI • Next-Gen AI Browser Companion</p>
           <div className="flex items-center gap-4 text-slate-600 font-medium">
             <Link href="/" className="hover:text-blue-600 transition-colors">
               Home
+            </Link>
+            <Link href="/simulator" className="hover:text-blue-600 transition-colors">
+              Simulator
             </Link>
             <Link href="/privacy" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
               Security & Privacy
             </Link>
             <a
-              href="https://github.com/arfabi/savvy"
+              href="https://github.com/arfabi/owly"
               target="_blank"
               rel="noreferrer"
               className="hover:text-blue-600 transition-colors inline-flex items-center gap-1"

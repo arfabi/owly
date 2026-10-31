@@ -1,4 +1,7 @@
-export type SupportedLanguage = "id" | "en";
+// OWLY.AI — Multilingual Translations Dictionary
+// Supported Locales: English (US - American English, Default) and Bahasa Indonesia (ID)
+
+export type SupportedLanguage = "en" | "id";
 
 export interface ExtensionTranslations {
   header: {
@@ -8,13 +11,74 @@ export interface ExtensionTranslations {
     vaultUnlocked: string;
     btnLock: string;
     btnUnlock: string;
+    selectLanguage: string;
+    changeLanguage: string;
+    langIndonesian: string;
+    langEnglishUs: string;
+    langIdSubtitle: string;
+    langEnSubtitle: string;
+    logConsoleTooltip: string;
+    accessibilityTooltip: string;
+    appSubtitle: string;
   };
   tabs: {
-    assistant: string;
     guide: string;
     vault: string;
     audit: string;
-    a11y: string;
+  };
+  assistant: {
+    greetingTitle: string;
+    greetingDesc: string;
+    guideMeTitle: string;
+    guideMeDesc: string;
+    btnAnalyzeForm: string;
+    btnAnalyzeAgain: string;
+    analyzedReadyBadge: string;
+    fieldsCountSuffix: string;
+    btnGuideStep: string;
+    btnAutofillQuick: string;
+    explainThisTitle: string;
+    explainThisSub: string;
+    showMeTitle: string;
+    showMeSub: string;
+    a11ySectionTitle: string;
+    chipTextTooSmall: string;
+    chipGlareScreen: string;
+    chipReadAloud: string;
+    chipHardToFocus: string;
+    btnMoreA11y: string;
+    snipBoxTitle: string;
+    snipVisionBadge: string;
+    voiceDrawerTitle: string;
+    pttTitle: string;
+    pttDesc: string;
+    liveTalkTitle: string;
+    liveTalkDesc: string;
+    micPermissionLabel: string;
+    micActive: string;
+    micInactive: string;
+    btnAllowMic: string;
+    pttHoldToSpeak: string;
+    pttReleaseToSend: string;
+    pttListeningPrompt: string;
+    pttIdlePrompt: string;
+    btnStopLiveTalk: string;
+    btnStartLiveTalk: string;
+    liveSpeakingStatus: string;
+    liveThinkingStatus: string;
+    liveListeningStatus: string;
+    liveIdleStatus: string;
+    inputPlaceholder: string;
+    keyboardHint: string;
+    btnSendMessage: string;
+    btnStartNewChat: string;
+    multiAgentRunning: string;
+    multiAgentScanningDesc: string;
+    step1Vision: string;
+    step2Dom: string;
+    step3Grounding: string;
+    step4Agent1: string;
+    step5Agent2: string;
   };
   coach: {
     activeFieldTitle: string;
@@ -44,269 +108,568 @@ export interface ExtensionTranslations {
   vault: {
     title: string;
     subtitle: string;
-    profilePribadi: string;
-    profilePasangan: string;
-    profilePekerjaan: string;
-    nikLabel: string;
-    namaLabel: string;
-    tglLabel: string;
-    alamatLabel: string;
-    ocrUploadTitle: string;
-    ocrUploadDesc: string;
-    btnSimulateOcr: string;
+    readyToFillTitle: string;
+    readyToFillSubtitle: string;
     btnBatchAutofill: string;
-    undoBarText: string;
+    warningNotAnalyzed: string;
+    btnAnalyzeNow: string;
+    undoBarSuccess: string;
     btnUndo: string;
-    essayTitle: string;
-    essaySubtitle: string;
-    essayBullet1Placeholder: string;
-    essayBullet2Placeholder: string;
-    essayBullet3Placeholder: string;
-    btnGenerateEssay: string;
-    essayResultLabel: string;
+    verifiedDataTitle: string;
+    itemsCountSuffix: string;
+    btnAddData: string;
+    uploadDocCardTitle: string;
+    uploadDocCardSubtitle: string;
+    btnUploadDoc: string;
+    uploadingDoc: string;
+    uploadConsentNotice: string;
+    privacyPolicyLink: string;
+    modalAddDataTitle: string;
+    labelDataName: string;
+    labelValue: string;
+    labelAliases: string;
+    hintAliases: string;
+    labelSourceTag: string;
+    placeholderDataName: string;
+    placeholderValue: string;
+    placeholderAliases: string;
+    placeholderSourceTag: string;
+    errorNameRequired: string;
+    errorValueRequired: string;
+    btnCancel: string;
+    btnSaveData: string;
+    deleteTooltip: string;
   };
   audit: {
     summaryTitle: string;
     greenCount: string;
     yellowCount: string;
     redCount: string;
-    photoTitle: string;
-    photoSubtitle: string;
-    chipRatio: string;
-    chipBlur: string;
-    chipBiometric: string;
-    btnScanPhoto: string;
-    btnFixPhoto: string;
-    consistencyTitle: string;
-    consistencyDesc: string;
-    consistencyMatch: string;
-    btnRunFullAudit: string;
-    auditCompleteToast: string;
+    reAuditBtn: string;
+    auditNowBtn: string;
+    auditingProgress: string;
+    findingsTitle: string;
+    fieldsDetectedSuffix: string;
+    tipVaultTypoTitle: string;
+    tipVaultTypoDesc: string;
+    btnOpenVault: string;
+    allClearTitle: string;
+    allClearDesc: string;
+    btnSaveFormToVault: string;
+    saveVaultToast: string;
+    scopeCardTitle: string;
+    scopeL1Label: string;
+    scopeL1Desc: string;
+    scopeL2Label: string;
+    scopeL2Desc: string;
+    scopeL3Label: string;
+    scopeL3Desc: string;
+    scopeL4Label: string;
+    scopeL4Desc: string;
+    btnHighlightField: string;
+    guideLabel: string;
   };
   a11y: {
     title: string;
+    welcomeTitle: string;
+    welcomeDesc: string;
+    quickProfilesTitle: string;
+    resetBtn: string;
+    undoBtn: string;
+    activeCountSuffix: string;
+    profileAdhd: string;
+    profileDyslexia: string;
+    profileLowVision: string;
+    profileSenior: string;
+  };
+  auth: {
+    title: string;
     subtitle: string;
-    zeroTokenBadge: string;
-    tools: {
-      id: string;
-      title: string;
-      desc: string;
-      type: "toggle" | "stepper";
-      statusOn: string;
-      statusOff: string;
-    }[];
+    loggedInBadge: string;
+    accountDesc: string;
+    btnLogout: string;
+    demoUserTitle: string;
+    btnDemoLogin: string;
+    demoAccountHint: string;
+    orSocial: string;
+    pdpNotice: string;
+  };
+  logConsole: {
+    title: string;
+    subtitle: string;
+    liveBadge: string;
+    copyJson: string;
+    copied: string;
+    clear: string;
+    close: string;
+    infoBannerTitle: string;
+    infoBannerDesc: string;
+    allLogs: string;
+    searchPlaceholder: string;
+    copyTooltip: string;
+    clearTooltip: string;
+    closeTooltip: string;
+  };
+  common: {
+    loading: string;
+    success: string;
+    error: string;
+    cancel: string;
+    close: string;
+    copy: string;
+    copied: string;
+    retry: string;
+    save: string;
+    privacyFooter: string;
   };
 }
 
 export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
-  id: {
-    header: {
-      portalDetected: "beasiswalpdp.kemenkeu.go.id",
-      targetGoal: "🎯 Beasiswa LPDP 2026",
-      vaultLocked: "Vault Terkunci",
-      vaultUnlocked: "Vault Terbuka",
-      btnLock: "Kunci",
-      btnUnlock: "Buka Vault",
-    },
-    tabs: {
-      assistant: "AI Assistant",
-      guide: "Ask Savvy",
-      vault: "AutoFill",
-      audit: "Audit Form",
-      a11y: "A11y Hub",
-    },
-    coach: {
-      activeFieldTitle: "Nomor Induk Kependudukan (NIK)",
-      activeFieldDesc: "Kolom formulir aktif yang sedang disorot Spotlight",
-      badgeOfficial: "🟢 Official Guidance",
-      badgeCurated: "🔵 Savvy Curated",
-      badgeAi: "🟡 AI Guidance",
-      secMeaning: "Arti Istilah:",
-      secMeaningText: "Nomor identitas kependudukan tunggal 16 digit yang diterbitkan oleh Dinas Dukcapil.",
-      secHowTo: "Cara Mengisi:",
-      secHowToText: "Ketik 16 digit angka tanpa spasi atau tanda strip. Wajib sesuai fisik e-KTP terbaru.",
-      secExample: "Contoh Valid:",
-      secExampleText: "3271041908980002",
-      secPitfall: "Jebakan Umum (Pitfall):",
-      secPitfallText: "Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili.",
-      sourceText: "",
-      btnAutofillSingle: "Isi Kolom Ini dari Vault (327104...)",
-      btnAutofillDone: "Telah Terisi dari Vault",
-      voicebotTitle: "Handsfree Voicebot (Muse Voice + VAD)",
-      voiceStatusListening: "Mendengarkan ucapan Anda...",
-      voiceStatusThinking: "Muse Spark sedang menalar...",
-      voiceStatusSpeaking: "Menjelaskan aturan juknis...",
-      btnAskVoice: "Bicara dengan Savvy",
-      btnExplainThis: "Explain This (Multimodal Snip)",
-      explainDesc: "Pilih area formulir yang membingungkan. Kotak input akan ditutup sensor otomatis.",
-    },
-    vault: {
-      title: "Multiple Vault (Zero-Knowledge AES-256)",
-      subtitle: "Data identitas terenkripsi di memori lokal browser. Tidak pernah dikirim ke server.",
-      profilePribadi: "Profil: Pribadi",
-      profilePasangan: "Profil: Pasangan",
-      profilePekerjaan: "Profil: Pekerjaan",
-      nikLabel: "NIK",
-      namaLabel: "Nama Lengkap",
-      tglLabel: "Tgl Lahir",
-      alamatLabel: "Alamat KTP",
-      ocrUploadTitle: "Upload Scan KTP ke Vault (Multimodal Vision)",
-      ocrUploadDesc: "Diproses di RAM oleh Muse Spark Open dengan persetujuan PDP, foto langsung dihapus.",
-      btnSimulateOcr: "Uji Coba Ekstraksi KTP",
-      btnBatchAutofill: "1-Click Autofill Semua Kolom Cocok",
-      undoBarText: "4 kolom formulir berhasil diisi dari Vault.",
-      btnUndo: "Batalkan (Undo)",
-      essayTitle: "Essay Coach (3-Bullet Smart Drafting)",
-      essaySubtitle: "Bantuan menstrukturkan draf esai resmi tanpa mengarang fakta/halusinasi.",
-      essayBullet1Placeholder: "Fakta 1: Latar belakang & fokus studi yang dipilih",
-      essayBullet2Placeholder: "Fakta 2: Rencana pengabdian di instansi/masyarakat",
-      essayBullet3Placeholder: "Fakta 3: Target kontribusi nyata 5 tahun ke depan",
-      btnGenerateEssay: "Rancang Draf Narasi Esai Formal",
-      essayResultLabel: "Hasil Draf Narasi Resmi (Siap Salin):",
-    },
-    audit: {
-      summaryTitle: "Traffic Light Pre-Submit Auditor",
-      greenCount: "3 Kolom Siap",
-      yellowCount: "1 Peringatan",
-      redCount: "1 Perlu Perbaikan",
-      photoTitle: "Audit Kepatuhan Pasfoto (ICAO 9303)",
-      photoSubtitle: "Pemeriksaan in-memory tanpa sentuh atau ubah piksel biometrik wajah.",
-      chipRatio: "Rasio 2x2 Inci: Sah",
-      chipBlur: "Ketajaman Laplacian: Baik (142)",
-      chipBiometric: "Proporsi Kepala: 58% (Normal 50-69%)",
-      btnScanPhoto: "Uji Pindai Pasfoto",
-      btnFixPhoto: "Ganti Pasfoto Tajam",
-      consistencyTitle: "Consistency Checker Agent",
-      consistencyDesc: "Pemeriksaan silang: Nama di Formulir ('Budi Santoso') vs Nama di Paspor ('BUDI SANTOSO').",
-      consistencyMatch: "Konsistensi Data: 100% Selaras",
-      btnRunFullAudit: "Jalankan Audit Menyeluruh Sekarang",
-      auditCompleteToast: "Audit selesai. Lampu hijau siap kirim!",
-    },
-    a11y: {
-      title: "Accessibility HUB: 14 Tools Deterministik",
-      subtitle: "Alat kenyamanan sensorik & kognitif lokal ($0 biaya token). Bisa dipicu klik atau AI reasoning.",
-      zeroTokenBadge: "0 Token LLM • Instan <10ms",
-      tools: [
-        { id: "spotlight", title: "Reading Spotlight", desc: "Strip sorot mengikuti vertikal kursor", type: "toggle", statusOn: "Aktif", statusOff: "Mati" },
-        { id: "tts", title: "Text to Speech (TTS)", desc: "Baca instruksi via Web Speech API", type: "toggle", statusOn: "Aktif", statusOff: "Mati" },
-        { id: "contrast", title: "Contrast Mode", desc: "Filter kontras tinggi WCAG AAA", type: "toggle", statusOn: "High Contrast", statusOff: "Normal" },
-        { id: "links", title: "Highlight Links", desc: "Sorot elemen interaktif & tombol", type: "toggle", statusOn: "Highlighted", statusOff: "Normal" },
-        { id: "textSize", title: "Bigger Text Size", desc: "Perbesar skala tipografi halaman", type: "stepper", statusOn: "+25% (Besar)", statusOff: "Normal" },
-        { id: "textSpacing", title: "Text Spacing", desc: "Perlebar jarak antar-huruf kata", type: "stepper", statusOn: "Spacious", statusOff: "Normal" },
-        { id: "pauseAnim", title: "Pause Animations", desc: "Hentikan elemen bergerak/distraksi", type: "toggle", statusOn: "Paused", statusOff: "Normal" },
-        { id: "hideImages", title: "Hide All Images", desc: "Sembunyikan gambar iklan/banner", type: "toggle", statusOn: "Hidden", statusOff: "Normal" },
-        { id: "dyslexiaFont", title: "Dyslexia Friendly Font", desc: "Ganti font ke OpenDyslexic", type: "toggle", statusOn: "OpenDyslexic", statusOff: "Normal" },
-        { id: "bigCursor", title: "Big Cursor", desc: "Ganti kursor ke pointer SVG besar", type: "toggle", statusOn: "Big Pointer", statusOff: "Normal" },
-        { id: "liveTooltips", title: "Live Explanatory Tooltips", desc: "Tooltip istilah birokrasi mengambang", type: "toggle", statusOn: "Aktif", statusOff: "Mati" },
-        { id: "lineHeight", title: "Line Height Spacing", desc: "Penskalaan jarak vertikal baris teks", type: "stepper", statusOn: "2.0 Line Height", statusOff: "Normal" },
-        { id: "textAlign", title: "Text Alignment", desc: "Normalisasi perataan teks ke kiri", type: "toggle", statusOn: "Left-Aligned", statusOff: "Normal" },
-        { id: "colorSat", title: "Color Saturation", desc: "Penyesuaian saturasi warna monokrom", type: "stepper", statusOn: "Monochrome", statusOff: "Normal" },
-      ],
-    },
-  },
+  // =========================================================================
+  // ENGLISH (US - American English, Default)
+  // =========================================================================
   en: {
     header: {
-      portalDetected: "beasiswalpdp.kemenkeu.go.id",
-      targetGoal: "🎯 LPDP Scholarship 2026",
+      portalDetected: "Official Form Detected",
+      targetGoal: "🎯 Online Application 2026",
       vaultLocked: "Vault Locked",
       vaultUnlocked: "Vault Unlocked",
       btnLock: "Lock",
       btnUnlock: "Unlock Vault",
+      selectLanguage: "Select Language",
+      changeLanguage: "Change Language",
+      langIndonesian: "Bahasa Indonesia",
+      langEnglishUs: "English (US)",
+      langIdSubtitle: "Indonesian (ID)",
+      langEnSubtitle: "American English (EN)",
+      logConsoleTooltip: "Log Console • Live Agent Tracing",
+      accessibilityTooltip: "Accessibility HUB (14 Tools)",
+      appSubtitle: "Your AI Browser Companion",
     },
     tabs: {
-      assistant: "AI Assistant",
-      guide: "Ask Savvy",
-      vault: "AutoFill",
+      guide: "Ask Owly",
+      vault: "Auto Fill",
       audit: "Audit Form",
-      a11y: "A11y Hub",
+    },
+    assistant: {
+      greetingTitle: "Hello, I'm Owly",
+      greetingDesc: "Your intelligent browser companion. Ask questions below or pick a quick tool.",
+      guideMeTitle: "Guide me through this form",
+      guideMeDesc: "Owly will scan this page and walk you through completing each input field.",
+      btnAnalyzeForm: "Analyze This Form",
+      btnAnalyzeAgain: "Re-Analyze This Form",
+      analyzedReadyBadge: "Form Analyzed & Ready",
+      fieldsCountSuffix: "Input Fields Detected",
+      btnGuideStep: "Guide Field by Field",
+      btnAutofillQuick: "1-Click AutoFill",
+      explainThisTitle: "Explain This",
+      explainThisSub: "Lightshot Snip",
+      showMeTitle: "Show Me",
+      showMeSub: "Find Button or Text",
+      a11ySectionTitle: "Accessibility Tools",
+      chipTextTooSmall: "👁️ Text Too Small",
+      chipGlareScreen: "🌗 Screen Too Bright",
+      chipReadAloud: "🔊 Read Aloud (TTS)",
+      chipHardToFocus: "🧠 Hard to Focus",
+      btnMoreA11y: "All 14 Tools",
+      snipBoxTitle: "Captured Snip Area",
+      snipVisionBadge: "Multimodal Vision",
+      voiceDrawerTitle: "Voice Companion",
+      pttTitle: "PTT (Push-to-Talk)",
+      pttDesc: "Hold button while speaking",
+      liveTalkTitle: "Live Talk",
+      liveTalkDesc: "Automatic speech detection",
+      micPermissionLabel: "Microphone Access:",
+      micActive: "Active",
+      micInactive: "Inactive",
+      btnAllowMic: "Allow",
+      pttHoldToSpeak: "Hold",
+      pttReleaseToSend: "Release",
+      pttListeningPrompt: "Listening to your voice...",
+      pttIdlePrompt: "Hold button to speak",
+      btnStopLiveTalk: "Stop Live Talk",
+      btnStartLiveTalk: "Start Live Talk",
+      liveSpeakingStatus: "🔊 Owly is speaking...",
+      liveThinkingStatus: "🧠 Owly is thinking...",
+      liveListeningStatus: "🎙️ Owly is listening to your speech...",
+      liveIdleStatus: "Click to enable two-way voice conversation",
+      inputPlaceholder: "Ask anything, adjust display, or 'Show me: ...'",
+      keyboardHint: "Enter ↵ to send, Shift+Enter for new line",
+      btnSendMessage: "Send Message",
+      btnStartNewChat: "Start New Conversation",
+      multiAgentRunning: "Owly AI Multi-Agent Running...",
+      multiAgentScanningDesc: "Analyzing visual screen, mapping DOM structure, and grounding official regulations",
+      step1Vision: "Upload Screenshot to Multimodal Vision Engine",
+      step2Dom: "DOM Extractor & Form Structure Mapping",
+      step3Grounding: "Official Regulation Grounding Engine",
+      step4Agent1: "Agent 1: Context & Bureaucracy Verifier",
+      step5Agent2: "Agent 2: Field Rules & Anti-Disqualification Auditor",
     },
     coach: {
       activeFieldTitle: "National Identification Number (NIK)",
       activeFieldDesc: "Active field highlighted by Beacon Spotlight",
       badgeOfficial: "🟢 Official Guidance",
-      badgeCurated: "🔵 Savvy Curated",
+      badgeCurated: "🔵 Owly Curated",
       badgeAi: "🟡 AI Guidance",
       secMeaning: "Field Meaning:",
-      secMeaningText: "A 16-digit single citizen identity number issued by Dukcapil civil registry.",
+      secMeaningText: "A 16-digit continuous citizen identification number issued by the civil registry.",
       secHowTo: "How to Fill:",
-      secHowToText: "Enter 16 digits without spaces or dashes. Must match your latest physical e-KTP.",
+      secHowToText: "Enter 16 continuous digits without spaces or dashes. Must match your latest physical ID card.",
       secExample: "Valid Example:",
       secExampleText: "3271041908980002",
       secPitfall: "Common Pitfall:",
-      secPitfallText: "Do not use old NIK from an outdated Family Card if you recently relocated.",
-      sourceText: "",
-      btnAutofillSingle: "Fill This Field from Vault (327104...)",
+      secPitfallText: "Do not use an outdated identification number if you have recently relocated your registered residence.",
+      sourceText: "Verified from Official Ministry Guidelines",
+      btnAutofillSingle: "Fill This Field from Vault",
       btnAutofillDone: "Autofilled from Vault",
-      voicebotTitle: "Handsfree Voicebot (Muse Voice + VAD)",
+      voicebotTitle: "Hands-Free Voicebot (Muse Voice + VAD)",
       voiceStatusListening: "Listening to your voice...",
       voiceStatusThinking: "Muse Spark is reasoning...",
       voiceStatusSpeaking: "Explaining official guidelines...",
-      btnAskVoice: "Talk to Savvy",
+      btnAskVoice: "Talk to Owly",
       btnExplainThis: "Explain This (Multimodal Snip)",
-      explainDesc: "Select confusing form areas. Input values are automatically masked in black.",
+      explainDesc: "Select any confusing section. Personal data inputs are automatically blacked out for privacy.",
     },
     vault: {
       title: "Multiple Vault (Zero-Knowledge AES-256)",
-      subtitle: "Identity credentials encrypted locally in browser memory. Never sent to servers.",
-      profilePribadi: "Profile: Personal",
-      profilePasangan: "Profile: Spouse",
-      profilePekerjaan: "Profile: Employment",
-      nikLabel: "NIK",
-      namaLabel: "Full Name",
-      tglLabel: "Birth Date",
-      alamatLabel: "Address",
-      ocrUploadTitle: "Upload ID Scan to Vault (Multimodal Vision)",
-      ocrUploadDesc: "Processed in RAM by Muse Spark Open with PDP consent, image deleted immediately.",
-      btnSimulateOcr: "Simulate ID Card OCR",
-      btnBatchAutofill: "1-Click Autofill All Matching Fields",
-      undoBarText: "4 form fields successfully filled from Vault.",
-      btnUndo: "Undo Autofill",
-      essayTitle: "Essay Coach (3-Bullet Smart Drafting)",
-      essaySubtitle: "Assists in structuring formal compliant essays without hallucinating facts.",
-      essayBullet1Placeholder: "Fact 1: Background & rationale for chosen academic field",
-      essayBullet2Placeholder: "Fact 2: Concrete contribution plan to agency or society",
-      essayBullet3Placeholder: "Fact 3: Measurable 5-year post-study milestones",
-      btnGenerateEssay: "Draft Formal Statement of Purpose",
-      essayResultLabel: "Official Statement Draft (Ready to Copy):",
+      subtitle: "Identity credentials encrypted locally in browser memory. Never sent to any server in cleartext.",
+      readyToFillTitle: "Ready to Fill Active Form",
+      readyToFillSubtitle: "Matches verified profile data to web inputs with one click",
+      btnBatchAutofill: "1-Click AutoFill",
+      warningNotAnalyzed: "Form has not been analyzed yet! Please analyze the form first so Owly can match fields accurately.",
+      btnAnalyzeNow: "🔍 Analyze Form Now",
+      undoBarSuccess: "Form successfully filled from Vault!",
+      btnUndo: "Undo 100%",
+      verifiedDataTitle: "Verified Profile Data",
+      itemsCountSuffix: "items",
+      btnAddData: "+ Add Data",
+      uploadDocCardTitle: "Add Profile Data via ID or Document",
+      uploadDocCardSubtitle: "Upload your ID card, Passport, or Academic Certificate (PDF, PNG, JPG)",
+      btnUploadDoc: "Upload Document",
+      uploadingDoc: "Processing Document...",
+      uploadConsentNotice: "By uploading, I consent to AI processing my ID for autofill. Original files are auto-deleted after extraction. Only encrypted extracted data is stored in my vault.",
+      privacyPolicyLink: "Privacy Policy",
+      modalAddDataTitle: "Add New Profile Item",
+      labelDataName: "Data Name",
+      labelValue: "Value",
+      labelAliases: "Aliases",
+      hintAliases: "(comma separated to recognize similar input field names)",
+      labelSourceTag: "Source Tag",
+      placeholderDataName: "e.g. Tax Identification Number",
+      placeholderValue: "e.g. 12.345.678.9-012.000",
+      placeholderAliases: "e.g. Tax ID, NPWP, Tax Number",
+      placeholderSourceTag: "e.g. Tax Card / Manual Input",
+      errorNameRequired: "Data Name is required.",
+      errorValueRequired: "Data Value is required.",
+      btnCancel: "Cancel",
+      btnSaveData: "Save Data",
+      deleteTooltip: "Delete this item",
     },
     audit: {
       summaryTitle: "Traffic Light Pre-Submit Auditor",
-      greenCount: "3 Fields Ready",
-      yellowCount: "1 Warning",
-      redCount: "1 Fix Needed",
-      photoTitle: "Biometric Photo Compliance (ICAO 9303)",
-      photoSubtitle: "Audited in-memory without retouching biometrics or altering face pixels.",
-      chipRatio: "Aspect Ratio 2x2: Valid",
-      chipBlur: "Laplacian Sharpness: Crisp (142)",
-      chipBiometric: "Head Proportion: 58% (Normal 50-69%)",
-      btnScanPhoto: "Run Photo Biometrics Scan",
-      btnFixPhoto: "Replace with Sharp Photo",
-      consistencyTitle: "Consistency Checker Agent",
-      consistencyDesc: "Cross-validation: Name on Form ('Budi Santoso') vs Name on Passport ('BUDI SANTOSO').",
-      consistencyMatch: "Data Consistency: 100% Match",
-      btnRunFullAudit: "Run Complete Pre-Submit Audit Now",
-      auditCompleteToast: "Audit completed. Green light cleared for submission!",
+      greenCount: "Passed",
+      yellowCount: "Warnings",
+      redCount: "Fatal Issues",
+      reAuditBtn: "Re-Audit Web Form",
+      auditNowBtn: "Audit Form Now",
+      auditingProgress: "Scanning & Auditing Page Fields...",
+      findingsTitle: "Audit Findings",
+      fieldsDetectedSuffix: "Fields Detected",
+      tipVaultTypoTitle: "Tip: Connect Vault for Typo Guard",
+      tipVaultTypoDesc: "No Vault documents detected. Audit runs normally, but automatic typo matching for names & IDs is inactive.",
+      btnOpenVault: "Open Auto Fill / Vault Tab",
+      allClearTitle: "Form is Perfect & Ready to Submit!",
+      allClearDesc: "All required fields are completed, standard formats verified, and no data contradictions found.",
+      btnSaveFormToVault: "Save Form Data to Vault",
+      saveVaultToast: "Form data successfully saved into your local encrypted Vault!",
+      scopeCardTitle: "Owly 4-Layer Audit Scope",
+      scopeL1Label: "Form Rules",
+      scopeL1Desc: "Required fields (*), minimum lengths, and built-in website placeholders.",
+      scopeL2Label: "Standard Formats",
+      scopeL2Desc: "16-digit ID validation, phone format (+1/08), RFC email syntax, and passport checks.",
+      scopeL3Label: "Typo Guard",
+      scopeL3Desc: "Cross-checks spelling of names and IDs against verified local Vault data.",
+      scopeL4Label: "File Instructions",
+      scopeL4Desc: "Verifies file size limits (KB/MB) and allowed extension guidelines on the page.",
+      btnHighlightField: "👉 Highlight Field on Web",
+      guideLabel: "Guide:",
     },
     a11y: {
-      title: "Accessibility HUB: 14 Deterministic Tools",
-      subtitle: "Local sensory & cognitive comfort tools ($0 token cost). Triggered by click or AI reasoning.",
-      zeroTokenBadge: "0 LLM Tokens • Instant <10ms",
-      tools: [
-        { id: "spotlight", title: "Reading Spotlight", desc: "Focus line strip following vertical cursor", type: "toggle", statusOn: "Active", statusOff: "Off" },
-        { id: "tts", title: "Text to Speech (TTS)", desc: "Read instructions via Web Speech API", type: "toggle", statusOn: "Active", statusOff: "Off" },
-        { id: "contrast", title: "Contrast Mode", desc: "High contrast WCAG AAA filter", type: "toggle", statusOn: "High Contrast", statusOff: "Normal" },
-        { id: "links", title: "Highlight Links", desc: "Highlight interactive buttons & links", type: "toggle", statusOn: "Highlighted", statusOff: "Normal" },
-        { id: "textSize", title: "Bigger Text Size", desc: "Scale typography without breaking layout", type: "stepper", statusOn: "+25% (Large)", statusOff: "Normal" },
-        { id: "textSpacing", title: "Text Spacing", desc: "Widen letter and word spacing", type: "stepper", statusOn: "Spacious", statusOff: "Normal" },
-        { id: "pauseAnim", title: "Pause Animations", desc: "Stop moving banners and animations", type: "toggle", statusOn: "Paused", statusOff: "Normal" },
-        { id: "hideImages", title: "Hide All Images", desc: "Hide decorative images and banners", type: "toggle", statusOn: "Hidden", statusOff: "Normal" },
-        { id: "dyslexiaFont", title: "Dyslexia Friendly Font", desc: "Switch global font to OpenDyslexic", type: "toggle", statusOn: "OpenDyslexic", statusOff: "Normal" },
-        { id: "bigCursor", title: "Big Cursor", desc: "Enlarge mouse pointer to high-visibility SVG", type: "toggle", statusOn: "Big Pointer", statusOff: "Normal" },
-        { id: "liveTooltips", title: "Live Explanatory Tooltips", desc: "Floating simplified legal terminology", type: "toggle", statusOn: "Active", statusOff: "Off" },
-        { id: "lineHeight", title: "Line Height Spacing", desc: "Increase vertical reading line spacing", type: "stepper", statusOn: "2.0 Line Height", statusOff: "Normal" },
-        { id: "textAlign", title: "Text Alignment", desc: "Normalize text alignment to left", type: "toggle", statusOn: "Left-Aligned", statusOff: "Normal" },
-        { id: "colorSat", title: "Color Saturation", desc: "Adjust monochrome color saturation", type: "stepper", statusOn: "Monochrome", statusOff: "Normal" },
-      ],
+      title: "Accessibility HUB: 14 Tools",
+      welcomeTitle: "Welcome to Owly Accessibility HUB",
+      welcomeDesc: "Access tools designed to optimize your browsing experience based on your sensory and comfort preferences.",
+      quickProfilesTitle: "QUICK ACCESSIBILITY PROFILES",
+      resetBtn: "Reset All",
+      undoBtn: "Undo",
+      activeCountSuffix: "active tools",
+      profileAdhd: "ADHD Friendly",
+      profileDyslexia: "Dyslexia Friendly",
+      profileLowVision: "Low Vision",
+      profileSenior: "Senior Comfort",
+    },
+    auth: {
+      title: "Owly.AI Auth",
+      subtitle: "Zero-Knowledge Public Form Assistant",
+      loggedInBadge: "Account Verified (Supabase 50,000 MAU). Data synchronized via AES-256-GCM encryption.",
+      accountDesc: "Your credentials and data are encrypted locally via AES-256-GCM. Plaintext is never stored on servers.",
+      btnLogout: "Log Out of Account",
+      demoUserTitle: "Instant Demo Access",
+      btnDemoLogin: "1-Click Demo Login",
+      demoAccountHint: "Account: demo@owly.ai • Preloaded ID/Document Vault",
+      orSocial: "Or Sign In via Google / Social Media",
+      pdpNotice: "Privacy Guaranteed: Confidential credentials and documents are never exposed or stored in cleartext.",
+    },
+    logConsole: {
+      title: "Owly.AI • Agentic Log Console",
+      subtitle: "Real-time reasoning, perception, & action execution trace",
+      liveBadge: "LIVE",
+      copyJson: "Copy JSON",
+      copied: "Copied",
+      clear: "Clear Logs",
+      close: "Close Console",
+      infoBannerTitle: "Live Tracing",
+      infoBannerDesc: "Real-time trace of Baseten Muse Spark Open calls, voice recognition, and local AES-256 Vault execution.",
+      allLogs: "ALL",
+      searchPlaceholder: "Filter log events by keyword, message, domain...",
+      copyTooltip: "Copy all logs in JSON format",
+      clearTooltip: "Clear current logs",
+      closeTooltip: "Close Console",
+    },
+    common: {
+      loading: "Loading...",
+      success: "Success",
+      error: "Error",
+      cancel: "Cancel",
+      close: "Close",
+      copy: "Copy",
+      copied: "Copied!",
+      retry: "Retry",
+      save: "Save",
+      privacyFooter: "Your data stays in your private device",
+    },
+  },
+
+  // =========================================================================
+  // BAHASA INDONESIA (ID)
+  // =========================================================================
+  id: {
+    header: {
+      portalDetected: "Formulir Resmi Terdeteksi",
+      targetGoal: "🎯 Pendaftaran Online 2026",
+      vaultLocked: "Vault Terkunci",
+      vaultUnlocked: "Vault Terbuka",
+      btnLock: "Kunci",
+      btnUnlock: "Buka Vault",
+      selectLanguage: "Pilih Bahasa",
+      changeLanguage: "Ganti Bahasa",
+      langIndonesian: "Bahasa Indonesia",
+      langEnglishUs: "English (US)",
+      langIdSubtitle: "Indonesia (ID)",
+      langEnSubtitle: "American English (EN)",
+      logConsoleTooltip: "Log Console • Pelacakan Agen Nyata",
+      accessibilityTooltip: "Accessibility HUB (14 Tools)",
+      appSubtitle: "Your AI Browser Companion",
+    },
+    tabs: {
+      guide: "Tanya Owly",
+      vault: "Auto Fill",
+      audit: "Audit Form",
+    },
+    assistant: {
+      greetingTitle: "Halo, Saya Owly",
+      greetingDesc: "Asisten cerdas pendamping Browsermu, ketik pertanyaan di bawah atau pilih bantuan cepat.",
+      guideMeTitle: "Pandu saya isi formulir ini",
+      guideMeDesc: "Owly akan memindai halaman ini dan membimbingmu untuk mengisi formulir ini.",
+      btnAnalyzeForm: "Analyze this Form",
+      btnAnalyzeAgain: "Audit Ulang Formulir Ini",
+      analyzedReadyBadge: "Formulir Dianalisis & Siap",
+      fieldsCountSuffix: "Kolom Pertanyaan Terdeteksi",
+      btnGuideStep: "Pandu Kolom demi Kolom",
+      btnAutofillQuick: "1-Click AutoFill",
+      explainThisTitle: "Explain This",
+      explainThisSub: "Cuplikan Area Layar",
+      showMeTitle: "Show Me",
+      showMeSub: "Cari Tombol / Teks",
+      a11ySectionTitle: "Alat Bantu Aksesibilitas",
+      chipTextTooSmall: "👁️ Teks Kekecilan",
+      chipGlareScreen: "🌗 Layar Silau",
+      chipReadAloud: "🔊 Bacakan Halaman",
+      chipHardToFocus: "🧠 Susah Fokus",
+      btnMoreA11y: "Semua 14 Alat",
+      snipBoxTitle: "Area Cuplikan (Snip)",
+      snipVisionBadge: "Multimodal Vision",
+      voiceDrawerTitle: "Voice Companion",
+      pttTitle: "PTT (Push-to-Talk)",
+      pttDesc: "Tahan tombol saat bicara",
+      liveTalkTitle: "Live Talk",
+      liveTalkDesc: "Deteksi suara otomatis",
+      micPermissionLabel: "Izin Mikrofon:",
+      micActive: "Aktif",
+      micInactive: "Tidak Aktif",
+      btnAllowMic: "Izinkan",
+      pttHoldToSpeak: "Tahan",
+      pttReleaseToSend: "Lepas",
+      pttListeningPrompt: "Mendengarkan suara Anda...",
+      pttIdlePrompt: "Tahan tombol untuk bicara",
+      btnStopLiveTalk: "Hentikan Live Talk",
+      btnStartLiveTalk: "Mulai Live Talk",
+      liveSpeakingStatus: "🔊 Owly sedang menjawab dengan suara...",
+      liveThinkingStatus: "🧠 Owly sedang memproses jawaban...",
+      liveListeningStatus: "🎙️ Owly siap mendengarkan ucapan Anda...",
+      liveIdleStatus: "Klik untuk mengaktifkan dialog suara dua arah",
+      inputPlaceholder: "Tanya Apapun, Atur Tampilan, atau 'Show me: ...'",
+      keyboardHint: "Enter ↵ untuk kirim, Shift+Enter untuk baris baru",
+      btnSendMessage: "Kirim Pesan",
+      btnStartNewChat: "Mulai Percakapan Baru",
+      multiAgentRunning: "Owly AI Multi-Agent Sedang Bekerja...",
+      multiAgentScanningDesc: "Memindai visual layar, struktur DOM, dan mencocokkan juknis resmi",
+      step1Vision: "Unggah Screenshot ke Multimodal Vision Engine",
+      step2Dom: "Ekstraktor DOM & Pemetaan Struktur Formulir",
+      step3Grounding: "Mesin Validasi Juknis & Regulasi Resmi",
+      step4Agent1: "Agen 1: Verifikator Konteks & Birokrasi",
+      step5Agent2: "Agent 2: Auditor Anti-Diskualifikasi & Aturan Kolom",
+    },
+    coach: {
+      activeFieldTitle: "Nomor Induk Kependudukan (NIK)",
+      activeFieldDesc: "Kolom aktif disorot oleh Beacon Spotlight",
+      badgeOfficial: "🟢 Panduan Resmi",
+      badgeCurated: "🔵 Owly Curated",
+      badgeAi: "🟡 AI Guidance",
+      secMeaning: "Arti Kolom:",
+      secMeaningText: "Nomor identitas tunggal warga negara berisikan 16 digit angka yang diterbitkan oleh Disdukcapil.",
+      secHowTo: "Cara Pengisian:",
+      secHowToText: "Ketik 16 digit angka berurutan tanpa tanda spasi atau strip. Pastikan sama persis dengan e-KTP fisik terbaru.",
+      secExample: "Contoh Sah:",
+      secExampleText: "3271041908980002",
+      secPitfall: "Jebakan / Fatal Error:",
+      secPitfallText: "Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili.",
+      sourceText: "Terverifikasi dari Petunjuk Teknis Resmi",
+      btnAutofillSingle: "Isi Kolom Ini dari Vault",
+      btnAutofillDone: "Telah Terisi dari Vault",
+      voicebotTitle: "Handsfree Voicebot (Muse Voice + VAD)",
+      voiceStatusListening: "Mendengarkan ucapan Anda...",
+      voiceStatusThinking: "Muse Spark sedang menalar...",
+      voiceStatusSpeaking: "Menjelaskan aturan juknis...",
+      btnAskVoice: "Bicara dengan Owly",
+      btnExplainThis: "Explain This (Multimodal Snip)",
+      explainDesc: "Pilih area formulir yang membingungkan. Kotak input akan ditutup sensor otomatis.",
+    },
+    vault: {
+      title: "Multiple Vault (Zero-Knowledge AES-256)",
+      subtitle: "Data identitas terenkripsi di memori lokal browser. Tidak pernah dikirim ke server dalam bentuk teks terbuka.",
+      readyToFillTitle: "Siap Mengisi Formulir Aktif",
+      readyToFillSubtitle: "Cocokkan data profil terverifikasi ke kolom input web dalam satu klik",
+      btnBatchAutofill: "1-Click AutoFill",
+      warningNotAnalyzed: "Formulir belum dianalisis! Klik tombol di bawah agar Owly memetakan kolom dengan akurat.",
+      btnAnalyzeNow: "🔍 Analyze Form Sekarang",
+      undoBarSuccess: "Formulir Berhasil Diisi!",
+      btnUndo: "Undo 100%",
+      verifiedDataTitle: "Data Profil Terverifikasi",
+      itemsCountSuffix: "item",
+      btnAddData: "+ Tambah Data",
+      uploadDocCardTitle: "Tambah Data Profil via KTP / Dokumen",
+      uploadDocCardSubtitle: "Unggah KTP, Paspor, atau Ijazah Anda (PDF, PNG, JPG)",
+      btnUploadDoc: "Upload Dokumen",
+      uploadingDoc: "Memproses Dokumen...",
+      uploadConsentNotice: "Dengan mengunggah, saya menyetujui AI mengekstrak data identitas untuk autofill. File asli otomatis dihapus setelah ekstraksi. Hanya data terenkripsi yang disimpan di Vault.",
+      privacyPolicyLink: "Kebijakan Privasi",
+      modalAddDataTitle: "Tambah Data Profil Baru",
+      labelDataName: "Nama Data",
+      labelValue: "Nilai Data",
+      labelAliases: "Aliases (Nama Serupa)",
+      hintAliases: "(pisahkan koma untuk mengenali input field dengan nama mirip)",
+      labelSourceTag: "Label Sumber (Tag)",
+      placeholderDataName: "Cth: Nomor NPWP",
+      placeholderValue: "Cth: 12.345.678.9-012.000",
+      placeholderAliases: "Pisahkan koma, cth: Tax ID, NPWP, Tax Number",
+      placeholderSourceTag: "Cth: Kartu NPWP / Manual Input",
+      errorNameRequired: "Nama Data wajib diisi.",
+      errorValueRequired: "Nilai data wajib diisi.",
+      btnCancel: "Batal",
+      btnSaveData: "Simpan Data",
+      deleteTooltip: "Hapus data ini",
+    },
+    audit: {
+      summaryTitle: "Traffic Light Pre-Submit Auditor",
+      greenCount: "Lolos",
+      yellowCount: "Peringatan",
+      redCount: "Fatal",
+      reAuditBtn: "Audit Ulang Formulir Web",
+      auditNowBtn: "Audit Form Sekarang",
+      auditingProgress: "Memindai & Mengaudit Kolom Halaman...",
+      findingsTitle: "Daftar Hasil Temuan",
+      fieldsDetectedSuffix: "Kolom Terdeteksi",
+      tipVaultTypoTitle: "Tips: Hubungkan Vault untuk Typo Guard",
+      tipVaultTypoDesc: "Anda belum menyimpan dokumen ke Vault. Audit tetap berjalan normal, namun fitur pencocokan otomatis salah ketik (typo guard) dinonaktifkan.",
+      btnOpenVault: "Buka Tab Auto Fill / Vault",
+      allClearTitle: "Formulir Sempurna & Siap Dikirim!",
+      allClearDesc: "Seluruh kolom wajib telah terisi, format baku sesuai standar nasional, dan tidak ditemukan kontradiksi data.",
+      btnSaveFormToVault: "Simpan Data Form Ini ke Vault",
+      saveVaultToast: "Data formulir berhasil disimpan ke Vault lokal terenkripsi Anda!",
+      scopeCardTitle: "Cakupan 4 Lapisan Audit Owly",
+      scopeL1Label: "Aturan Form",
+      scopeL1Desc: "Kolom bertanda bintang (*), panjang minimum, dan placeholder bawaan web.",
+      scopeL2Label: "Format Baku",
+      scopeL2Desc: "NIK 16 digit (algoritma wanita +40), No HP 08/+62, Email RFC, dan paspor ICAO.",
+      scopeL3Label: "Typo Guard",
+      scopeL3Desc: "Membandingkan ejaan nama/kontak dengan data resmi Vault secara 100% lokal.",
+      scopeL4Label: "Instruksi Berkas",
+      scopeL4Desc: "Membaca catatan batasan ukuran (KB/MB) dan format ekstensi file di halaman.",
+      btnHighlightField: "👉 Sorot Kolom di Web",
+      guideLabel: "Panduan:",
+    },
+    a11y: {
+      title: "Accessibility HUB: 14 Tools",
+      welcomeTitle: "Selamat Datang di Owly Accessibility HUB",
+      welcomeDesc: "Gunakan fitur-fitur untuk memudahkan Anda untuk mendapatkan pengalaman pengguna yang terbaik sesuai dengan kebutuhan.",
+      quickProfilesTitle: "PROFIL CEPAT AKSESIBILITAS",
+      resetBtn: "Reset Semua",
+      undoBtn: "Urungkan",
+      activeCountSuffix: "fitur aktif",
+      profileAdhd: "ADHD Friendly",
+      profileDyslexia: "Dyslexia Friendly",
+      profileLowVision: "Low Vision",
+      profileSenior: "Senior Comfort",
+    },
+    auth: {
+      title: "Autentikasi Owly.AI",
+      subtitle: "Asisten Formulir Publik Berbasis Zero-Knowledge",
+      loggedInBadge: "Akun Terverifikasi (Supabase 50.000 MAU). Data disinkronkan dengan enkripsi AES-256-GCM.",
+      accountDesc: "Data Anda tersimpan dan terenkripsi secara lokal via AES-256-GCM. Plaintext tidak pernah dikirim ke server.",
+      btnLogout: "Keluar dari Akun",
+      demoUserTitle: "Pintu Masuk Demo Instan",
+      btnDemoLogin: "1-Click Masuk Demo",
+      demoAccountHint: "Akun: demo@owly.ai • Vault KTP/Dokumen Otomatis Terisi",
+      orSocial: "Atau Masuk via Google / Media Sosial",
+      pdpNotice: "Jaminan Privasi UU PDP: NIK, NPWP, dan data foto tidak pernah disimpan dalam format teks terbuka.",
+    },
+    logConsole: {
+      title: "Owly.AI • Agentic Log Console",
+      subtitle: "Trace penalaran real-time, persepsi, dan eksekusi aksi",
+      liveBadge: "LIVE",
+      copyJson: "Salin JSON",
+      copied: "Tersalin",
+      clear: "Bersihkan Log",
+      close: "Tutup Console",
+      infoBannerTitle: "Pelacakan Langsung",
+      infoBannerDesc: "Jejak live pemanggilan model Baseten Muse Spark Open, VAD suara, dan eksekusi Vault AES-256.",
+      allLogs: "SEMUA",
+      searchPlaceholder: "Saring event log berdasarkan kata kunci...",
+      copyTooltip: "Salin semua log dalam format JSON",
+      clearTooltip: "Bersihkan log saat ini",
+      closeTooltip: "Tutup Console",
+    },
+    common: {
+      loading: "Memuat...",
+      success: "Berhasil",
+      error: "Kendala",
+      cancel: "Batal",
+      close: "Tutup",
+      copy: "Salin",
+      copied: "Tersalin!",
+      retry: "Coba Lagi",
+      save: "Simpan",
+      privacyFooter: "Data Anda tetap aman di perangkat Anda",
     },
   },
 };

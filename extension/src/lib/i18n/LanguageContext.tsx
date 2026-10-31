@@ -10,32 +10,36 @@ interface LanguageContextProps {
 const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<SupportedLanguage>("id");
+  // Default language is American English ("en")
+  const [language, setLanguageState] = useState<SupportedLanguage>("en");
 
   useEffect(() => {
-    // Muat bahasa dari chrome.storage.local bila tersedia
+    // Load preferred language from chrome.storage.local or localStorage
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.get(["preferred_language"], (res) => {
-        if (res.preferred_language && (res.preferred_language === "id" || res.preferred_language === "en")) {
-          setLanguageState(res.preferred_language as SupportedLanguage);
+      chrome.storage.local.get(["owly_preferred_lang", "preferred_language"], (res) => {
+        const saved = res.owly_preferred_lang || res.preferred_language;
+        if (saved && (saved === "id" || saved === "en")) {
+          setLanguageState(saved as SupportedLanguage);
         }
       });
     } else {
-      const saved = localStorage.getItem("savvy_preferred_lang") as SupportedLanguage;
-      if (saved) setLanguageState(saved);
+      const saved = localStorage.getItem("owly_preferred_lang") as SupportedLanguage;
+      if (saved && (saved === "id" || saved === "en")) {
+        setLanguageState(saved);
+      }
     }
   }, []);
 
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({ preferred_language: lang });
+      chrome.storage.local.set({ owly_preferred_lang: lang, preferred_language: lang });
     } else {
-      localStorage.setItem("savvy_preferred_lang", lang);
+      localStorage.setItem("owly_preferred_lang", lang);
     }
   };
 
-  const t = translations[language] || translations.id;
+  const t = translations[language] || translations.en;
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
