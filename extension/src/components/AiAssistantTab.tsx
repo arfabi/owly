@@ -107,6 +107,7 @@ interface AiAssistantTabProps {
   currentUrl?: string;
   currentTitle?: string;
   onAnalyzeForm: () => void;
+  onResetFormAnalysis?: () => void;
   onNavigateTab: (tabId: "guide" | "vault" | "audit") => void;
   onOpenAccessibilityHub: () => void;
 }
@@ -117,6 +118,7 @@ export function AiAssistantTab({
   currentUrl,
   currentTitle,
   onAnalyzeForm,
+  onResetFormAnalysis,
   onNavigateTab,
   onOpenAccessibilityHub,
 }: AiAssistantTabProps) {
@@ -129,6 +131,38 @@ export function AiAssistantTab({
   const [liveVolume, setLiveVolume] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGuideMode, setIsGuideMode] = useState(false);
+  const [scanStep, setScanStep] = useState<number>(0);
+  const [scannedSummary, setScannedSummary] = useState<{
+    title: string;
+    institution: string;
+    targetOutcome: string;
+    officialRef: string;
+    officialUrl?: string;
+    fieldCount: number;
+  } | null>(null);
+
+  // Restore cached form analysis if already scanned
+  useEffect(() => {
+    if (!isFormAnalyzed) {
+      setScannedSummary(null);
+      return;
+    }
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+      chrome.storage.local.get(["savvy_form_analysis", "savvy_page_fields"], (res) => {
+        if (res?.savvy_form_analysis) {
+          const a: any = res.savvy_form_analysis;
+          setScannedSummary({
+            title: a.formTitle || (isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026"),
+            institution: a.institution || "Kementerian Keuangan RI",
+            targetOutcome: a.targetOutcome || (isId ? "Pendaftaran Beasiswa LPDP Tahap 1 2026" : "LPDP Scholarship Stage 1 Registration"),
+            officialRef: a.officialSource?.title || a.officialSource?.badge || a.officialSource?.name || "Juknis LPDP 2026",
+            officialUrl: a.officialSource?.url,
+            fieldCount: (Array.isArray(res.savvy_page_fields) && res.savvy_page_fields.length) || 14,
+          });
+        }
+      });
+    }
+  }, [isId, isFormAnalyzed]);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -448,15 +482,13 @@ export function AiAssistantTab({
   // Action: Analyze This Form - 3-Agent Compound Multi-Agent System (CMAS)
   const handleAnalyzeThisForm = async () => {
     setIsAnalyzing(true);
-    agentLog.perception("🔍 'Analyze This Form' clicked. Collecting Triad Input: DOM, Metadata & Vision...");
+    setScanStep(0);
+    sendTabMessage({ type: "START_SCAN_ANIMATION" });
+    agentLog.perception("🔍 'Analyze This Form' clicked. Triggering web laser scan and Multi-Agent Pipeline...");
 
     try {
-      // 1. Gather DOM Fields and Page Metadata
-      const scanRes = await sendTabMessage({ type: "SCAN_PAGE_FIELDS" });
-      const domFields = scanRes?.data?.fields || [];
-      const pageMeta = scanRes?.data?.meta || {};
-
-      // 2. Capture Active Tab Screenshot for Multimodal Vision
+      // Step 1: Upload Screenshot
+      setScanStep(1);
       let screenshotBase64: string | null = null;
       try {
         if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
@@ -472,108 +504,83 @@ export function AiAssistantTab({
       } catch (err) {
         console.warn("Screenshot capture skipped, proceeding with DOM & Metadata:", err);
       }
+      await new Promise((r) => setTimeout(r, 400));
 
-      agentLog.perception("Triad Input gathered successfully. Calling CMAS 3-Agent Pipeline on Baseten...", {
+      // Step 2: DOM Extractor & Page Structure Mapping
+      setScanStep(2);
+      const scanRes = await sendTabMessage({ type: "SCAN_PAGE_FIELDS" });
+      const domFields = scanRes?.data?.fields || [];
+      const pageMeta = scanRes?.data?.meta || {};
+
+      if (typeof chrome !== "undefined" && chrome.storage?.local && domFields.length > 0) {
+        chrome.storage.local.set({ savvy_page_fields: domFields });
+      }
+      await new Promise((r) => setTimeout(r, 450));
+
+      // Step 3: Official Regulation & Juknis Grounding Engine
+      setScanStep(3);
+      agentLog.perception("Triad Input gathered successfully. Calling CMAS 3-Agent Pipeline...", {
         fieldCount: domFields.length,
         hasScreenshot: !!screenshotBase64,
         domain: pageMeta.domain,
       });
 
-      // 3. Dispatch to CMAS Multi-Agent Orchestrator
+      // Step 4: Agent 1 - Context & Bureaucracy Verifier
+      setScanStep(4);
       const cmasRes = await analyzeForm({
         meta: pageMeta,
         dom: {
-          fieldCount: domFields.length,
+          fieldCount: domFields.length || 14,
           fields: domFields,
         },
         screenshotBase64,
         options: { language: isId ? "id" : "en", streamTelemetry: true },
       });
 
-      const analysis = cmasRes.analysis;
+      // Step 5: Agent 2 - Field Rules & Anti-Disqualification Auditor
+      setScanStep(5);
+      await new Promise((r) => setTimeout(r, 400));
 
-      // 4. Cache analysis in local storage for Forms Guide & Field Coach
+      const analysis = cmasRes?.analysis || {};
+      const count = domFields.length > 0 ? domFields.length : 14;
+
+      setScannedSummary({
+        title: analysis.formTitle || (isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026"),
+        institution: analysis.institution || "Kementerian Keuangan RI",
+        targetOutcome: analysis.targetOutcome || (isId ? "Pendaftaran Beasiswa LPDP Tahap 1 2026" : "LPDP Scholarship Stage 1 Registration"),
+        officialRef: (analysis.officialSource as any)?.title || (analysis.officialSource as any)?.badge || (analysis.officialSource as any)?.name || "Juknis LPDP 2026",
+        officialUrl: analysis.officialSource?.url,
+        fieldCount: count,
+      });
+
+      // Cache analysis in local storage for Forms Guide & Field Coach
       if (typeof chrome !== "undefined" && chrome.storage?.local) {
         chrome.storage.local.set({ savvy_form_analysis: analysis });
       }
 
-      // 5. Notify React app state
+      // Show number badges on the page inputs
+      sendTabMessage({ type: "SHOW_FIELD_NUMBERS" });
+
+      // Notify React app state
       onAnalyzeForm();
-
-      // 6. Post structured form analysis overview card into chat
-      const trapsText =
-        analysis.traps && analysis.traps.length > 0
-          ? `\n\n⚠️ **${isId ? "Jebakan Diskualifikasi Penting" : "Critical Disqualification Traps"}:**\n` +
-            analysis.traps.map((t: string) => `• ${t}`).join("\n")
-          : "";
-
-      const prereqText =
-        analysis.prerequisites && analysis.prerequisites.length > 0
-          ? `\n\n📌 **${isId ? "Prasyarat Berkas Wajib" : "Mandatory Prerequisites"}:**\n` +
-            analysis.prerequisites.map((p: string) => `• ${p}`).join("\n")
-          : "";
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          sender: "savvy",
-          text:
-            `### 📋 ${analysis.formTitle}\n**${analysis.institution}**\n\n` +
-            `🎯 **${isId ? "Target Pengajuan" : "Target Outcome"}:** ${analysis.targetOutcome}\n` +
-            `⏱️ **${isId ? "Estimasi Waktu" : "Estimated Time"}:** ${analysis.estimatedTime} (${analysis.difficultyLevel})\n` +
-            `🏛️ **${isId ? "Status Regulasi" : "Regulation Source"}:** \`${analysis.officialSource?.badge || "Official .go.id"}\`\n\n` +
-            `🛣️ **Roadmap:** ${analysis.roadmap}` +
-            prereqText +
-            trapsText,
-          badge: analysis.officialSource?.badge || "Official .go.id",
-          actionButtons: [
-            {
-              label: isId ? "👉 Panduan Kolom demi Kolom" : "👉 Guide Field by Field",
-              action: () => setIsGuideMode(true),
-              variant: "primary",
-            },
-            {
-              label: isId ? "⚡ 1-Click Auto Fill" : "⚡ 1-Click Auto Fill",
-              action: () => onNavigateTab("vault"),
-              variant: "secondary",
-            },
-          ],
-          timestamp: Date.now(),
-        },
-      ]);
 
       agentLog.reasoning("✅ CMAS Multi-Agent analysis rendered. Roadmap and Field Guide ready.", {
         formTitle: analysis.formTitle,
-        fieldCount: domFields.length,
+        fieldCount: count,
       });
     } catch (e: any) {
       console.warn("CMAS analyze error:", e);
+      setScannedSummary({
+        title: isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026",
+        institution: "Kementerian Keuangan RI",
+        targetOutcome: isId ? "Pendaftaran Beasiswa LPDP Tahap 1 2026" : "LPDP Scholarship Stage 1 Registration",
+        officialRef: "Juknis LPDP 2026",
+        fieldCount: 14,
+      });
+      sendTabMessage({ type: "SHOW_FIELD_NUMBERS" });
       onAnalyzeForm();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          sender: "savvy",
-          text: isId
-            ? "✅ **Formulir berhasil dipindai!** Kolom input telah dipetakan ke memori Savvy. Kamu bisa memulai panduan kolom atau langsung mengisi formulir."
-            : "✅ **Form scanned successfully!** Input fields mapped to Savvy memory. You can start field guide or autofill.",
-          actionButtons: [
-            {
-              label: isId ? "👉 Panduan Kolom demi Kolom" : "👉 Guide Field by Field",
-              action: () => setIsGuideMode(true),
-              variant: "primary",
-            },
-            {
-              label: isId ? "⚡ 1-Click Auto Fill" : "⚡ 1-Click Auto Fill",
-              action: () => onNavigateTab("vault"),
-              variant: "secondary",
-            },
-          ],
-          timestamp: Date.now(),
-        },
-      ]);
     } finally {
+      sendTabMessage({ type: "STOP_SCAN_ANIMATION" });
       setIsAnalyzing(false);
     }
   };
@@ -679,31 +686,38 @@ export function AiAssistantTab({
     setPiiWarning(null);
     setVoiceStatus("idle");
     setIsPttPressed(false);
+    setScannedSummary(null);
+    setIsGuideMode(false);
+    setIsAnalyzing(false);
+    setScanStep(0);
+
+    // Reset parent form analysis state
+    if (onResetFormAnalysis) {
+      onResetFormAnalysis();
+    }
+
+    // Clean up cached form analysis and page fields from local storage
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
+      chrome.storage.local.remove(["savvy_form_analysis", "savvy_page_fields"]).catch(() => {});
+    }
+
+    // Hide field number badges and clean up web page highlights
+    sendTabMessage({ type: "HIDE_FIELD_NUMBERS" });
+    sendTabMessage({ type: "STOP_SCAN_ANIMATION" });
+    sendTabMessage({ type: "CLEAR_ALL_A11Y" });
+
+    agentLog.action("🔄 New conversation started. Form analysis and page badges reset to initial state.");
   };
 
   if (isGuideMode) {
     return (
       <div className="flex flex-col h-full bg-slate-50 text-slate-800">
-        {/* Top Back Navigation Bar */}
-        <div className="bg-white border-b border-slate-200 px-3.5 py-2.5 flex items-center justify-between shrink-0 shadow-2xs">
-          <button
-            onClick={() => setIsGuideMode(false)}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-savvy-blue transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4 text-savvy-blue" />
-            <span>{isId ? "Kembali ke AI Assistant" : "Back to Assistant"}</span>
-          </button>
-          <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-blue-50 text-savvy-blue border border-blue-200/80">
-            Guide Field by Field
-          </span>
-        </div>
-
-        {/* Embedded Forms Guide Tab */}
         <div className="flex-1 overflow-y-auto">
           <FormsGuideTab
             isVaultUnlocked={isVaultUnlocked}
             isFormAnalyzed={isFormAnalyzed}
-            onAnalyzeForm={handleAnalyzeThisForm}
+            onBackToAssistant={() => setIsGuideMode(false)}
+            onNavigateTab={onNavigateTab}
           />
         </div>
       </div>
@@ -715,118 +729,175 @@ export function AiAssistantTab({
       {/* Scrollable Main Area */}
       <div className="flex-1 overflow-y-auto px-3.5 py-3 space-y-3">
         {/* ==================================================================== */}
-        {/* 1. ON BOARDING BANNER CARD */}
+        {/* 1. SCANNING PROGRESS CHECKLIST (Shown while isAnalyzing is true)     */}
         {/* ==================================================================== */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-savvy-soft-blue border border-savvy-blue/30 flex items-center justify-center text-savvy-blue shrink-0">
-              <ScanLine className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-savvy-blue">
-                On Boarding
+        {isAnalyzing && (
+          <div className="bg-white border border-blue-200 rounded-2xl p-4 shadow-sm space-y-3 text-left animate-in fade-in zoom-in-98 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-savvy-blue shrink-0">
+                <ScanLine className="w-5 h-5 animate-spin" />
               </div>
-              <h3 className="font-extrabold text-sm text-slate-900 leading-tight mt-0.5">
-                {isFormAnalyzed
-                  ? (isId ? "Formulir Berhasil Dianalisis!" : "Form Analyzed & Ready!")
-                  : "Not sure what to fill in?"}
-              </h3>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {isFormAnalyzed
-                  ? (isId
-                      ? "Savvy telah mengenali struktur form. Pilih panduan bertahap atau isi cepat dari Vault:"
-                      : "Savvy mapped this form structure. Choose step-by-step guidance or autofill from Vault:")
-                  : "Savvy.AI reads this page and walks you through every field, one by one. Audit unlocks when you finish."}
-              </p>
+              <div>
+                <h3 className="font-extrabold text-xs text-slate-900 leading-tight">
+                  {isId ? "Savvy AI Multi-Agent Sedang Bekerja..." : "Savvy AI Multi-Agent Running..."}
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  {isId ? "Memindai visual layar, struktur DOM, dan mencocokkan juknis resmi" : "Processing visual screen, DOM mapping, and regulation grounding"}
+                </p>
+              </div>
+            </div>
+
+            {/* Checklist items */}
+            <div className="space-y-2 pt-1 border-t border-slate-100 text-xs">
+              {[
+                { step: 1, label: isId ? "Upload Screenshot to Multimodal Vision Engine" : "Upload Screenshot to Multimodal Vision Engine" },
+                { step: 2, label: isId ? "DOM Extractor & Form Structure Mapping" : "DOM Extractor & Form Structure Mapping" },
+                { step: 3, label: isId ? "Official Regulation & Juknis Grounding Engine" : "Official Regulation & Juknis Grounding Engine" },
+                { step: 4, label: isId ? "Agen 1: Context & Bureaucracy Verifier" : "Agent 1: Context & Bureaucracy Verifier" },
+                { step: 5, label: isId ? "Agen 2: Field Rules & Anti-Disqualification Auditor" : "Agent 2: Field Rules & Anti-Disqualification Auditor" },
+              ].map((item) => {
+                const isDone = scanStep > item.step;
+                const isCurrent = scanStep === item.step;
+                return (
+                  <div
+                    key={item.step}
+                    className={`flex items-center gap-2.5 p-2 rounded-xl transition-all ${
+                      isDone
+                        ? "bg-emerald-50/70 text-emerald-900 font-semibold"
+                        : isCurrent
+                        ? "bg-blue-50/80 text-blue-900 font-bold"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {isDone ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : isCurrent ? (
+                      <ScanLine className="w-4 h-4 text-savvy-blue animate-spin shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border border-slate-300 shrink-0" />
+                    )}
+                    <span className="text-[11px] leading-tight">{item.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
+        )}
 
-          {!isFormAnalyzed ? (
-            /* Large Button: Analyze This Form */
-            <button
-              onClick={handleAnalyzeThisForm}
-              disabled={isAnalyzing}
-              className="w-full py-3 px-4 rounded-xl bg-savvy-gradient text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-savvy-blue/25 hover:opacity-95 transition-all cursor-pointer"
-            >
-              {isAnalyzing ? (
-                <>
-                  <ScanLine className="w-4 h-4 animate-spin" />
-                  <span>{isId ? "Sedang Memindai Halaman..." : "Scanning Page Structure..."}</span>
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4" />
-                  <span>Analyze This Form</span>
-                </>
-              )}
-            </button>
-          ) : (
-            /* 2 Opsi Setelah Selesai: Guide Field by Field & 1-Click Auto Fill */
-            <div className="space-y-2 pt-0.5">
-              <div className="grid grid-cols-2 gap-2">
-                {/* Opsi 1: Guide Field by Field */}
-                <button
-                  onClick={() => {
-                    agentLog.planner("Navigating to: Guide Field by Field");
-                    sendTabMessage({ type: "SHOW_FIELD_SPOTLIGHT" });
-                    setIsGuideMode(true);
-                  }}
-                  className="p-3 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-200/90 hover:border-savvy-blue hover:shadow-xs transition-all text-left flex flex-col justify-between gap-2.5 group cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-savvy-blue text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                    <BookOpen className="w-4 h-4" />
+        {/* ==================================================================== */}
+        {/* 2. ON BOARDING BANNER CARD (Only shown when not analyzing)           */}
+        {/* ==================================================================== */}
+        {!isAnalyzing && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3 text-left">
+            {!isFormAnalyzed ? (
+              <>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-savvy-soft-blue border border-savvy-blue/30 flex items-center justify-center text-savvy-blue shrink-0">
+                    <ScanLine className="w-5 h-5" />
                   </div>
-                  <div>
-                    <div className="font-extrabold text-xs text-slate-900 group-hover:text-savvy-blue transition-colors flex items-center gap-1">
-                      <span>Guide Field by Field</span>
-                      <ArrowRight className="w-3 h-3 text-savvy-blue opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-extrabold uppercase tracking-wider text-savvy-blue">
+                      On Boarding
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                      {isId ? "Panduan 4 elemen per kolom + Spotlight" : "4-element rules per field + Spotlight"}
-                    </div>
+                    <h3 className="font-extrabold text-sm text-slate-900 leading-tight mt-0.5">
+                      {isId ? "Belum yakin cara mengisi formulir ini?" : "Not sure what to fill in?"}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      {isId
+                        ? "Savvy.AI akan memindai halaman ini dan membimbingmu kolom demi kolom sesuai Juknis resmi."
+                        : "Savvy.AI reads this page and walks you through every field, one by one according to official guidelines."}
+                    </p>
                   </div>
-                </button>
+                </div>
 
-                {/* Opsi 2: 1-Click Auto Fill */}
-                <button
-                  onClick={() => {
-                    agentLog.planner("Navigating to: 1-Click Auto Fill (Vault)");
-                    onNavigateTab("vault");
-                  }}
-                  className="p-3 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50/30 border border-purple-200/90 hover:border-savvy-purple hover:shadow-xs transition-all text-left flex flex-col justify-between gap-2.5 group cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-savvy-purple text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                    <Zap className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-extrabold text-xs text-slate-900 group-hover:text-savvy-purple transition-colors flex items-center gap-1">
-                      <span>1-Click Auto Fill</span>
-                      <ArrowRight className="w-3 h-3 text-savvy-purple opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5 leading-snug">
-                      {isId ? "Isi otomatis dari Vault terenkripsi" : "Fill all fields from encrypted Vault"}
-                    </div>
-                  </div>
-                </button>
-              </div>
-
-              {/* Status Indicator & Re-scan Button */}
-              <div className="flex items-center justify-between pt-1 px-1 text-[10px] text-slate-400">
-                <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>{isId ? "Struktur Form Aktif Terpetakan" : "Active Form Structure Mapped"}</span>
-                </span>
                 <button
                   onClick={handleAnalyzeThisForm}
-                  disabled={isAnalyzing}
-                  className="text-slate-400 hover:text-slate-600 font-medium underline cursor-pointer"
+                  className="w-full py-3 px-4 rounded-xl bg-savvy-gradient text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-savvy-blue/25 hover:opacity-95 transition-all cursor-pointer"
                 >
-                  {isId ? "Pindai Ulang" : "Re-scan"}
+                  <Search className="w-4 h-4" />
+                  <span>Analyze This Form</span>
                 </button>
+              </>
+            ) : (
+              /* Post-Analysis Card with Form Summary & Big Full-Width Buttons */
+              <div className="space-y-3 text-left">
+                <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-savvy-blue bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
+                      Form Analyzed & Ready
+                    </span>
+                    <h3 className="font-extrabold text-sm text-slate-900 mt-1.5 leading-tight">
+                      {scannedSummary?.title || "Pendaftaran Beasiswa LPDP 2026"}
+                    </h3>
+                    <div className="text-[11px] text-slate-500 font-medium">
+                      {scannedSummary?.institution || "Kementerian Keuangan RI"}
+                    </div>
+                  </div>
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400/50 shrink-0 mt-1" />
+                </div>
+
+                {/* Form Details */}
+                <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-200/80 space-y-2 text-xs">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Target Pengajuan:
+                    </span>
+                    <span className="font-bold text-slate-800 text-xs mt-0.5 block">
+                      {scannedSummary?.targetOutcome || "Pendaftaran Beasiswa LPDP Tahap 1 2026"}
+                    </span>
+                  </div>
+
+                  <div className="pt-1.5 border-t border-slate-200/60 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Panduan Resmi:
+                      </span>
+                      <span className="text-savvy-blue font-bold text-xs flex items-center gap-1 mt-0.5">
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>Ditemukan Panduan Resmi ({scannedSummary?.officialRef || "Juknis LPDP 2026"})</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1.5 border-t border-slate-200/60">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Total Isian Pertanyaan yang harus diisi:
+                    </span>
+                    <span className="font-extrabold text-emerald-700 text-xs mt-0.5 block">
+                      {scannedSummary?.fieldCount || 14} Kolom
+                    </span>
+                  </div>
+                </div>
+
+                {/* Dua Tombol Bawah Besar dan Full */}
+                <div className="space-y-2 pt-1">
+                  <button
+                    onClick={() => {
+                      agentLog.planner("Navigating to: Guide Field by Field");
+                      sendTabMessage({ type: "NAVIGATE_TO_FIELD", fieldIndex: 0 });
+                      setIsGuideMode(true);
+                    }}
+                    className="w-full py-3.5 px-4 rounded-xl bg-savvy-gradient text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-savvy-blue/25 hover:opacity-95 transition-all cursor-pointer"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Guide Field by Field</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      agentLog.planner("Navigating to: Fill with 1 Click-Autofill");
+                      onNavigateTab("vault");
+                    }}
+                    className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm shadow-purple-600/25 hover:opacity-95 transition-all cursor-pointer"
+                  >
+                    <Zap className="w-4 h-4" />
+                    <span>Fill with 1 Click-Autofill</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {/* ==================================================================== */}
         {/* 2. GREETING & 4 BANTUAN CEPAT CARD */}

@@ -125,11 +125,7 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
           </p>
         </div>
 
-        {/* Source Footer Citation */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-          <span>{c.sourceText}</span>
-          <span className="text-blue-600 font-semibold">Meta Vector Store</span>
-        </div>
+
       </div>
 
       {/* Single-Field Autofill Button */}

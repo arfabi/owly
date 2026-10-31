@@ -1,9 +1,6 @@
-// ============================================================================
-// SAVVY.AI — Pre-Submit Regex & Consistency FSM Validator (Traffic Light)
-// Instantaneous (<50ms) client-side verification preventing disqualification
-// ============================================================================
+export * from "./clientAuditor";
 
-export interface AuditIssue {
+export interface LegacyAuditIssue {
   field: string;
   level: "green" | "yellow" | "red";
   message: string;
@@ -13,7 +10,7 @@ export interface AuditIssue {
 export interface AuditReport {
   overallStatus: "green" | "yellow" | "red";
   score: number; // 0 - 100
-  issues: AuditIssue[];
+  issues: any[];
   passedCount: number;
   warningCount: number;
   dangerCount: number;
@@ -63,7 +60,7 @@ export function validateEmail(email: string): boolean {
  * Runs full pre-submit form audit on collected form values
  */
 export function auditFormData(formData: Record<string, string>): AuditReport {
-  const issues: AuditIssue[] = [];
+  const issues: any[] = [];
 
   // 1. Audit NIK
   if (formData.nik) {

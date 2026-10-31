@@ -105,14 +105,715 @@
       z-index: 2147483646;
       display: none;
     }
+
+    /* Scanner Laser Beam Animation */
+    .savvy-scanner-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 2147483646;
+      overflow: hidden;
+      transition: opacity 0.3s ease;
+    }
+    .savvy-scanner-overlay.fade-out {
+      opacity: 0;
+    }
+    .savvy-scanner-backdrop {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.18) 0%, rgba(15, 23, 42, 0.45) 100%);
+    }
+    .savvy-laser-beam {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.8) 15%, #2563EB 50%, rgba(56, 189, 248, 0.8) 85%, transparent 100%);
+      box-shadow: 0 0 16px #38BDF8, 0 0 32px #2563EB, 0 0 4px #FFFFFF;
+      animation: savvyLaserSweep 2.6s ease-in-out infinite alternate;
+    }
+    .savvy-laser-trail {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 90px;
+      background: linear-gradient(to top, rgba(37, 99, 235, 0.18), transparent);
+      pointer-events: none;
+    }
+    @keyframes savvyLaserSweep {
+      0% {
+        top: 2%;
+      }
+      100% {
+        top: 98%;
+      }
+    }
+    .savvy-scanner-card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 18px;
+      padding: 20px 32px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5), 0 0 35px rgba(37, 99, 235, 0.25);
+      text-align: center;
+      color: #FFFFFF;
+      z-index: 2147483647;
+      pointer-events: auto;
+      animation: savvyCardPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes savvyCardPop {
+      0% { transform: translate(-50%, -46%) scale(0.95); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    .savvy-scanner-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .savvy-scanner-spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(56, 189, 248, 0.25);
+      border-top-color: #38BDF8;
+      border-radius: 50%;
+      animation: savvySpin 0.8s linear infinite;
+    }
+    @keyframes savvySpin {
+      to { transform: rotate(360deg); }
+    }
+    .savvy-scanner-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FFFFFF;
+      letter-spacing: -0.2px;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    .savvy-scanner-subtitle {
+      font-size: 12px;
+      color: #94A3B8;
+      font-weight: 500;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+
+    /* Numbered Field Badges */
+    .savvy-field-number-badge {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #2563EB;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.45), 0 0 0 2px #FFFFFF;
+      cursor: pointer;
+      pointer-events: auto;
+      z-index: 2147483647;
+      transition: transform 0.15s ease, background 0.15s ease;
+      user-select: none;
+    }
+    .savvy-field-number-badge:hover {
+      background: #1D4ED8;
+      transform: scale(1.22);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.55), 0 0 0 2px #FFFFFF;
+    }
+    .savvy-field-number-badge.active-badge {
+      background: #10B981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4), 0 0 0 2px #FFFFFF;
+      transform: scale(1.22);
+    }
   `;
   shadowRoot.appendChild(styleEl);
+
+  // Laser scanner overlay controller
+  function startScanAnimation() {
+    stopScanAnimation();
+    const overlay = document.createElement("div");
+    overlay.className = "savvy-scanner-overlay";
+    overlay.innerHTML = `
+      <div class="savvy-scanner-backdrop"></div>
+      <div class="savvy-laser-beam">
+        <div class="savvy-laser-trail"></div>
+      </div>
+      <div class="savvy-scanner-card">
+        <div class="savvy-scanner-card-header">
+          <span class="savvy-scanner-spinner"></span>
+          <span class="savvy-scanner-title">This Page is being scanned by Savvy.AI</span>
+        </div>
+        <div class="savvy-scanner-subtitle">Please wait until finish...</div>
+      </div>
+    `;
+    shadowRoot.appendChild(overlay);
+    agentLog.action("✨ Laser scanner animation activated on page.");
+  }
+
+  function stopScanAnimation() {
+    const existing = shadowRoot.querySelector(".savvy-scanner-overlay");
+    if (existing) {
+      existing.classList.add("fade-out");
+      setTimeout(() => existing.remove(), 250);
+      agentLog.action("✨ Laser scanner animation stopped.");
+    }
+  }
+
+  // Clean label helper
+  function cleanLabelText(raw: string): string {
+    return raw
+      .replace(/[\n\r\t]+/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/[*:]+$/, "")
+      .trim();
+  }
+
+  function isValidLabelText(txt: string | null | undefined): boolean {
+    if (!txt) return false;
+    const cleaned = cleanLabelText(txt);
+    if (cleaned.length < 2 || cleaned.length > 70) return false;
+    // Exclude pure format hints or placeholders (e.g. DD/MM/YYY, 08xx, ---)
+    if (/^(dd[\/\-\.]mm|yyyy[\/\-\.]mm|mm[\/\-\.]dd|hh:mm|08x|\+62|contoh|e\.g\.|example|\.\.\.|---)/i.test(cleaned)) {
+      return false;
+    }
+    return true;
+  }
+
+  // Enhanced Helper untuk mencari Label dari Form Element & Upload Trigger
+  function findElementLabel(el: HTMLElement): string {
+    // 1. Explicit ARIA label
+    if (el.getAttribute("aria-label") && isValidLabelText(el.getAttribute("aria-label"))) {
+      return cleanLabelText(el.getAttribute("aria-label")!);
+    }
+    const ariaLabelledby = el.getAttribute("aria-labelledby");
+    if (ariaLabelledby) {
+      const lblEl = document.getElementById(ariaLabelledby);
+      if (lblEl && isValidLabelText(lblEl.textContent)) return cleanLabelText(lblEl.textContent);
+    }
+
+    // 2. Explicit label[for=id]
+    if (el.id) {
+      const label = document.querySelector(`label[for="${el.id}"]`);
+      if (label && isValidLabelText(label.textContent)) return cleanLabelText(label.textContent);
+    }
+
+    // 3. Enclosing label
+    const parentLabel = el.closest("label");
+    if (parentLabel && isValidLabelText(parentLabel.textContent)) {
+      return cleanLabelText(parentLabel.textContent);
+    }
+
+    // 4. Ancestor & Column traversal (up to 5 levels)
+    // Common layout: <div class="row"><div class="col-4"><label>Date of Issue</label></div><div class="col-8"><input></div></div>
+    let curr: HTMLElement | null = el.parentElement;
+    let depth = 0;
+    while (curr && depth < 5 && curr.tagName !== "BODY" && curr.tagName !== "FORM") {
+      // 4a. Check preceding sibling of current ancestor container (e.g. left column div)
+      let sib = curr.previousElementSibling;
+      while (sib) {
+        const cand = sib.querySelector("label, .form-label, .col-form-label, dt, th, legend, h3, h4, h5, h6, strong, b");
+        if (cand && isValidLabelText(cand.textContent)) {
+          return cleanLabelText(cand.textContent);
+        }
+        if (isValidLabelText(sib.textContent)) {
+          return cleanLabelText(sib.textContent);
+        }
+        sib = sib.previousElementSibling;
+      }
+
+      // 4b. If ancestor has a label that doesn't contain `el`
+      const insideLabel = curr.querySelector("label, .form-label, .col-form-label, dt, th, legend, h3, h4, h5, h6, strong, b");
+      if (insideLabel && !insideLabel.contains(el) && isValidLabelText(insideLabel.textContent)) {
+        return cleanLabelText(insideLabel.textContent);
+      }
+
+      // 4c. Table row
+      if (curr.tagName === "TR") {
+        const th = curr.querySelector("th, td:first-child");
+        if (th && !th.contains(el) && isValidLabelText(th.textContent)) {
+          return cleanLabelText(th.textContent);
+        }
+      }
+
+      curr = curr.parentElement;
+      depth++;
+    }
+
+    // 5. Immediate previous sibling elements of the input
+    let prev = el.previousElementSibling;
+    while (prev) {
+      if (["LABEL", "H3", "H4", "H5", "H6", "P", "SPAN", "STRONG", "B", "DIV"].includes(prev.tagName)) {
+        if (isValidLabelText(prev.textContent)) return cleanLabelText(prev.textContent);
+      }
+      prev = prev.previousElementSibling;
+    }
+
+    // 6. Geometric Proximity Search (Find nearest text element to the left or immediately above)
+    try {
+      const elRect = el.getBoundingClientRect();
+      if (elRect.width > 0 && elRect.height > 0) {
+        const candidates = Array.from(
+          document.querySelectorAll("label, .form-label, .col-form-label, dt, th, legend, h4, h5, h6, strong, b, [class*='label']")
+        ) as HTMLElement[];
+
+        let bestCandidate: HTMLElement | null = null;
+        let minDistance = 99999;
+
+        for (const cand of candidates) {
+          if (cand.contains(el) || el.contains(cand)) continue;
+          if (!isValidLabelText(cand.textContent)) continue;
+
+          const r = cand.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) continue;
+
+          // Candidate to the left on the same horizontal row
+          const isLeftSameRow =
+            r.right <= elRect.left + 25 &&
+            r.left >= elRect.left - 450 &&
+            Math.abs((r.top + r.bottom) / 2 - (elRect.top + elRect.bottom) / 2) < 28;
+
+          // Candidate immediately above in same column
+          const isDirectlyAbove =
+            r.bottom <= elRect.top + 8 &&
+            r.bottom >= elRect.top - 50 &&
+            r.left < elRect.right &&
+            r.right > elRect.left - 30;
+
+          if (isLeftSameRow) {
+            const dist = elRect.left - r.right;
+            if (dist >= 0 && dist < minDistance) {
+              minDistance = dist;
+              bestCandidate = cand;
+            }
+          } else if (isDirectlyAbove) {
+            const dist = (elRect.top - r.bottom) * 1.5;
+            if (dist >= 0 && dist < minDistance) {
+              minDistance = dist;
+              bestCandidate = cand;
+            }
+          }
+        }
+
+        if (bestCandidate && bestCandidate.textContent) {
+          return cleanLabelText(bestCandidate.textContent);
+        }
+      }
+    } catch (_) {}
+
+    // 7. Button text for upload triggers
+    if (el.tagName === "BUTTON" || el.getAttribute("role") === "button") {
+      const btnTxt = el.textContent?.trim();
+      if (btnTxt && /^(upload|unggah|browse|pilih file|pilih berkas|choose file)$/i.test(btnTxt)) {
+        const card = el.closest(".card, .panel, .upload-container, .form-group, [class*='upload'], div");
+        if (card) {
+          const heading = card.querySelector("h3, h4, h5, h6, label, .title, strong");
+          if (heading && isValidLabelText(heading.textContent)) {
+            return cleanLabelText(heading.textContent);
+          }
+        }
+      }
+      if (btnTxt) return cleanLabelText(btnTxt);
+    }
+
+    // 8. Placeholder (ONLY if it is NOT a format hint like DD/MM/YY)
+    const placeholder = el.getAttribute("placeholder");
+    if (placeholder && isValidLabelText(placeholder)) {
+      return cleanLabelText(placeholder);
+    }
+
+    // 9. Name or ID attribute fallback, cleaned of prefixes
+    const rawName = el.getAttribute("name") || el.id || "";
+    if (rawName) {
+      if (rawName === "_username" || rawName === "username") return "Email";
+      if (rawName === "_password" || rawName === "password") return "Password";
+      return cleanLabelText(rawName.replace(/[_\-]+/g, " "));
+    }
+
+    return "Kolom Form";
+  }
+
+  // Canonical Form Field Collector for 100% synchronized Scanning & Badging
+  interface FormFieldItem {
+    targetEl: HTMLElement;
+    badgeTargetEl: HTMLElement;
+    id: string;
+    name: string;
+    label: string;
+    placeholder: string;
+    required: boolean;
+    type: string;
+  }
+
+  function getInteractiveFormElements(): FormFieldItem[] {
+    const result: FormFieldItem[] = [];
+    const visitedEls = new Set<HTMLElement>();
+
+    // 1. Gather all inputs, selects, textareas
+    const inputs = Array.from(
+      document.querySelectorAll("input, select, textarea")
+    ) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[];
+
+    inputs.forEach((el) => {
+      if (el.type === "hidden" || el.type === "submit" || el.type === "reset") return;
+
+      // Check if it's a file input
+      if (el.type === "file") {
+        const rect = el.getBoundingClientRect();
+        const isDirectlyVisible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== "hidden";
+        
+        let badgeTarget: HTMLElement = el;
+        if (!isDirectlyVisible) {
+          const labelFor = el.id ? document.querySelector<HTMLElement>(`label[for="${el.id}"]`) : null;
+          const parentLabel = el.closest<HTMLElement>("label");
+          const parentContainer = el.closest<HTMLElement>(".form-group, .upload-container, div");
+          const triggerBtn = parentContainer?.querySelector<HTMLElement>("button, .btn, [role='button'], label");
+
+          const visibleTrigger = [labelFor, parentLabel, triggerBtn].find((candidate) => {
+            if (!candidate) return false;
+            const r = candidate.getBoundingClientRect();
+            return r.width > 0 && r.height > 0 && window.getComputedStyle(candidate).visibility !== "hidden";
+          });
+
+          if (visibleTrigger) {
+            badgeTarget = visibleTrigger;
+          } else {
+            return;
+          }
+        }
+
+        visitedEls.add(el);
+        visitedEls.add(badgeTarget);
+
+        result.push({
+          targetEl: el,
+          badgeTargetEl: badgeTarget,
+          id: el.id || el.name || "",
+          name: el.name || "",
+          label: findElementLabel(badgeTarget) || findElementLabel(el) || "Upload File",
+          placeholder: "",
+          required: el.required,
+          type: "file",
+        });
+        return;
+      }
+
+      // Normal input, select, textarea
+      const rect = el.getBoundingClientRect();
+      const isVisible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== "hidden";
+      if (!isVisible) return;
+
+      visitedEls.add(el);
+      let label = findElementLabel(el);
+      // For radios / checkboxes, include value or parent label text if available
+      if (el.type === "radio" || el.type === "checkbox") {
+        const parentLbl = el.closest("label")?.textContent?.trim();
+        const val = (el as HTMLInputElement).value;
+        if (parentLbl && !label.includes(parentLbl)) {
+          label = `${label} (${parentLbl})`;
+        } else if (val && val !== "on" && !label.includes(val)) {
+          label = `${label} (${val})`;
+        }
+      }
+
+      result.push({
+        targetEl: el,
+        badgeTargetEl: el,
+        id: el.id || el.name || "",
+        name: el.name || "",
+        label,
+        placeholder: (el as HTMLInputElement).placeholder || "",
+        required: el.required,
+        type: el.type || el.tagName.toLowerCase(),
+      });
+    });
+
+    // 2. Standalone Upload buttons / labels matching upload keywords
+    const buttonsAndLabels = Array.from(
+      document.querySelectorAll("button, [role='button'], a.btn, label.btn, .upload-btn")
+    ) as HTMLElement[];
+
+    buttonsAndLabels.forEach((btn) => {
+      if (visitedEls.has(btn)) return;
+      const txt = (btn.textContent || "").trim().toLowerCase();
+      const isUploadBtn =
+        /^(upload|unggah|browse|pilih file|pilih berkas|choose file)/i.test(txt) ||
+        btn.getAttribute("aria-label")?.toLowerCase().includes("upload");
+
+      if (isUploadBtn) {
+        const rect = btn.getBoundingClientRect();
+        const isVisible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(btn).visibility !== "hidden";
+        if (!isVisible) return;
+
+        visitedEls.add(btn);
+        result.push({
+          targetEl: btn,
+          badgeTargetEl: btn,
+          id: btn.id || "",
+          name: btn.getAttribute("name") || "",
+          label: findElementLabel(btn),
+          placeholder: "",
+          required: false,
+          type: "file",
+        });
+      }
+    });
+
+    // Sort elements in visual reading order (top-to-bottom, left-to-right) so badges match exact page layout
+    result.sort((a, b) => {
+      const rectA = a.badgeTargetEl.getBoundingClientRect();
+      const rectB = b.badgeTargetEl.getBoundingClientRect();
+      if (Math.abs(rectA.top - rectB.top) > 12) {
+        return rectA.top - rectB.top;
+      }
+      return rectA.left - rectB.left;
+    });
+
+    return result;
+  }
+
+  // Pre-Submit Form Audit Snapshot Extractor (Scrapes values, DOM constraints, surrounding cues, & file limits)
+  function extractFormAuditSnapshot() {
+    const detected = getInteractiveFormElements();
+    const fields = detected.map((item) => {
+      const el = item.targetEl as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement);
+      let val = "";
+      if (el) {
+        if (el.tagName === "SELECT") {
+          const sel = el as HTMLSelectElement;
+          val = sel.options[sel.selectedIndex]?.text || sel.value || "";
+        } else if (el.type === "file") {
+          const fileInput = el as HTMLInputElement;
+          val = fileInput.files?.[0]?.name || "";
+        } else if (el.type === "checkbox" || el.type === "radio") {
+          const inputEl = el as HTMLInputElement;
+          val = inputEl.checked ? (inputEl.value || "checked") : "";
+        } else {
+          val = (el as HTMLInputElement).value || "";
+        }
+      }
+
+      // Check asterisk or required cues in label or siblings
+      const parent = el.closest(".form-group, .mb-3, .form-row, tr, div") || el.parentElement;
+      const parentText = parent?.textContent || "";
+      const labelText = item.label || "";
+      const hasAsterisk = labelText.includes("*") || parentText.includes("*") || el.getAttribute("aria-required") === "true";
+
+      // Surrounding context (search for hints like (Contoh: ...) or format cues)
+      const contextMatch = parentText.match(/\(([^)]+)\)/);
+      const surroundingContext = contextMatch ? contextMatch[0] : "";
+
+      const minLen = ("minLength" in el && typeof (el as any).minLength === "number" && (el as any).minLength > 0) ? (el as any).minLength : undefined;
+      const maxLen = ("maxLength" in el && typeof (el as any).maxLength === "number" && (el as any).maxLength > 0) ? (el as any).maxLength : undefined;
+      const pattern = el.getAttribute("pattern") || undefined;
+      const inputMask = el.getAttribute("data-mask") || el.getAttribute("data-inputmask") || undefined;
+      const accept = el.getAttribute("accept") || undefined;
+
+      return {
+        fieldId: item.id || el.id || item.name,
+        name: item.name || el.name || item.id,
+        label: item.label,
+        currentValue: val.trim(),
+        surroundingContext,
+        rules: {
+          isRequired: el.required || hasAsterisk,
+          placeholder: item.placeholder || (el as any).placeholder || "",
+          pattern,
+          minLength: minLen,
+          maxLength: maxLen,
+          type: item.type || el.type || "text",
+          inputMaskDetected: inputMask,
+          accept,
+        },
+      };
+    });
+
+    // Extract page-wide upload & instruction cues from sidebars, alerts, footnotes
+    const pageWideFileInstructions: string[] = [];
+    const candidateTexts = Array.from(document.querySelectorAll("aside, .alert, .note, .keterangan, .sidebar, .info, footer, small, p, li"))
+      .map((el) => el.textContent?.trim() || "")
+      .filter((txt) => {
+        const lower = txt.toLowerCase();
+        return (
+          (lower.includes("mb") || lower.includes("kb") || lower.includes("pdf") || lower.includes("jpg") || lower.includes("png")) &&
+          (lower.includes("maksimal") || lower.includes("ukuran") || lower.includes("file") || lower.includes("berkas") || lower.includes("format"))
+        );
+      })
+      .slice(0, 5);
+
+    pageWideFileInstructions.push(...candidateTexts);
+
+    // Extract attached files metadata
+    const attachedFilesMetadata: Array<{
+      fieldName: string;
+      fileName: string;
+      fileSizeKb: number;
+      fileExtension: string;
+    }> = [];
+
+    const fileInputs = Array.from(document.querySelectorAll('input[type="file"]')) as HTMLInputElement[];
+    fileInputs.forEach((fi) => {
+      if (fi.files && fi.files.length > 0) {
+        const f = fi.files[0];
+        const ext = f.name.includes(".") ? f.name.split(".").pop()?.toLowerCase() || "" : "";
+        attachedFilesMetadata.push({
+          fieldName: fi.name || fi.id || "file",
+          fileName: f.name,
+          fileSizeKb: Math.round(f.size / 1024),
+          fileExtension: ext,
+        });
+      }
+    });
+
+    return {
+      fields,
+      pageUploadContext: {
+        pageWideFileInstructions,
+        attachedFilesMetadata,
+      },
+      meta: {
+        url: window.location.href,
+        domain: window.location.hostname,
+        title: document.title,
+      },
+    };
+  }
+
+  // Numbered field badges controller
+  let activeNumberedBadges: {
+    badgeEl: HTMLElement;
+    targetEl: HTMLElement;
+    badgeTargetEl: HTMLElement;
+    index: number;
+  }[] = [];
+
+  function updateBadgePositions() {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+    activeNumberedBadges.forEach(({ badgeEl, badgeTargetEl, targetEl }) => {
+      const anchor = badgeTargetEl || targetEl;
+      if (!document.body.contains(anchor)) {
+        badgeEl.style.display = "none";
+        return;
+      }
+      const rect = anchor.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) {
+        badgeEl.style.display = "none";
+        return;
+      }
+      badgeEl.style.display = "flex";
+      badgeEl.style.top = `${rect.top + scrollTop - 10}px`;
+      badgeEl.style.left = `${rect.right + scrollLeft - 12}px`;
+    });
+  }
+
+  function showFieldNumberBadges() {
+    hideFieldNumberBadges();
+
+    const detected = getInteractiveFormElements();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+    detected.forEach((item, idx) => {
+      const fieldIndex = idx + 1; // 1-based display
+      const rect = item.badgeTargetEl.getBoundingClientRect();
+
+      const badge = document.createElement("div");
+      badge.className = "savvy-field-number-badge";
+      badge.textContent = `${fieldIndex}`;
+      badge.title = `Kolom #${fieldIndex}: ${item.label} (Klik untuk panduan)`;
+      badge.style.top = `${rect.top + scrollTop - 10}px`;
+      badge.style.left = `${rect.right + scrollLeft - 12}px`;
+
+      badge.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        item.targetEl.focus();
+        item.badgeTargetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        showFieldSpotlight(item.badgeTargetEl);
+
+        activeNumberedBadges.forEach((b, i) => {
+          if (i === idx) b.badgeEl.classList.add("active-badge");
+          else b.badgeEl.classList.remove("active-badge");
+        });
+
+        try {
+          chrome.runtime.sendMessage({
+            type: "FIELD_SELECTED_FROM_PAGE",
+            fieldIndex: idx,
+            fieldId: item.id || "",
+            fieldName: item.name || "",
+            label: item.label,
+          }).catch(() => {});
+        } catch (_) {}
+      });
+
+      shadowRoot.appendChild(badge);
+      activeNumberedBadges.push({
+        badgeEl: badge,
+        targetEl: item.targetEl,
+        badgeTargetEl: item.badgeTargetEl,
+        index: idx,
+      });
+    });
+
+    window.addEventListener("scroll", updateBadgePositions, { passive: true });
+    window.addEventListener("resize", updateBadgePositions, { passive: true });
+    agentLog.action(`🔢 Rendered numbered badges for ${detected.length} interactive fields.`);
+  }
+
+  function hideFieldNumberBadges() {
+    activeNumberedBadges.forEach(({ badgeEl }) => badgeEl.remove());
+    activeNumberedBadges = [];
+    window.removeEventListener("scroll", updateBadgePositions);
+    window.removeEventListener("resize", updateBadgePositions);
+  }
 
   const spotlightEl = document.createElement("div");
   spotlightEl.className = "savvy-spotlight";
   spotlightEl.style.display = "none";
   spotlightEl.innerHTML = `<div class="savvy-spotlight-beacon">S</div>`;
   shadowRoot.appendChild(spotlightEl);
+
+  let spotlightTimeout: any = null;
+
+  function hideFieldSpotlight() {
+    if (spotlightEl) {
+      spotlightEl.style.display = "none";
+    }
+    if (spotlightTimeout) {
+      clearTimeout(spotlightTimeout);
+      spotlightTimeout = null;
+    }
+  }
+
+  function showFieldSpotlight(target: HTMLElement) {
+    const rect = target.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+    spotlightEl.style.display = "block";
+    spotlightEl.style.top = `${rect.top + scrollTop - 4}px`;
+    spotlightEl.style.left = `${rect.left + scrollLeft - 4}px`;
+    spotlightEl.style.width = `${rect.width + 8}px`;
+    spotlightEl.style.height = `${rect.height + 8}px`;
+
+    if (spotlightTimeout) clearTimeout(spotlightTimeout);
+    spotlightTimeout = setTimeout(() => {
+      spotlightEl.style.display = "none";
+    }, 4000);
+  }
 
   const readingGuideEl = document.createElement("div");
   readingGuideEl.className = "savvy-reading-guide";
@@ -125,46 +826,18 @@
     }
   });
 
-  // 3. Helper untuk mencari Label dari Form Element
-  function findElementLabel(el: HTMLElement): string {
-    if (el.getAttribute("aria-label")) {
-      return el.getAttribute("aria-label")!;
-    }
-    if (el.id) {
-      const label = document.querySelector(`label[for="${el.id}"]`);
-      if (label && label.textContent) return label.textContent.trim();
-    }
-    const parentLabel = el.closest("label");
-    if (parentLabel && parentLabel.textContent) {
-      return parentLabel.textContent.trim();
-    }
-    const placeholder = el.getAttribute("placeholder");
-    if (placeholder) return placeholder.trim();
-    return el.getAttribute("name") || el.id || "Kolom Form";
-  }
-
-  // 4. Focus Listener untuk mendeteksi field aktif
+  // 3. Focus Listener untuk mendeteksi field aktif
   document.addEventListener("focusin", (e) => {
     const target = e.target as HTMLElement;
     if (
       target &&
       (target.tagName === "INPUT" ||
         target.tagName === "SELECT" ||
-        target.tagName === "TEXTAREA")
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "BUTTON")
     ) {
-      const rect = target.getBoundingClientRect();
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-      // Posisikan Spotlight
-      spotlightEl.style.display = "block";
-      spotlightEl.style.top = `${rect.top + scrollTop - 4}px`;
-      spotlightEl.style.left = `${rect.left + scrollLeft - 4}px`;
-      spotlightEl.style.width = `${rect.width + 8}px`;
-      spotlightEl.style.height = `${rect.height + 8}px`;
-
       const label = findElementLabel(target);
-      agentLog.perception(`🎯 Field focused: '${target.id || target.getAttribute("name") || "input"}' (${label})`, {
+      agentLog.perception(`🎯 Field focused: '${target.id || target.getAttribute("name") || target.tagName.toLowerCase()}' (${label})`, {
         fieldId: target.id || "",
         tagName: target.tagName,
         inputType: (target as HTMLInputElement).type || "text",
@@ -172,20 +845,44 @@
       });
 
       // Kirim metadata field ke background & sidepanel
-      chrome.runtime.sendMessage({
-        type: "FIELD_FOCUSED",
-        fieldId: target.id || "",
-        fieldName: target.getAttribute("name") || "",
-        label,
-        tagName: target.tagName,
-        inputType: (target as HTMLInputElement).type || "text",
-        value: (target as HTMLInputElement).value || "",
-      });
+      try {
+        if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+          chrome.runtime.sendMessage({
+            type: "FIELD_FOCUSED",
+            fieldId: target.id || "",
+            fieldName: target.getAttribute("name") || "",
+            label,
+            tagName: target.tagName,
+            inputType: (target as HTMLInputElement).type || "text",
+            value: (target as HTMLInputElement).value || "",
+          }).catch(() => {});
+
+          // Jika badge nomor aktif, sinkronkan juga active badge dan notifikasi field terpilih ke sidepanel
+          if (activeNumberedBadges.length > 0) {
+            const matchIdx = activeNumberedBadges.findIndex(
+              (b) => b.targetEl === target || b.badgeTargetEl === target
+            );
+            if (matchIdx !== -1) {
+              activeNumberedBadges.forEach((b, i) => {
+                if (i === matchIdx) b.badgeEl.classList.add("active-badge");
+                else b.badgeEl.classList.remove("active-badge");
+              });
+              chrome.runtime.sendMessage({
+                type: "FIELD_SELECTED_FROM_PAGE",
+                fieldIndex: matchIdx,
+                fieldId: target.id || "",
+                fieldName: target.getAttribute("name") || "",
+                label,
+              }).catch(() => {});
+            }
+          }
+        }
+      } catch (_) {}
     }
   });
 
   document.addEventListener("focusout", () => {
-    // Spotlight tetap aktif sejenak untuk memandu mata
+    hideFieldSpotlight();
   });
 
   // 4b. MutationObserver & SPA Route Change Detection (multi_agents.md Section 8)
@@ -249,9 +946,12 @@
   // 5. Message Listener dari Side Panel
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type === "INJECT_VALUE") {
-      const { fieldId, fieldName, value } = message;
+      const { fieldId, fieldName, fieldIndex, value } = message;
       let target: HTMLElement | null = null;
-      if (fieldId) target = document.getElementById(fieldId);
+      if (typeof fieldIndex === "number" && activeNumberedBadges[fieldIndex]) {
+        target = activeNumberedBadges[fieldIndex].targetEl;
+      }
+      if (!target && fieldId) target = document.getElementById(fieldId);
       if (!target && fieldName) target = document.querySelector(`[name="${fieldName}"]`);
 
       if (target && ("value" in target)) {
@@ -260,7 +960,7 @@
         target.dispatchEvent(new Event("input", { bubbles: true }));
         target.dispatchEvent(new Event("change", { bubbles: true }));
         target.dispatchEvent(new Event("blur", { bubbles: true }));
-        agentLog.action(`⚡ Injected value into field '${fieldId || fieldName}'`, { targetTag: target.tagName });
+        agentLog.action(`⚡ Injected value into field '${fieldId || fieldName || fieldIndex}'`, { targetTag: target.tagName });
         sendResponse({ success: true });
         return;
       }
@@ -284,21 +984,22 @@
       sendResponse({ success: true, count: Object.keys(settings).length });
     }
 
-    if (message.type === "SCAN_PAGE_FIELDS" || message.type === "QUERY_PAGE_FIELDS") {
-      const inputs = Array.from(
-        document.querySelectorAll("input, select, textarea")
-      ) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[];
+    if (message.type === "CLEAR_ALL_A11Y") {
+      clearAllA11yFeatures();
+      sendResponse({ success: true });
+      return;
+    }
 
-      const fields = inputs
-        .filter((el) => el.type !== "hidden" && el.type !== "submit")
-        .map((el) => ({
-          id: el.id || el.name,
-          name: el.name,
-          label: findElementLabel(el),
-          placeholder: (el as HTMLInputElement).placeholder || "",
-          required: el.required,
-          type: el.type || el.tagName.toLowerCase(),
-        }));
+    if (message.type === "SCAN_PAGE_FIELDS" || message.type === "QUERY_PAGE_FIELDS") {
+      const detected = getInteractiveFormElements();
+      const fields = detected.map((d) => ({
+        id: d.id,
+        name: d.name,
+        label: d.label,
+        placeholder: d.placeholder,
+        required: d.required,
+        type: d.type,
+      }));
 
       const meta = {
         url: window.location.href,
@@ -308,12 +1009,123 @@
         keywords: document.querySelector('meta[name="keywords"]')?.getAttribute("content")?.split(",").map((s) => s.trim()) || [],
       };
 
-      agentLog.perception(`🔍 Scanning DOM: Discovered ${fields.length} active interactive fields on ${meta.domain}`, {
+      agentLog.perception(`🔍 Scanning DOM: Discovered ${fields.length} synchronized form fields on ${meta.domain}`, {
         count: fields.length,
         title: meta.title,
         fieldKeys: fields.map((f) => f.name || f.id || f.label).slice(0, 8),
       });
       sendResponse({ success: true, fields, count: fields.length, meta });
+    }
+
+    if (message.type === "EXTRACT_FORM_AUDIT_DATA") {
+      const snapshot = extractFormAuditSnapshot();
+      agentLog.action(`🔍 EXTRACT_FORM_AUDIT_DATA: Scraped ${snapshot.fields.length} active inputs and ${snapshot.pageUploadContext.attachedFilesMetadata.length} attached files for audit.`);
+      sendResponse({ success: true, data: snapshot });
+      return;
+    }
+
+    if (message.type === "HIGHLIGHT_AUDIT_FIELD") {
+      let target: HTMLElement | null = null;
+      let badgeTarget: HTMLElement | null = null;
+      if (message.fieldId) target = document.getElementById(message.fieldId);
+      if (!target && message.fieldName) target = document.querySelector(`[name="${message.fieldName}"]`);
+      if (!target && typeof message.fieldIndex === "number") {
+        const detected = getInteractiveFormElements();
+        if (detected[message.fieldIndex]) {
+          target = detected[message.fieldIndex].targetEl;
+          badgeTarget = detected[message.fieldIndex].badgeTargetEl;
+        }
+      }
+      const elToHighlight = badgeTarget || target;
+      if (elToHighlight) {
+        target?.focus();
+        elToHighlight.scrollIntoView({ behavior: "smooth", block: "center" });
+        showFieldSpotlight(elToHighlight);
+        agentLog.action(`🎯 Audit Spotlight highlighted field '${message.fieldLabel || message.fieldName || message.fieldId}'`);
+        sendResponse({ success: true });
+        return;
+      }
+      sendResponse({ success: false, reason: "Field not found" });
+      return;
+    }
+
+    if (message.type === "APPLY_FIELD_VALUE") {
+      let target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null = null;
+      if (message.fieldId) target = document.getElementById(message.fieldId) as any;
+      if (!target && message.fieldName) target = document.querySelector(`[name="${message.fieldName}"]`) as any;
+      if (target && typeof message.value === "string") {
+        target.value = message.value;
+        target.dispatchEvent(new Event("input", { bubbles: true }));
+        target.dispatchEvent(new Event("change", { bubbles: true }));
+        target.focus();
+        showFieldSpotlight(target);
+        agentLog.action(`⚡ Applied Vault value to field '${message.fieldName || message.fieldId}': "${message.value}"`);
+        sendResponse({ success: true });
+        return;
+      }
+      sendResponse({ success: false, reason: "Field or value invalid" });
+      return;
+    }
+
+    if (message.type === "START_SCAN_ANIMATION") {
+      startScanAnimation();
+      sendResponse({ success: true });
+      return;
+    }
+
+    if (message.type === "STOP_SCAN_ANIMATION") {
+      stopScanAnimation();
+      sendResponse({ success: true });
+      return;
+    }
+
+    if (message.type === "SHOW_FIELD_NUMBERS") {
+      showFieldNumberBadges();
+      sendResponse({ success: true, count: activeNumberedBadges.length });
+      return;
+    }
+
+    if (message.type === "HIDE_FIELD_NUMBERS") {
+      hideFieldNumberBadges();
+      sendResponse({ success: true });
+      return;
+    }
+
+    if (message.type === "NAVIGATE_TO_FIELD") {
+      let target: HTMLElement | null = null;
+      let badgeTarget: HTMLElement | null = null;
+      const idx = typeof message.fieldIndex === "number" ? message.fieldIndex : -1;
+      if (idx >= 0 && activeNumberedBadges[idx]) {
+        target = activeNumberedBadges[idx].targetEl;
+        badgeTarget = activeNumberedBadges[idx].badgeTargetEl;
+        activeNumberedBadges.forEach((b, i) => {
+          if (i === idx) b.badgeEl.classList.add("active-badge");
+          else b.badgeEl.classList.remove("active-badge");
+        });
+      }
+      if (!target && message.fieldId) {
+        target = document.getElementById(message.fieldId);
+      }
+      if (!target && message.fieldName) {
+        target = document.querySelector(`[name="${message.fieldName}"]`);
+      }
+      if (!target && idx >= 0) {
+        const detected = getInteractiveFormElements();
+        if (detected[idx]) {
+          target = detected[idx].targetEl;
+          badgeTarget = detected[idx].badgeTargetEl;
+        }
+      }
+      const elToHighlight = badgeTarget || target;
+      if (elToHighlight) {
+        target?.focus();
+        elToHighlight.scrollIntoView({ behavior: "smooth", block: "center" });
+        showFieldSpotlight(elToHighlight);
+        sendResponse({ success: true, fieldIndex: idx });
+        return;
+      }
+      sendResponse({ success: false, reason: "Field not found" });
+      return;
     }
 
     if (message.type === "START_SNIP_SELECTION") {
@@ -331,15 +1143,7 @@
       if (target) {
         target.focus();
         target.scrollIntoView({ behavior: "smooth", block: "center" });
-        const rect = target.getBoundingClientRect();
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-
-        spotlightEl.style.display = "block";
-        spotlightEl.style.top = `${rect.top + scrollTop - 4}px`;
-        spotlightEl.style.left = `${rect.left + scrollLeft - 4}px`;
-        spotlightEl.style.width = `${rect.width + 8}px`;
-        spotlightEl.style.height = `${rect.height + 8}px`;
+        showFieldSpotlight(target);
         agentLog.action(`💡 Spotlight Beacon navigated to field '${target.id || target.getAttribute("name") || "input"}'`);
         sendResponse({ success: true });
         return;
@@ -349,6 +1153,12 @@
 
     if (message.type === "BATCH_AUTOFILL") {
       const payload = message.payload || {};
+      const profileItems: Array<{ name: string; value: string; aliases?: string[] }> = Array.isArray(message.items)
+        ? message.items
+        : Array.isArray(payload.items)
+        ? payload.items
+        : [];
+
       const inputs = Array.from(document.querySelectorAll("input, textarea, select")) as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)[];
       
       // Store backup for 100% safe undo
@@ -359,14 +1169,66 @@
 
       let injectedCount = 0;
       inputs.forEach((input) => {
-        const nameAttr = (input.name || input.id || "").toLowerCase();
+        if (input.type === "hidden" || input.type === "submit" || input.type === "button") return;
+        const rawLabel = findElementLabel(input) || input.name || input.id || (input as any).placeholder || "";
+        const nameAttr = rawLabel.toLowerCase().trim();
         let valToInject = "";
-        if (nameAttr.includes("nik") || nameAttr.includes("ktp")) valToInject = payload.nik || "";
-        else if (nameAttr.includes("nama") || nameAttr.includes("name")) valToInject = payload.nama || "";
-        else if (nameAttr.includes("lahir") || nameAttr.includes("birth") || nameAttr.includes("tgl")) valToInject = payload.tanggal_lahir || "";
-        else if (nameAttr.includes("alamat") || nameAttr.includes("address")) valToInject = payload.alamat || "";
-        else if (nameAttr.includes("email") || nameAttr.includes("mail")) valToInject = payload.email || "";
-        else if (nameAttr.includes("hp") || nameAttr.includes("phone") || nameAttr.includes("telp")) valToInject = payload.no_hp || "";
+
+        // 1. Dynamic Matching via Profile Items & Aliases
+        if (profileItems.length > 0) {
+          const isMotherField = nameAttr.includes("mother") || nameAttr.includes("ibu");
+          for (const item of profileItems) {
+            const itemLower = item.name.toLowerCase().trim();
+            if (isMotherField && (itemLower.includes("nama lengkap") || itemLower === "nama" || itemLower === "full name")) {
+              continue;
+            }
+            if (!isMotherField && itemLower.includes("ibu")) {
+              continue;
+            }
+
+            let matches = (nameAttr.length > 1 && itemLower.length > 1 && (nameAttr === itemLower || nameAttr.includes(itemLower) || itemLower.includes(nameAttr)));
+
+            if (!matches && Array.isArray(item.aliases)) {
+              matches = item.aliases.some((alias) => {
+                const a = alias.toLowerCase().trim();
+                return a.length > 1 && (nameAttr === a || nameAttr.includes(a) || a.includes(nameAttr));
+              });
+            }
+
+            if (matches && item.value) {
+              valToInject = item.value;
+              break;
+            }
+          }
+        }
+
+        // 2. Legacy Fallback dictionary
+        if (!valToInject) {
+          if (nameAttr.includes("nik") || nameAttr.includes("ktp") || nameAttr.includes("national id")) {
+            valToInject = payload.nik || payload["NIK"] || "";
+          } else if (nameAttr.includes("mother") || nameAttr.includes("ibu")) {
+            valToInject = payload["Nama Ibu Kandung"] || payload.nama_ibu || "";
+          } else if (nameAttr.includes("nama") || nameAttr.includes("name") || nameAttr.includes("fullname")) {
+            valToInject = payload.nama || payload["Nama Lengkap"] || "";
+          } else if (nameAttr.includes("place") || nameAttr.includes("tempat") || nameAttr.includes("pob")) {
+            valToInject = payload.tempat_lahir || payload["Tempat Lahir"] || "";
+          } else if (
+            input.type === "date" ||
+            nameAttr.includes("tanggal_lahir") ||
+            nameAttr.includes("tgl_lahir") ||
+            nameAttr.includes("dob") ||
+            (nameAttr.includes("birth") && (nameAttr.includes("date") || nameAttr.includes("day"))) ||
+            (nameAttr.includes("lahir") && nameAttr.includes("tgl"))
+          ) {
+            valToInject = payload.tanggal_lahir || payload["Tanggal Lahir"] || "";
+          } else if (nameAttr.includes("alamat") || nameAttr.includes("address") || nameAttr.includes("domisili")) {
+            valToInject = payload.alamat || payload["Alamat KTP"] || "";
+          } else if (input.type === "email" || nameAttr.includes("email") || nameAttr.includes("mail") || nameAttr.includes("surel")) {
+            valToInject = payload.email || payload["Email"] || "";
+          } else if (input.type === "tel" || nameAttr.includes("hp") || nameAttr.includes("phone") || nameAttr.includes("telp") || nameAttr.includes("whatsapp")) {
+            valToInject = payload.no_hp || payload["No. Handphone"] || "";
+          }
+        }
 
         if (valToInject) {
           input.value = valToInject;
@@ -988,6 +1850,45 @@
     window.addEventListener("mouseup", onMouseUp);
   }
 
+  // 6b. Reset Semua Fitur Accessibility & Spotlight (WCAG 2.2 Revert)
+  function clearAllA11yFeatures() {
+    const html = document.documentElement;
+    const body = document.body;
+
+    stopScanAnimation();
+    hideFieldNumberBadges();
+    hideFieldSpotlight();
+    if (readingGuideEl) {
+      readingGuideEl.style.display = "none";
+    }
+
+    html.style.filter = "";
+    html.style.fontSize = "";
+    body.style.letterSpacing = "";
+    body.style.wordSpacing = "";
+    body.style.lineHeight = "";
+    body.style.textAlign = "";
+    body.style.fontFamily = "";
+
+    document.getElementById("savvy-pause-anim")?.remove();
+    document.getElementById("savvy-hide-img")?.remove();
+    document.getElementById("savvy-highlight-links")?.remove();
+    document.getElementById("savvy-big-cursor")?.remove();
+
+    try {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    } catch (_) {}
+
+    try {
+      const snip = shadowRoot.querySelector(".savvy-lightshot-container");
+      if (snip) snip.remove();
+    } catch (_) {}
+
+    agentLog.action("🧹 All accessibility features and spotlights cleared.");
+  }
+
   // 6. Controller 14 Fitur Accessibility HUB (WCAG 2.2 AAA & Pure JS)
   function applyA11yFeature(feature: string, enabled: boolean, value?: string, _level?: number) {
     const html = document.documentElement;
@@ -1208,11 +2109,11 @@
     }
   }
 
-  // 7. Auto-load persisted Accessibility settings from chrome.storage on page open/refresh
+  // 7. Auto-load persisted Accessibility settings ONLY IF sidepanel is actively open
   try {
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
-      chrome.storage.local.get("savvy_a11y_settings", (res) => {
-        if (res && res.savvy_a11y_settings) {
+      chrome.storage.local.get(["savvy_sidepanel_open", "savvy_a11y_settings"], (res) => {
+        if (res && res.savvy_sidepanel_open && res.savvy_a11y_settings) {
           Object.entries(res.savvy_a11y_settings).forEach(([feature, cfg]: [string, any]) => {
             if (cfg && cfg.enabled) {
               applyA11yFeature(feature, cfg.enabled, cfg.value, cfg.level);

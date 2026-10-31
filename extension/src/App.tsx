@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "./lib/i18n/LanguageContext";
 import { Header } from "./components/Header";
-import { AuthModal } from "./components/AuthModal";
 import { AiAssistantTab } from "./components/AiAssistantTab";
 import { FormsGuideTab } from "./components/FormsGuideTab";
 import { VaultTab } from "./components/VaultTab";
@@ -22,13 +21,11 @@ import { agentLog, logAgent, AgentDomain } from "./lib/agentLogger";
 export function App() {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"guide" | "vault" | "audit">("guide");
-  const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
+  const [isVaultUnlocked, setIsVaultUnlocked] = useState(true);
   const [isFormAnalyzed, setIsFormAnalyzed] = useState(false);
   const [activeTabUrl, setActiveTabUrl] = useState<string>("");
   const [activeTabTitle, setActiveTabTitle] = useState<string>("");
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [a11yModalOpen, setA11yModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
 
   // Connect to background script & log initial session
   useEffect(() => {
@@ -49,7 +46,32 @@ export function App() {
     if (typeof chrome !== "undefined" && chrome.runtime?.connect) {
       try {
         const port = chrome.runtime.connect({ name: "savvy-sidepanel" });
+
+        const handleCleanupA11y = () => {
+          if (typeof chrome !== "undefined" && chrome.tabs && chrome.tabs.query) {
+            chrome.tabs.query({}, (tabs) => {
+              tabs.forEach((tab) => {
+                if (tab.id) {
+                  chrome.tabs.sendMessage(tab.id, { type: "CLEAR_ALL_A11Y" }).catch(() => {});
+                }
+              });
+            });
+          }
+          if (typeof chrome !== "undefined" && chrome.storage?.local) {
+            chrome.storage.local.remove([
+              "savvy_a11y_settings",
+              "savvy_a11y_levels",
+              "savvy_a11y_profile",
+              "savvy_sidepanel_open",
+            ]).catch(() => {});
+          }
+        };
+
+        window.addEventListener("beforeunload", handleCleanupA11y);
+
         return () => {
+          handleCleanupA11y();
+          window.removeEventListener("beforeunload", handleCleanupA11y);
           try {
             port.disconnect();
           } catch (e) {}
@@ -84,18 +106,7 @@ export function App() {
     <div className="w-full h-screen bg-slate-50 flex flex-col overflow-hidden text-left font-sans antialiased select-none">
       {/* Extension Header */}
       <Header
-        currentUser={currentUser}
-        onOpenAuthModal={() => setAuthModalOpen(true)}
         onOpenAccessibilityHub={() => setA11yModalOpen(true)}
-        onLogout={() => setCurrentUser(null)}
-      />
-
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        currentUser={currentUser}
-        onLoginSuccess={(user) => setCurrentUser(user)}
-        onLogout={() => setCurrentUser(null)}
       />
 
       {/* Clean Capsule Top Navigation Tabs (3 Tabs) */}
@@ -134,6 +145,7 @@ export function App() {
             currentUrl={activeTabUrl}
             currentTitle={activeTabTitle}
             onAnalyzeForm={() => setIsFormAnalyzed(true)}
+            onResetFormAnalysis={() => setIsFormAnalyzed(false)}
             onNavigateTab={(tab) => {
               if (tab === "guide" || tab === "vault" || tab === "audit") {
                 setActiveTab(tab);
@@ -150,7 +162,9 @@ export function App() {
             onAnalyzeForm={() => setIsFormAnalyzed(true)}
           />
         )}
-        {activeTab === "audit" && <AuditorTab />}
+        {activeTab === "audit" && (
+          <AuditorTab onNavigateTab={(tab) => setActiveTab(tab)} />
+        )}
 
         {/* Accessibility Hub Slide-Over Modal */}
         {a11yModalOpen && (

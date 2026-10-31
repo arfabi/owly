@@ -33,9 +33,23 @@ const OFF_ICONS = {
 // Track active side panel connections across windows
 let activeSidePanelConnections = 0;
 
+function clearAccessibilityGlobally() {
+  chrome.storage.local.set({ savvy_sidepanel_open: false }).catch(() => {});
+  chrome.storage.local.remove(["savvy_a11y_settings", "savvy_a11y_levels", "savvy_a11y_profile"]).catch(() => {});
+
+  chrome.tabs.query({}, (tabs) => {
+    tabs.forEach((tab) => {
+      if (tab.id) {
+        chrome.tabs.sendMessage(tab.id, { type: "CLEAR_ALL_A11Y" }).catch(() => {});
+      }
+    });
+  });
+}
+
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === "savvy-sidepanel") {
     activeSidePanelConnections++;
+    chrome.storage.local.set({ savvy_sidepanel_open: true }).catch(() => {});
     agentLog.planner("Side Panel session connected (Active icon ON).", { connections: activeSidePanelConnections }, false);
     chrome.action.setIcon({ path: ON_ICONS }).catch(() => {});
 
@@ -44,6 +58,7 @@ chrome.runtime.onConnect.addListener((port) => {
       agentLog.planner("Side Panel session disconnected.", { remaining: activeSidePanelConnections }, false);
       if (activeSidePanelConnections === 0) {
         chrome.action.setIcon({ path: OFF_ICONS }).catch(() => {});
+        clearAccessibilityGlobally();
       }
     });
   }
@@ -51,6 +66,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
 // 2. Listener Tab Switch & Update untuk Sinkronisasi Global Accessibility Settings
 chrome.tabs.onActivated.addListener((activeInfo) => {
+  if (activeSidePanelConnections <= 0) return;
   chrome.storage.local.get("savvy_a11y_settings", (res) => {
     if (res && res.savvy_a11y_settings) {
       chrome.tabs.sendMessage(activeInfo.tabId, {
@@ -63,7 +79,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url) {
-    if (tab.url.startsWith("http") || tab.url.startsWith("file")) {
+    if (activeSidePanelConnections > 0 && (tab.url.startsWith("http") || tab.url.startsWith("file"))) {
       chrome.storage.local.get("savvy_a11y_settings", (res) => {
         if (res && res.savvy_a11y_settings) {
           chrome.tabs.sendMessage(tabId, {

@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isId = language === "id";
 
   const toolIcons = [
     Eye,
@@ -85,6 +86,9 @@ export default function Home() {
             </a>
             <Link href="/mock-portal" className="hover:text-blue-600 transition-colors">
               {t.nav.mockPortal}
+            </Link>
+            <Link href="/privacy" className="hover:text-blue-600 transition-colors">
+              {isId ? "Keamanan & Privasi" : "Privacy & Security"}
             </Link>
             <Link
               href="/simulator"
@@ -549,7 +553,20 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-10 border-t border-slate-200 text-center text-xs text-slate-500 bg-slate-50">
         <p>{t.footer.copyright}</p>
-        <p className="mt-1 text-slate-400">{t.footer.subline}</p>
+        <div className="mt-2 flex items-center justify-center gap-4 text-slate-600 font-medium">
+          <Link href="/privacy" className="text-blue-600 font-bold hover:underline">
+            {isId ? "Keamanan & Kebijakan Privasi (/privacy)" : "Security & Privacy Policy (/privacy)"}
+          </Link>
+          <span>•</span>
+          <Link href="/mock-portal" className="hover:text-blue-600">
+            Mock Portal
+          </Link>
+          <span>•</span>
+          <Link href="/simulator" className="hover:text-blue-600">
+            Simulator
+          </Link>
+        </div>
+        <p className="mt-2 text-slate-400">{t.footer.subline}</p>
       </footer>
     </div>
   );
