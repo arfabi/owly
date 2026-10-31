@@ -1,1 +1,0 @@
-di Simulator juga tertulis Lognya, baik log extensi dan log backendnya.
