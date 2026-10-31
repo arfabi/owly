@@ -397,7 +397,7 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
     a11y: {
       title: "Accessibility HUB: 14 Tools",
       welcomeTitle: "Welcome to Owly Accessibility HUB",
-      welcomeDesc: "Access tools designed to optimize your browsing experience based on your sensory and comfort preferences.",
+      welcomeDesc: "Built on the conviction of digital equality—empowering neurodivergent individuals with ADHD, seniors, and citizens with low vision with equal, barrier-free access.",
       quickProfilesTitle: "QUICK ACCESSIBILITY PROFILES",
       resetBtn: "Reset All",
       undoBtn: "Undo",
@@ -621,7 +621,7 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
     a11y: {
       title: "Accessibility HUB: 14 Tools",
       welcomeTitle: "Selamat Datang di Owly Accessibility HUB",
-      welcomeDesc: "Gunakan fitur-fitur untuk memudahkan Anda untuk mendapatkan pengalaman pengguna yang terbaik sesuai dengan kebutuhan.",
+      welcomeDesc: "Mewujudkan kesetaraan akses digital bagi setiap warga—membantu individu dengan ADHD, lansia, hingga penderita low vision untuk mendapatkan kemudahan akses yang sama tanpa hambatan.",
       quickProfilesTitle: "PROFIL CEPAT AKSESIBILITAS",
       resetBtn: "Reset Semua",
       undoBtn: "Urungkan",

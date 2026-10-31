@@ -25,6 +25,7 @@ import {
 } from "../lib/audit/clientAuditor";
 import { agentLog } from "../lib/agentLogger";
 import { sendTabMessage } from "../lib/tabMessenger";
+import { API_BASE_URL } from "../lib/api/client";
 
 interface AuditorTabProps {
   onNavigateTab?: (tab: "guide" | "vault" | "audit") => void;
@@ -75,7 +76,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
       // Step 3: Call AI Agentic Endpoint for scattered page instructions (Optional AI augmentation)
       let aiFindings: any[] = [];
       try {
-        const auditApiUrl = "http://localhost:3000/api/form/audit";
+        const auditApiUrl = `${API_BASE_URL}/api/form/audit`;
         const fetchRes = await fetch(auditApiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

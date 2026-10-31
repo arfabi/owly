@@ -172,7 +172,7 @@ Owly.AI memisahkan tanggung jawab alat secara tegas: **AI untuk penalaran probab
 | ⚙️ **Deterministik** | **FSM Regex Validator** | TypeScript FSM | Memeriksa NIK 16 digit Kemendagri, rumus wanita (Tgl+40), nomor HP `+62/08`, email RFC 5322, dan Paspor ICAO. |
 | ⚙️ **Deterministik** | **Biometric Photo Inspector** | C++ `sharp` In-Memory | Menguji Laplacian blur sharpness variance (>100.0) & rasio kepala 70-80% ICAO Doc 9303 tanpa transmisi piksel ke server. |
 | ⚙️ **Deterministik** | **Zero-Knowledge Vault** | WebCrypto AES-256-GCM | Enkripsi data identitas lokal pendaftar (PBKDF2 100k iterasi). |
-| ⚙️ **Deterministik** | **14 A11y DOM Tools** | Native CSS & JS DOM | Kontras WCAG AAA, font disleksia, garis fokus, TTS lokal ($0 token, 0ms). |
+| ⚙️ **Deterministik** | **14 A11y Accessibility Hub** | Native CSS & JS DOM | Kesetaraan akses bagi setiap warga (ADHD, lansia, low vision). Dapat diaktifkan manual via kartu atau dipanggil otonom oleh penalaran AI saat pendaftar lelah/pusing ($0 token, 0ms). |
 | ⚙️ **Deterministik** | **100% Lossless Undo Stack** | In-Memory Redux Stack | Mengembalikan seluruh form ke kondisi semula tanpa merusak ketikan manual. |
 
 ---
@@ -205,27 +205,6 @@ Owly.AI mengatur parameter `reasoning_effort` secara presisi sesuai matriks reko
 - **Native Vision (`image_url`):** Screenshot visual halaman aktif dikirim sebagai payload typed content `{"type": "image_url", ...}` (token `<|patch|>`), memungkinkan model memahami banner pengumuman visual, status warna, dan tata letak tabel yang tidak terbaca oleh parser DOM teks.
 - **Native Audio (`audio_url`):** Pengiriman data rekaman suara langsung via `{"type": "audio_url", ...}` (token `<|audio|>`) untuk transkripsi dan ekstraksi form instan.
 - **Zero-Pixel Privacy:** Kanvas lokal browser menyamarkan foto wajah fisik sebelum dikirim ke model penglihatan multimodal.
-
----
-
-## 📁 Pengujian Laboratorium Modular (`playground/`)
-
-Folder [`playground/`](file:///d:/webdev/laragon/www/savvy/playground) menyediakan rangkaian 12 skrip pengujian berbasis Node.js murni (*Zero external dependencies*) untuk memverifikasi setiap kapabilitas Baseten Muse Spark Open:
-
-| Skrip Pengujian | Fitur yang Diuji | Perintah Menjalankan |
-|---|---|---|
-| [`01-reasoning.js`](file:///d:/webdev/laragon/www/savvy/playground/01-reasoning.js) | Cross-field sanity check NIK vs Tgl Lahir | `npm run test:reasoning` |
-| [`02-decision.js`](file:///d:/webdev/laragon/www/savvy/playground/02-decision.js) | Structured JSON output & risk assessment | `npm run test:decision` |
-| [`03-chaining.js`](file:///d:/webdev/laragon/www/savvy/playground/03-chaining.js) | 3-step prompt chaining (Rubrik ➔ Esai) | `npm run test:chaining` |
-| [`04-last-response.js`](file:///d:/webdev/laragon/www/savvy/playground/04-last-response.js) | Multi-turn chat context & memory | `npm run test:last-response` |
-| [`05-web-search.js`](file:///d:/webdev/laragon/www/savvy/playground/05-web-search.js) | Official domain search grounding (.go.id) | `npm run test:web-search` |
-| [`06-file-search.js`](file:///d:/webdev/laragon/www/savvy/playground/06-file-search.js) | Document RAG 4-element Field Coach | `npm run test:file-search` |
-| [`07-audio-transcribe.js`](file:///d:/webdev/laragon/www/savvy/playground/07-audio-transcribe.js) | Speech-to-form verbal parameter binder | `npm run test:audio` |
-| [`08-reasoning-effort.js`](file:///d:/webdev/laragon/www/savvy/playground/08-reasoning-effort.js) | Kontrol `reasoning_effort` (low/med/high) | `npm run test:effort` |
-| [`09-native-tool-calling.js`](file:///d:/webdev/laragon/www/savvy/playground/09-native-tool-calling.js) | Native tool calling & parallel execution | `npm run test:tools` |
-| [`10-multimodal-vision.js`](file:///d:/webdev/laragon/www/savvy/playground/10-multimodal-vision.js) | Native `image_url` visual document reasoning | `npm run test:vision` |
-| [`11-multimodal-audio.js`](file:///d:/webdev/laragon/www/savvy/playground/11-multimodal-audio.js) | Native `audio_url` speech processing | `npm run test:multimodal-audio` |
-| [`12-streaming-reasoning.js`](file:///d:/webdev/laragon/www/savvy/playground/12-streaming-reasoning.js) | SSE streaming pemisahan reasoning vs content | `npm run test:stream` |
 
 ---
 
@@ -287,31 +266,64 @@ Diverifikasi melalui skrip pengujian [`web/scripts/e2e_verification.mjs`](file:/
 
 ---
 
-## 📦 Menjalankan Proyek Secara Lokal
+## 🚀 Panduan Instalasi Mandiri (Self-Hosted / Local Development)
 
-### 1. Prasyarat
-- Node.js versi 18 ke atas
-- Akun Baseten dengan API Key aktif
-- Proyek Supabase PostgreSQL
+Bagi Anda yang ingin menjalankan ekosistem **Owly.AI** secara mandiri (*self-hosted*) atau untuk pengembangan lokal (*local development*), ikuti langkah-langkah berikut:
 
-### 2. Menjalankan Web Application (Next.js 16)
+### Langkah 1: Kloning Repositori
+```bash
+git clone https://github.com/arfabi/owly.git
+cd owly
+```
+
+### Langkah 2: Konfigurasi Environment Backend (`web/.env.local`)
+Masuk ke direktori web dan siapkan file konfigurasi lingkungan:
 ```bash
 cd web
+cp .env.example .env.local
+```
+Buka file `.env.local` dan masukkan kunci API yang Anda miliki:
+```env
+# 1. Baseten Inference API Key (Model: meta-models/muse-spark-open-1026)
+BASETEN_API_KEY="your_baseten_api_key_here"
+
+# 2. Supabase PostgreSQL (Penyimpanan RAG Juknis & Sinkronisasi Ciphertext Vault)
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key_here"
+```
+
+### Langkah 3: Menjalankan Server Web & Backend API
+```bash
 npm install
-# Konfigurasikan variabel lingkungan di web/.env.local
 npm run dev
 ```
-Buka browser pada `http://localhost:3000`.
+Server Next.js akan berjalan di `http://localhost:3000`. Anda dapat mengakses Landing Page dan Simulator Form di peramban.
 
-### 3. Mengompilasi Chrome Extension MV3
+### Langkah 4: Mengarahkan Endpoint API di Ekstensi Browser
+Secara default, ekstensi browser mengarah ke server produksi cloud. Untuk menghubungkannya ke server lokal atau VPS self-hosted Anda:
+1. Buka file [`extension/src/lib/api/client.ts`](file:///d:/webdev/laragon/www/savvy/extension/src/lib/api/client.ts).
+2. Ubah konstanta `API_BASE_URL` pada baris ke-8 agar mengarah ke alamat server lokal Anda:
+```typescript
+// Ganti dari endpoint produksi ke URL server lokal atau domain self-hosted Anda:
+export const API_BASE_URL = "http://localhost:3000";
+```
+*(Catatan: Jika server Anda berjalan di VPS/domain publik sendiri, sesuaikan dengan URL server Anda, misal `https://api.domain-anda.com`)*.
+
+### Langkah 5: Mengompilasi & Memasang Ekstensi Chrome MV3
+Kompilasi kode sumber ekstensi:
 ```bash
-cd extension
+cd ../extension
 npm install
 npm run build
 ```
-1. Buka Google Chrome dan navigasikan ke `chrome://extensions/`.
-2. Aktifkan **Developer mode** di pojok kanan atas.
-3. Klik **Load unpacked** dan pilih folder `extension/dist/`.
+Proses ini akan menghasilkan folder distribusi `extension/dist/`.
+
+**Pemasangan di Browser Chromium (Chrome, Edge, Brave, Opera):**
+1. Buka peramban dan navigasikan ke `chrome://extensions/`.
+2. Aktifkan sakelar **Developer mode** di pojok kanan atas layar.
+3. Klik tombol **Load unpacked** (Muat yang belum dibongkar).
+4. Pilih folder `extension/dist/` dari proyek Anda.
+5. Klik ikon **Owly.AI** pada bilah ekstensi peramban untuk membuka Side Panel.
 
 ---
 

@@ -327,7 +327,7 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       badge: "Kenyamanan Sensorik & Kognitif",
       title: "Accessibility HUB: 14 Tools Deterministik",
       subtitle:
-        "Dapat diaktifkan secara manual lewat klik tile kartu atau dipicu oleh reasoning AI saat pengguna mengeluh pusing/lelah. Murni berjalan di browser lokal tanpa biaya token ($0).",
+        "Mewujudkan kesetaraan akses digital bagi setiap warga—termasuk individu dengan ADHD, lansia, hingga penderita low vision—karena setiap orang berhak atas kemudahan akses yang setara tanpa hambatan. Dapat diaktifkan secara manual lewat klik tile kartu atau dipanggil secara otonom oleh penalaran AI saat pengguna mengeluh pusing atau lelah. Murni berjalan di browser lokal tanpa biaya token ($0).",
       tools: [
         { title: "Reading Spotlight", status: "Focus Line" },
         { title: "Text to Speech (TTS)", status: "Web Speech" },
@@ -610,7 +610,7 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       badge: "Sensory & Cognitive Comfort",
       title: "Accessibility HUB: 14 Deterministic Tools",
       subtitle:
-        "Can be triggered manually by clicking cards or autonomously called by AI reasoning when citizens complain of fatigue. Runs 100% in client browser with $0 token cost.",
+        "Built on the core conviction that everyone deserves equal, barrier-free digital access—empowering neurodivergent individuals with ADHD, seniors, and citizens with low vision. Can be triggered manually by clicking cards or autonomously called by AI reasoning when citizens complain of fatigue. Runs 100% in the client browser with $0 token cost.",
       tools: [
         { title: "Reading Spotlight", status: "Focus Line" },
         { title: "Text to Speech (TTS)", status: "Web Speech" },

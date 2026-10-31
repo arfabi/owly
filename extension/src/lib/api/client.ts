@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Cloud API Client (Next.js Backend Bridge)
+// OWLY.AI — Cloud API Client (Next.js Backend Bridge)
 // Production endpoint: https://owly-ai.vercel.app/
 // ============================================================================
 
