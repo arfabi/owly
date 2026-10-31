@@ -1,7 +1,7 @@
 # Owly.AI — Your AI Browser Companion for Forms & Web
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/bot.svg" width="64" height="64" alt="Owly.AI Logo" />
+  <img src="web/public/owly.png" width="96" height="96" alt="Owly.AI Logo" />
 </p>
 
 <p align="center">
