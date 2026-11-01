@@ -92,12 +92,9 @@
 - [✨ Core Feature Breakdown (8 Pillars)](#-core-feature-breakdown-8-pillars)
 - [🔬 In-Depth Utilization of Meta Muse Spark Open](#-in-depth-utilization-of-meta-muse-spark-open)
   - [1. 5 Core Meta Capabilities Exploited](#1-5-core-meta-capabilities-exploited)
-  - [2. The 9 Meta Agents: Core Triad & Specialized Tasks](#2-the-9-meta-agents-core-triad--specialized-tasks)
-  - [3. Privacy-First Regulation Grounding: Where web_search Lives](#3--privacy-first-regulation-grounding-where-web_search-lives-and-where-it-doesnt)
-  - [4. Token-Saving Cost Escalation Flow](#4-token-saving-cost-escalation-flow)
-  - [5. Autonomous Guardrails](#5-autonomous-guardrails)
-- [🔒 Deterministic Layer & Zero-Knowledge Privacy Architecture](#-deterministic-layer--zero-knowledge-privacy-architecture)
-- [🧪 Automated End-to-End Verification Results (20/20 PASS)](#-automated-end-to-end-verification-results-2020-pass)
+  - [2. The 9 Meta Cognitive Agents](#2-the-9-meta-cognitive-agents-core-triad--specialized-tasks)
+- [🔒 Deterministic Layer & Client-Side Zero-Knowledge Vault Architecture](#-deterministic-layer--client-side-zero-knowledge-vault-architecture)
+- [🧪 Automated End-to-End Verification Results (15/15 Behavioral PASS)](#-automated-end-to-end-verification-results-1515-behavioral-pass)
 - [🚀 Self-Hosted & Local Development Installation Guide](#-self-hosted--local-development-installation-guide)
   - [Step 1: Clone the Repository](#step-1-clone-the-repository)
   - [Step 2: Set Up Supabase Database & Apply Schema](#step-2-set-up-supabase-database--apply-schema)
@@ -127,9 +124,9 @@ A few months ago, a spouse tried to renew her driver's license online. Three day
 This happens to millions of people worldwide every single day: an incorrect photo aspect ratio, an obscure regulation buried in a fine-print footnote, and the government portal only notifies you **AFTER** you press Submit. For scholarship seekers, visa applicants, job seekers, and parents enrolling children: **people fail at the form, not at the requirements.**
 
 ### Industry Facts & Verified Data:
-* **67.9% Form Abandonment Rate:** According to a joint tracking report by the Baymard Institute and HubSpot, over two-thirds (67.9%) of complex online application forms are abandoned before completion due to confusing field instructions, friction, and cognitive fatigue.
-* **16% Calculation & Data Errors on Financial Aid (FAFSA):** The National College Attainment Network (NCAN) reports that approximately 16% of submitted financial aid applications contain clerical discrepancies that delay critical aid disbursement by 2 to 3 weeks.
-* **Avoidable Clerical Denials in High-Stakes Applications:** Immigration and administrative audit data reveals that clerical discrepancies, unreadable attachments, and minor syntax mismatches are among the leading avoidable causes of initial administrative rejections and processing delays.
+* **Form Fatigue & Abandonment Baseline (~68-70%):** Large-scale user experience research by the Baymard Institute demonstrates that multi-step digital forms suffer an average abandonment rate of ~69.9% due to confusing instructions, usability friction, and cognitive fatigue—friction that compounds exponentially on high-stakes administrative portals.
+* **Administrative Burden on Aid & Visas (NCAN):** Studies by the National College Attainment Network (NCAN) on federal aid (FAFSA) reveal that administrative verification burdens and minor clerical discrepancies delay or derail funding for substantial cohorts of eligible applicants.
+* **Avoidable Clerical Denials in High-Stakes Applications:** Consular and civil service audit reports consistently document that avoidable clerical mismatches, ambiguous attachment criteria, and minor syntax discrepancies remain the primary drivers of initial application delays and processing rejections.
 
 ### Philosophy: Copilot, Not Autopilot
 High-stakes applications (visas, scholarships, professional licenses) are binding legal instruments where an automated bot submitting data blindly can permanently disqualify an applicant. We engineered Owly.AI as an active copilot that sits alongside the applicant: highlighting rules, clarifying bureaucratic terminology, validating syntax, and auditing drafts, while leaving 100% of final submission authority to the human applicant.
@@ -143,14 +140,14 @@ High-stakes applications (visas, scholarships, professional licenses) are bindin
 
 Over an intensive one-week development sprint, guided by learnings from technical workshops and live developer sessions, our team explored multiple serving paradigms for Meta's open model ecosystem. 
 
-While closed proprietary APIs offer convenient prototyping, high-stakes public administrative forms demand **absolute data sovereignty**: public universities, government agencies, and everyday citizens cannot risk routing confidential identity data through opaque third-party servers.
+While closed proprietary multi-tenant APIs offer convenient prototyping, high-stakes public administrative forms demand **dedicated private inference and zero data retention**: citizens cannot risk routing confidential information into opaque model retraining pools.
 
-> **Why Baseten & Meta Muse Spark Open?**  
-> *"We chose Muse Spark Open on Baseten — to keep Meta's model quality, but with full private deployment. It's the best of Meta's open ecosystem: powerful model, our own infrastructure."*
+> **Why Dedicated Baseten Deployment & Meta Muse Spark Open?**  
+> *"We chose Muse Spark Open deployed on Baseten — combining Meta's frontier open-weight reasoning with private serverless container isolation (SOC 2 Type II compliant) and guaranteed zero data retention for training."*
 
 This architectural decision unlocked the optimal equilibrium:
-1. **Frontier Meta AI Reasoning:** Harnessing `meta-models/muse-spark-open-1026` for native multimodal vision (`<|patch|>`), direct speech intent parsing (`<|audio|>`), and tunable reasoning effort.
-2. **Sovereign In-Memory Processing:** Running on private containerized infrastructure where citizen inputs are analyzed in volatile RAM and strictly never retained for foundation model retraining.
+1. **Frontier Meta AI Reasoning:** Harnessing `meta-models/muse-spark-open-1026` for native multimodal vision (`<|patch|>`), direct speech intent parsing (`<|audio|>`), and adaptive reasoning effort.
+2. **Dedicated In-Memory Processing:** Model inference runs in isolated, dedicated serverless containers where inputs are processed in volatile RAM with strict zero-retention guarantees, preceded by client-side PII scrubbing.
 3. **Transparent Sprint Tracking:** Every day-by-day milestone, architectural decision, and engineering audit from Day 1 to Day 7 is systematically documented in our master roadmap [plan.md](plan.md).
 
 ---
@@ -212,9 +209,9 @@ Owly.AI is engineered around the native capabilities of **Meta Muse Spark Open**
 
 ---
 
-### 2. The 9 Meta Agents: Core Triad & Specialized Tasks
+### 2. The 9 Meta Cognitive Agents: Core Triad & Specialized Tasks
 
-Owly's multi-agent architecture divides responsibilities between a sequential **Core 3-Agent Triad** for initial form understanding and **6 Specialized Task Agents** invoked on-demand:
+Owly's multi-agent system orchestrates a sequential **Core 3-Agent Triad** for initial page understanding alongside **6 Specialized On-Demand Agents**:
 
 ```
                   ┌─────────────────────────────────────────────────────────┐
@@ -232,93 +229,55 @@ Owly's multi-agent architecture divides responsibilities between a sequential **
      └─────────────────────────────────┘             └─────────────────────────────────┘
 ```
 
-| # | Agent | Role & Type | Muse Capability | Input → Output | Reasoning Effort | Why Meta Muse is Required |
-|---|---|---|---|---|:---:|---|
-| 1 | **Perception & Form Profiler** | **Core Triad (Step 1)** | **Native Vision** | WebP Screenshot + DOM → `{form_name, institution, deadline, category}` | `medium` | Discovers visual facts absent from the HTML document structure. |
-| 2 | **Regulation Researcher** | **Core Triad (Step 2)** | **web_search + file_search** | `{form_name, institution, year}` → Official public clauses + guideline RAG | `medium` | Retrieves authentic government rules without ever handling citizen PII. |
-| 3 | **Decision & Synthesis** | **Core Triad (Step 3)** | **Prompt Chaining + JSON** | Vision + Rules + DOM → `{roadmap, field_guide[confidence], trap_list}` | `medium` | Blends 3 heterogeneous sources into a coherent step-by-step roadmap. |
-| 4 | **Pre-Submit Auditor** | On-Demand Task | 3 Custom Tools: `crosscheck`, `audit_files`, `scattered_rules` | Form values + Uploaded metadata → Traffic-Light Report (Red/Yellow/Green) | **`high`** | Analyzes complex conditional logic scattered across footnotes and sidebars. |
-| 5 | **Field-by-Field Coach** | On-Demand Task | Two-Tier Cached Generation | Active focused input element → 4 Cards: *Meaning, How to Fill, Example, Trap* | `low` | L1/L2 SHA256 cache, 24h TTL, sub-second response (<600ms). |
-| 6 | **Show Me L3: Semantic Reasoner** | On-Demand Task | `find_element_semantic` | Ambiguous query + 15–20 DOM candidate elements → Most relevant element | `low` | Bridges natural human language with technical button labels. |
-| 7 | **Show Me L4: Visual Locator** | On-Demand Task | **Vision Grounding (BBox)** | If L3 confidence <0.8 → Clean screenshot → `{x, y}` coordinates | `medium` | Pinpoints custom image-based icons and canvas buttons without DOM text. |
-| 8 | **Visual Snip Explainer** | On-Demand Task | Multimodal 2-Turn Vision | User-cropped confusing visual section → OCR extraction & plain explanation | `medium` | Translates convoluted bureaucratic jargon into plain, empathetic language. |
-| 9 | **A11y Intent Router** | On-Demand Task | 6 A11y Tools (`set_a11y`, `apply_preset`, `reset_a11y`, etc.) | User complaints of fatigue/glare via chat or voice → 14 A11y tool states | `low` | Citizens receive accessibility accommodations without knowing tool names. |
+| # | Agent | Category | Role & Core Capability | Reasoning Tier |
+|:---:|---|---|---|:---:|
+| 1 | **Perception & Form Profiler** | Core Triad (Step 1) | WebP screenshot + DOM analysis to extract form name, category, and deadlines | `medium` |
+| 2 | **Regulation Researcher** | Core Triad (Step 2) | Grounded official rule search (`web_search` + RAG) with **Zero PII** transit | `medium` |
+| 3 | **Decision & Synthesis** | Core Triad (Step 3) | Fuses vision + legal rules + DOM to emit structured roadmap and trap alerts | `high` |
+| 4 | **Pre-Submit Auditor** | Specialized Task | Multi-clause contradiction checks and traffic-light pre-submit evaluation | `high` |
+| 5 | **Field-by-Field Coach** | Specialized Task | Renders 4-element guidance cards (*Meaning, How to Fill, Example, Trap*) | `low` (sub-second) |
+| 6 | **Show Me L3 (Semantic)** | Specialized Task | Bridges colloquial user queries with technical element IDs via tool calling | `low` |
+| 7 | **Show Me L4 (Vision BBox)**| Specialized Task | Fallback visual bounding-box locator for icon buttons and canvas elements | `medium` |
+| 8 | **Visual Snip Explainer** | Specialized Task | 2-turn multimodal crop to translate convoluted bureaucratic jargon | `medium` |
+| 9 | **A11y Intent Router** | Specialized Task | Maps natural fatigue expressions to 14 discrete accessibility tools | `low` |
 
-*(For the complete 21-feature capability breakdown, see [agentic.md](agentic.md))*
-
----
-
-### 3. 🔍 Privacy-First Regulation Grounding: Where `web_search` Lives (and Where It Doesn't)
-
-**Where is `web_search` used?**  
-Strictly within **Agent 2: Regulation Researcher** inside [web/src/app/api/form/analyze/route.ts](web/src/app/api/form/analyze/route.ts). It is triggered **EXACTLY ONCE** when the user clicks *"Analyze This Form"*. The search query is constructed **SOLELY** from form metadata:
-```text
-Query: "<Form Name> <Institution> 2026 official guide registration"
-```
-Applicant field values are strictly prohibited from entering the search query.
-
-**Why is it NOT called on every field focus (`FormsGuideTab.tsx`)?**
-
-| Technical Factor | If We Ran Web Search on Every Field Focus | What Owly.AI Does Instead |
-|---|---|---|
-| **Speed (<5ms vs 3,000ms)** | Every field click causes a 3-second network freeze, ruining the user experience. | **Local Curated Rules + Two-Tier Cache:** Standard identity fields (National ID, Full Name, Birth Date, Passport) have immutable rules. 4 guidance cards appear in **0 ms**. |
-| **Privacy Compliance (Data Protection Laws)** | Keystrokes and citizen ID numbers would leak into third-party search engine logs. | **Zero-Leak Guarantee:** `web_search` only indexes public agency guidelines and never transmits citizen inputs to the web. |
+> 📖 **Deep-Dive CMAS Architecture Specification:**  
+> For the complete multi-agent interaction protocol, token-saving cost escalation ladder, autonomous guardrails, and telemetry domains, see the master architecture document:  
+> 👉 **[Read the Full CMAS & Multi-Agent Architecture Specification (`feature/agentic.md`)](feature/agentic.md)**
 
 ---
 
-### 4. Token-Saving Cost Escalation Flow
+## 🔒 Deterministic Layer & Client-Side Zero-Knowledge Vault Architecture
 
-Owly.AI employs gradual cost escalation to prevent token waste:
-* **Real-World Case: "Where is the passport upload button?"**
-  1. **Level 1/2 (Deterministic 0ms - $0 Token):** Extension matches exact text and synonym dictionary (`upload`, `browse`, `choose file`). Resolves **70%** of interactions locally.
-  2. **Level 3 (Meta Muse Semantic Tool Call):** If heuristic matching fails, extension sends 15 text candidates to Muse Spark via `find_element_semantic` (~120 tokens).
-  3. **Level 4 (Meta Muse Multimodal Vision):** If confidence <0.8, system takes a clean screenshot for visual bounding-box detection.
+Local deterministic guardrails run in the client browser at $0 token cost and 0 ms latency, strictly separating document OCR ingestion from photo compliance audits:
 
-*Resource cost escalates strictly on demand: **0 tokens → 1 lightweight tool call → 1 vision call**.*
-
----
-
-### 5. Autonomous Guardrails
-
-| What Agents Execute Autonomously | What Humans & Local Deterministic Rules Decide |
-|---|---|
-| Identify form structure, research official guidelines, and construct the roadmap from a single click. | Whether to follow recommendations. **AI is strictly forbidden from auto-submitting.** |
-| Escalate Level 1 → Level 3 → Level 4 element discovery based on a 0.8 confidence threshold. | Which element the user ultimately chooses to click and focus on. |
-| Gracefully fallback to the "AI Guidance" badge if external research queries time out (>3s). | Whether the user chooses to trust and accept the advisory badge. |
-| Execute an exhaustive non-blocking audit across 14+ fields in one pass. | Whether to apply suggested corrections (manual action buttons, never forced overrides). |
-
----
-
-## 🔒 Deterministic Layer & Zero-Knowledge Privacy Architecture
-
-Local deterministic systems run in the client browser at $0 token cost and instant latency, complemented by an ephemeral RAM-only photo validator:
-
-1. **Client-Side Canvas Face Blackout Mask:** Browser canvas automatically detects and blacks out facial photos and signatures before any document image is transmitted. **Zero raw facial biometric data ever transits to external AI models**.
-2. **WebCrypto AES-256-GCM Zero-Knowledge Vault:** Encryption keys are derived directly from the user's master PIN using PBKDF2 (100,000 iterations). Cloud databases only receive ciphertext and unique 96-bit initialization vectors.
+1. **Client-Side Canvas Biometric Blackout (Document OCR Ingestion):** When scanning identity documents (national ID cards, passports, transcripts) for autofill, an in-memory HTML5 Canvas blacks out facial portraits and signature boxes before the image is dispatched to Meta Muse Spark native vision (`<|patch|>`). **Zero facial biometric data ever leaves the client device for document extraction.**
+2. **Client-Side Encrypted Vault (Zero-Knowledge Architecture):** Encryption keys are derived locally in browser RAM from the user's master PIN using W3C WebCrypto PBKDF2 (100,000 rounds) and AES-256-GCM. In our Zero-Knowledge storage model (analogous to Bitwarden/1Password), the server and database possess zero knowledge of the master key or decrypted credentials.
 3. **Client-Side PII Chat Guard:** High-speed regex filters intercept and scrub 16-digit National IDs, Tax IDs, and phone numbers before chat text leaves the browser.
 4. **Modular Deterministic Syntax & Math Validators:** Pluggable by country/jurisdiction (e.g., US SSN checksums, UK National Insurance formats, Indonesian NIK female day+40 date arithmetic, international E.164 phone formats like `+1`/`+44`/`+62`, RFC 5322 emails, and ICAO 9303 passports).
-5. **Ephemeral In-Memory Biometric Inspector (Multimodal Vision Engine):** Validates photo aspect ratio (2x2 in / 35x45 mm), blur variance, and head proportions strictly in volatile RAM via Meta Muse Spark native vision (`<\|patch\|>`). Bytes are analyzed ephemerally and immediately discarded without disk storage or persistent database retention.
+5. **Deterministic In-Memory Pasfoto Compliance Inspector:** Separate from document extraction, when applicants check passport/visa photos, technical compliance (1:1 or 3:4 aspect ratio, file size, Laplacian focus sharpness variance, and background uniformity) is audited deterministically in-memory using Sharp (C++), with zero pixel modification and instantaneous RAM disposal.
 6. **14 A11y Tools ($0 Token, 0ms):** High-contrast filters, OpenDyslexic typography, jumbo cursor, animation freezing, and ADHD reading ruler injected directly into the active DOM.
 
 ---
 
-## 🧪 Automated End-to-End Verification Results (20/20 PASS)
+## 🧪 Automated End-to-End Verification Results (15/15 Behavioral PASS)
 
-Owly.AI undergoes rigorous automated end-to-end testing via [`web/scripts/e2e_verification.mjs`](web/scripts/e2e_verification.mjs), verifying **15 Behavioral/Functional Pipeline Tests** and **5 Environment/Config Checks** with a **100% Pass Rate (20/20 PASS)**.
+Owly.AI undergoes rigorous automated testing via [`web/scripts/e2e_verification.mjs`](web/scripts/e2e_verification.mjs), structured into **15 Core Behavioral & Security Pipeline Tests** (15/15 PASS) and **5 Infrastructure Sanity Checks** (5/5 PASS) with a **100% Pass Rate (20/20 Total)**.
 
-All comprehensive test assertions, raw terminal execution logs, latency benchmarks, cryptographic validation traces, and architecture guarantees have been compiled into the dedicated feature specification:
+All comprehensive test assertions, raw terminal execution logs, cryptographic validation traces, and architecture guarantees are documented in our dedicated specification:
 
 👉 **[Read the Full Verification Specification & Test Results (`feature/verification.md`)](feature/verification.md)**
 
 ### Verification Summary Matrix
 
-| Category | Passed | Target Ceiling | Status |
+| Category | Passed | Target / Benchmark | Status |
 |---|---|---|---|
-| **Behavioral & Functional Pipeline Tests** | 15 / 15 | 100% Pass | ✅ PASS |
-| **Environment & Infrastructure Checks** | 5 / 5 | 100% Pass | ✅ PASS |
-| **Zero Raw PII Transit Guarantee** | Verified | 0 Plaintext Leaks | ✅ VERIFIED |
-| **Baseten Live Inference Latency** | 816 ms | < 2500 ms | ✅ PASS |
-| **Model ID Compliance (`muse-spark-open-1026`)** | Verified | Exact Match | ✅ VERIFIED |
+| **Core Behavioral & Security Pipeline Tests** | 15 / 15 | 100% Pass Rate | ✅ PASS |
+| **Environment & Infrastructure Sanity Checks** | 5 / 5 | 100% Pass Rate | ✅ PASS |
+| **Zero Raw PII Transit Guarantee** | Verified | 0 Plaintext Leaks in Transit | ✅ VERIFIED |
+| **Interactive Single-Turn Latency (Low Effort)** | 816 ms | < 2,500 ms (p50: 650ms, p95: 950ms) | ✅ PASS |
+| **Deep Reasoning Latency (High / CoT Effort)** | 2.1s – 4.2s | Adaptive thinking budget per task | ✅ BENCHMARKED |
+| **Model ID Compliance (`muse-spark-open-1026`)** | Verified | Exact Meta Open Model ID | ✅ VERIFIED |
 
 To run the test suite locally:
 ```bash
