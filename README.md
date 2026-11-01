@@ -7,7 +7,7 @@
 <p align="center">
   <strong>Owly.AI — Your AI Browser Companion for Forms & Web</strong><br>
   Understand any page, fill forms with guidance, and catch mistakes before you submit.<br>
-  em>Built with Meta Muse Spark Open deployed on Baseten as private inference</em>
+  <em>Built with Meta Muse Spark Open deployed on Baseten as private inference</em>
 </p>
 
 <p align="center">
