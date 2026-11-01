@@ -151,9 +151,9 @@ Format output HARUS berupa JSON valid tanpa markdown, dengan struktur persis ber
           { role: 'system', content: 'You are a precise JSON generator for form guidance. Always output strictly valid JSON.' },
           { role: 'user', content: prompt }
         ],
-        reasoning_effort: 'medium',
+        reasoning_effort: 'low',
         temperature: 0.2,
-        max_tokens: 600
+        max_tokens: 1000
       })
     });
 
@@ -166,20 +166,33 @@ Format output HARUS berupa JSON valid tanpa markdown, dengan struktur persis ber
     const completion = await basetenRes.json();
     let rawContent = completion.choices?.[0]?.message?.content || '{}';
 
-    // Bersihkan pembungkus markdown ```json ... ``` jika ada
-    rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
+    function extractCleanJson(raw: string): any {
+      if (!raw) return null;
+      const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      try {
+        return JSON.parse(cleaned);
+      } catch {
+        const firstBrace = cleaned.indexOf('{');
+        const lastBrace = cleaned.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          try {
+            return JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
+          } catch {
+            return null;
+          }
+        }
+        return null;
+      }
+    }
 
-    let parsedGuidance: any = {};
-    try {
-      parsedGuidance = JSON.parse(rawContent);
-    } catch (parseErr) {
-      console.warn('Failed to parse JSON directly, extracting via regex:', rawContent);
+    let parsedGuidance = extractCleanJson(rawContent);
+    if (!parsedGuidance || !parsedGuidance.meaning) {
       parsedGuidance = {
-        meaning: `Kolom untuk memasukkan ${fieldName || fieldKey}.`,
-        how_to_fill: 'Isi sesuai dengan dokumen resmi kependudukan atau akademik yang masih berlaku.',
-        example: 'Sesuai format dokumen resmi',
-        pitfalls: 'Pastikan tidak ada salah ketik angka atau karakter yang berbeda dengan dokumen asli.',
-        confirmation_ref: officialCitation || 'Pedoman Pendaftaran Resmi',
+        meaning: isEn ? `Input field for ${fieldName || fieldKey}.` : `Kolom untuk memasukkan ${fieldName || fieldKey}.`,
+        how_to_fill: isEn ? 'Enter matching valid official identity or academic credentials.' : 'Isi sesuai dengan dokumen resmi kependudukan atau akademik yang masih berlaku.',
+        example: isEn ? 'Matching official document format' : 'Sesuai format dokumen resmi',
+        pitfalls: isEn ? 'Ensure there are no typos or discrepancies with original records.' : 'Pastikan tidak ada salah ketik angka atau karakter yang berbeda dengan dokumen asli.',
+        confirmation_ref: officialCitation || (isEn ? 'Official Registration Guidelines' : 'Pedoman Pendaftaran Resmi'),
         source_type: officialCitation ? 'official' : 'ai_guidance'
       };
     }
@@ -189,7 +202,7 @@ Format output HARUS berupa JSON valid tanpa markdown, dengan struktur persis ber
       how_to_fill: parsedGuidance.how_to_fill || '',
       example: parsedGuidance.example || '',
       pitfalls: parsedGuidance.pitfalls || '',
-      confirmation_ref: parsedGuidance.confirmation_ref || officialCitation || 'Panduan Resmi',
+      confirmation_ref: parsedGuidance.confirmation_ref || officialCitation || (isEn ? 'Official Guidelines' : 'Panduan Resmi'),
       source_type: parsedGuidance.source_type || (officialCitation ? 'official' : 'ai_guidance')
     };
 

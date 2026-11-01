@@ -23,6 +23,8 @@ import {
   BookOpen,
   ArrowLeft,
   Accessibility,
+  Clock,
+  RotateCcw,
 } from "lucide-react";
 import { inspectAndRedactPII } from "../lib/privacy/censor";
 import { auditFormData } from "../lib/audit/rules";
@@ -103,6 +105,117 @@ async function cropScreenshot(
   });
 }
 
+interface SectionSummary {
+  name: string;
+  fieldCount: number;
+  uploadCount: number;
+}
+
+function groupFieldsIntoSections(fields: any[], isId: boolean): SectionSummary[] {
+  if (!fields || fields.length === 0) {
+    return [
+      { name: isId ? "Identitas Pribadi & Kependudukan" : "Personal Identity & Civil Records", fieldCount: 3, uploadCount: 0 },
+      { name: isId ? "Latar Belakang Akademik & Program" : "Academic & Program Information", fieldCount: 4, uploadCount: 0 },
+      { name: isId ? "Dokumen & Verifikasi Berkas" : "Documents & Verification", fieldCount: 3, uploadCount: 1 },
+    ];
+  }
+
+  const map = new Map<string, { fieldCount: number; uploadCount: number }>();
+
+  fields.forEach((f) => {
+    let secName = (f.section || "").trim();
+    if (!secName) {
+      const str = `${f.id || ""} ${f.name || ""} ${f.label || ""}`.toLowerCase();
+      const type = (f.type || f.inputType || "").toLowerCase();
+      if (type === "file" || str.includes("foto") || str.includes("upload") || str.includes("berkas") || str.includes("ijazah") || str.includes("dokumen")) {
+        secName = isId ? "Dokumen & Berkas Lampiran" : "Documents & Attachments";
+      } else if (str.includes("ipk") || str.includes("gpa") || str.includes("pendidikan") || str.includes("jurusan") || str.includes("study") || str.includes("universitas")) {
+        secName = isId ? "Informasi Akademik & Pendidikan" : "Academic & Education Details";
+      } else if (str.includes("telepon") || str.includes("phone") || str.includes("email") || str.includes("alamat") || str.includes("domisili") || str.includes("kota")) {
+        secName = isId ? "Informasi Kontak & Domisili" : "Contact & Address Information";
+      } else if (str.includes("esai") || str.includes("essay") || str.includes("motivation") || str.includes("statement")) {
+        secName = isId ? "Esai & Pernyataan Tujuan" : "Essay & Statement of Purpose";
+      } else {
+        secName = isId ? "Identitas Diri & Profil Utama" : "Personal Profile & Details";
+      }
+    }
+
+    if (!map.has(secName)) {
+      map.set(secName, { fieldCount: 0, uploadCount: 0 });
+    }
+    const current = map.get(secName)!;
+    const isUpload = (f.type || f.inputType || "").toLowerCase() === "file";
+    if (isUpload) {
+      current.uploadCount++;
+    } else {
+      current.fieldCount++;
+    }
+  });
+
+  const sections: SectionSummary[] = [];
+  map.forEach((val, key) => {
+    sections.push({
+      name: key,
+      fieldCount: val.fieldCount,
+      uploadCount: val.uploadCount,
+    });
+  });
+
+  return sections;
+}
+
+function formatEstimatedTime(rawTime: string | undefined, isId: boolean): string {
+  if (!rawTime) return isId ? "15-20 Menit" : "15-20 Mins";
+  if (isId) {
+    return rawTime.replace(/mins?/gi, "Menit").replace(/minutes?/gi, "Menit");
+  } else {
+    return rawTime.replace(/menit/gi, "Mins");
+  }
+}
+
+function formatFormDescription(rawDesc: string | undefined, isId: boolean): string {
+  if (!rawDesc) {
+    return isId
+      ? "Formulir pendaftaran beasiswa magister dan doktoral resmi Kementerian Keuangan RI."
+      : "Official application form for master and doctoral scholarship selection.";
+  }
+  if (!isId) {
+    if (rawDesc.includes("Penerbitan Bukti Registrasi") || rawDesc.includes("Submit Formulir")) {
+      return "Official Registration Receipt / Form Submission";
+    }
+    if (rawDesc.includes("Formulir pendaftaran beasiswa magister")) {
+      return "Official application form for master and doctoral scholarship selection.";
+    }
+    if (rawDesc.includes("Pendaftaran Beasiswa LPDP")) {
+      return "LPDP Scholarship Application 2026";
+    }
+  } else {
+    if (rawDesc.includes("Official Registration Receipt") || rawDesc.includes("Form Submission")) {
+      return "Penerbitan Bukti Registrasi / Submit Formulir";
+    }
+    if (rawDesc.includes("Official application form for master")) {
+      return "Formulir pendaftaran beasiswa magister dan doktoral resmi Kementerian Keuangan RI.";
+    }
+  }
+  return rawDesc;
+}
+
+function formatFormTitle(rawTitle: string | undefined, isId: boolean): string {
+  if (!rawTitle) {
+    return isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026";
+  }
+  if (!isId) {
+    if (rawTitle === "Pendaftaran Beasiswa LPDP 2026" || rawTitle === "Formulir Publik") {
+      return rawTitle === "Formulir Publik" ? "Public Application Form" : "LPDP Scholarship Application 2026";
+    }
+  } else {
+    if (rawTitle === "LPDP Scholarship Application 2026" || rawTitle === "Public Application Form") {
+      return rawTitle === "Public Application Form" ? "Formulir Publik" : "Pendaftaran Beasiswa LPDP 2026";
+    }
+  }
+  return rawTitle;
+}
+
 interface AiAssistantTabProps {
   isVaultUnlocked: boolean;
   isFormAnalyzed: boolean;
@@ -136,11 +249,14 @@ export function AiAssistantTab({
   const [scanStep, setScanStep] = useState<number>(0);
   const [scannedSummary, setScannedSummary] = useState<{
     title: string;
+    description?: string;
     institution: string;
     targetOutcome: string;
     officialRef: string;
     officialUrl?: string;
     fieldCount: number;
+    estimatedTime?: string;
+    sections?: SectionSummary[];
   } | null>(null);
 
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -155,13 +271,19 @@ export function AiAssistantTab({
       chrome.storage.local.get(["savvy_form_analysis", "savvy_page_fields"], (res) => {
         if (res?.savvy_form_analysis) {
           const a: any = res.savvy_form_analysis;
+          const fields: any[] = Array.isArray(res.savvy_page_fields) ? res.savvy_page_fields : [];
+          const sections = groupFieldsIntoSections(fields, isId);
+
           setScannedSummary({
-            title: a.formTitle || (isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026"),
+            title: formatFormTitle(a.formTitle, isId),
+            description: formatFormDescription(a.targetOutcome || a.description, isId),
             institution: a.institution || "Kementerian Keuangan RI",
-            targetOutcome: a.targetOutcome || (isId ? "Pendaftaran Beasiswa LPDP Tahap 1 2026" : "LPDP Scholarship Stage 1 Registration"),
+            targetOutcome: formatFormDescription(a.targetOutcome, isId),
             officialRef: a.officialSource?.title || a.officialSource?.badge || a.officialSource?.name || "Juknis LPDP 2026",
             officialUrl: a.officialSource?.url,
-            fieldCount: (Array.isArray(res.savvy_page_fields) && res.savvy_page_fields.length) || 14,
+            fieldCount: fields.length || 11,
+            estimatedTime: formatEstimatedTime(a.estimatedTime, isId),
+            sections,
           });
         }
       });
@@ -928,13 +1050,18 @@ export function AiAssistantTab({
       const analysis = cmasRes?.analysis || {};
       const count = domFields.length > 0 ? domFields.length : 14;
 
+      const sections = groupFieldsIntoSections(domFields, isId);
+
       setScannedSummary({
-        title: analysis.formTitle || (isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026"),
+        title: formatFormTitle(analysis.formTitle, isId),
+        description: formatFormDescription(analysis.targetOutcome || (analysis as any).description, isId),
         institution: analysis.institution || "Kementerian Keuangan RI",
-        targetOutcome: analysis.targetOutcome || (isId ? "Pendaftaran Beasiswa LPDP Tahap 1 2026" : "LPDP Scholarship Stage 1 Registration"),
+        targetOutcome: formatFormDescription(analysis.targetOutcome, isId),
         officialRef: (analysis.officialSource as any)?.title || (analysis.officialSource as any)?.badge || (analysis.officialSource as any)?.name || "Juknis LPDP 2026",
         officialUrl: analysis.officialSource?.url,
-        fieldCount: count,
+        fieldCount: count || domFields.length || 11,
+        estimatedTime: formatEstimatedTime(analysis.estimatedTime, isId),
+        sections,
       });
 
       // Cache analysis in local storage for Forms Guide & Field Coach
@@ -1349,22 +1476,69 @@ export function AiAssistantTab({
                 </>
               ) : (
                 /* Post-Analysis Summary & Actions */
-                <div className="space-y-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-[9px] font-black uppercase tracking-wider text-savvy-blue bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60">
-                        {t.assistant.analyzedReadyBadge}
-                      </span>
-                      <h5 className="font-extrabold text-xs text-slate-900 mt-1 leading-tight">
-                        {scannedSummary?.title || (isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026")}
-                      </h5>
-                      <div className="text-[10px] text-emerald-700 font-bold mt-0.5">
-                        {scannedSummary?.fieldCount || 14} {t.assistant.fieldsCountSuffix}
-                      </div>
-                    </div>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-400/50 shrink-0 mt-1" />
+                <div className="space-y-3.5">
+                  {/* Header Badge & Estimated Time */}
+                  <div className="flex items-center justify-between gap-2 border-b border-blue-100/70 pb-2.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-savvy-blue bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200/80 flex items-center gap-1.5 shadow-2xs">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>{t.assistant.analyzedReadyBadge}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100/90 px-2.5 py-0.5 rounded-full border border-slate-200/60">
+                      <Clock className="w-3 h-3 text-amber-500" />
+                      <span>{formatEstimatedTime(scannedSummary?.estimatedTime, isId)}</span>
+                    </span>
                   </div>
 
+                  {/* Form Title & Description */}
+                  <div>
+                    <h4 className="font-extrabold text-sm text-slate-900 leading-snug">
+                      {formatFormTitle(scannedSummary?.title, isId)}
+                    </h4>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                      {formatFormDescription(scannedSummary?.description || scannedSummary?.targetOutcome, isId)}
+                    </p>
+                  </div>
+
+                  {/* Sections Breakdown to Complete */}
+                  <div className="bg-slate-50/90 rounded-xl p-3 border border-slate-200/80 space-y-2">
+                    <div className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                      <span>{t.assistant.sectionsToFillTitle}</span>
+                      <span className="text-emerald-700 font-black">
+                        {scannedSummary?.fieldCount || 11} {isId ? "total kolom" : "total fields"}
+                      </span>
+                    </div>
+                    <ul className="space-y-1.5 text-[11px] text-slate-700 font-medium">
+                      {scannedSummary?.sections && scannedSummary.sections.length > 0 ? (
+                        scannedSummary.sections.map((sec, idx) => (
+                          <li key={idx} className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-1.5 truncate">
+                              <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 font-black text-[9px] flex items-center justify-center shrink-0">
+                                {idx + 1}
+                              </span>
+                              <span className="truncate" title={sec.name}>{sec.name}</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-slate-500 shrink-0 bg-white px-2 py-0.5 rounded-md border border-slate-200/60">
+                              {sec.fieldCount > 0 && `${sec.fieldCount} ${isId ? "kolom" : "fields"}`}
+                              {sec.fieldCount > 0 && sec.uploadCount > 0 && ", "}
+                              {sec.uploadCount > 0 && `${sec.uploadCount} ${isId ? "unggah" : "upload"}`}
+                            </span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-1.5 truncate">
+                            <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-700 font-black text-[9px] flex items-center justify-center shrink-0">1</span>
+                            <span className="truncate">{isId ? "Kolom Formulir" : "Form Fields"}</span>
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-500 shrink-0 bg-white px-2 py-0.5 rounded-md border border-slate-200/60">
+                            {scannedSummary?.fieldCount || 10} {isId ? "kolom" : "fields"}
+                          </span>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+
+                  {/* Main Action Buttons */}
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <button
                       onClick={() => {
@@ -1372,7 +1546,7 @@ export function AiAssistantTab({
                         sendTabMessage({ type: "NAVIGATE_TO_FIELD", fieldIndex: 0 });
                         setIsGuideMode(true);
                       }}
-                      className="py-2 px-2.5 rounded-xl bg-savvy-gradient text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-95 transition-all cursor-pointer truncate"
+                      className="py-2.5 px-3 rounded-xl bg-savvy-gradient text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-sm shadow-savvy-blue/20 hover:opacity-95 transition-all cursor-pointer truncate"
                     >
                       <BookOpen className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">{t.assistant.btnGuideStep}</span>
@@ -1383,103 +1557,132 @@ export function AiAssistantTab({
                         agentLog.planner("Navigating to: Fill with 1 Click-Autofill");
                         onNavigateTab("vault");
                       }}
-                      className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-2xs hover:opacity-95 transition-all cursor-pointer truncate"
+                      className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-sm shadow-purple-500/20 hover:opacity-95 transition-all cursor-pointer truncate"
                     >
                       <Zap className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">{t.assistant.btnAutofillQuick}</span>
                     </button>
                   </div>
+
+                  {/* Cancel / Reset Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      agentLog.action("User clicked: Cancel & Return to Overview.");
+                      setScannedSummary(null);
+                      setIsGuideMode(false);
+                      setIsAnalyzing(false);
+                      setScanStep(0);
+                      if (onResetFormAnalysis) {
+                        onResetFormAnalysis();
+                      }
+                      if (typeof chrome !== "undefined" && chrome.storage?.local) {
+                        chrome.storage.local.remove(["savvy_form_analysis", "savvy_page_fields"]).catch(() => {});
+                      }
+                      sendTabMessage({ type: "HIDE_FIELD_NUMBERS" });
+                      sendTabMessage({ type: "STOP_SCAN_ANIMATION" });
+                    }}
+                    className="w-full py-2 px-3 rounded-xl border border-slate-200/80 hover:border-slate-300 hover:bg-slate-100/70 text-slate-500 hover:text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3 text-slate-400" />
+                    <span>{t.assistant.btnCancelAnalysis}</span>
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* 3. Dua Tombol Fitur Utama: Explain This & Show Me */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={triggerExplainThis}
-                className="p-2.5 rounded-xl border border-slate-200 hover:border-savvy-purple/50 hover:bg-purple-50/40 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
-              >
-                <div className="w-7 h-7 rounded-lg bg-purple-50 text-savvy-purple flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Crop className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                    {t.assistant.explainThisTitle}
-                  </div>
-                  <div className="text-[9px] text-slate-400 font-medium truncate">
-                    {t.assistant.explainThisSub}
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={triggerShowMe}
-                className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
-              >
-                <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Eye className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[11px] font-extrabold text-slate-900 truncate">
-                    {t.assistant.showMeTitle}
-                  </div>
-                  <div className="text-[9px] text-slate-400 font-medium truncate">
-                    {t.assistant.showMeSub}
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            {/* 4. Bagian Alat Bantu (Accessibility Chips) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                {t.assistant.a11ySectionTitle}
-              </span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  {
-                    label: t.assistant.chipTextTooSmall,
-                    query: isId ? "tulisannya kekecilan tolong perbesar" : "text is too small please make it larger",
-                    title: isId ? "Perbesar ukuran teks halaman" : "Enlarge page text size",
-                  },
-                  {
-                    label: t.assistant.chipGlareScreen,
-                    query: isId ? "layarnya silau tolong mode gelap" : "screen glare please high contrast dark mode",
-                    title: isId ? "Aktifkan kontras tinggi / gelap" : "Enable high contrast mode",
-                  },
-                  {
-                    label: t.assistant.chipReadAloud,
-                    query: isId ? "tolong bacakan halaman ini" : "please read this page aloud",
-                    title: isId ? "Bacakan teks halaman via TTS" : "Read page text via TTS",
-                  },
-                  {
-                    label: t.assistant.chipHardToFocus,
-                    query: isId ? "susah fokus membaca tolong spotlight" : "hard to focus please turn on reading spotlight",
-                    title: isId ? "Aktifkan reading spotlight & jeda animasi" : "Enable reading spotlight & pause animation",
-                  },
-                ].map((chip) => (
+            {/* Onboarding Starter Tools (Explain This, Show Me, Accessibility) - Hidden when Form is Analyzed */}
+            {!isFormAnalyzed && (
+              <>
+                {/* 3. Dua Tombol Fitur Utama: Explain This & Show Me */}
+                <div className="grid grid-cols-2 gap-2">
                   <button
-                    key={chip.label}
-                    type="button"
-                    onClick={() => handleSendMessage(chip.query)}
-                    title={chip.title}
-                    className="text-[10.5px] font-medium whitespace-nowrap bg-slate-50 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition-all cursor-pointer select-none shadow-2xs"
+                    onClick={triggerExplainThis}
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-savvy-purple/50 hover:bg-purple-50/40 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
                   >
-                    {chip.label}
+                    <div className="w-7 h-7 rounded-lg bg-purple-50 text-savvy-purple flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Crop className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-extrabold text-slate-900 truncate">
+                        {t.assistant.explainThisTitle}
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-medium truncate">
+                        {t.assistant.explainThisSub}
+                      </div>
+                    </div>
                   </button>
-                ))}
 
-                {/* Accessibility Lainnya Button */}
-                <button
-                  type="button"
-                  onClick={onOpenAccessibilityHub}
-                  className="text-[10.5px] font-bold whitespace-nowrap bg-blue-50/80 hover:bg-blue-100 text-blue-700 hover:text-blue-800 px-2.5 py-1 rounded-full border border-blue-200 transition-all cursor-pointer select-none shadow-2xs flex items-center gap-1"
-                >
-                  <Accessibility className="w-3 h-3 text-blue-600" />
-                  <span>{t.assistant.btnMoreA11y}</span>
-                </button>
-              </div>
-            </div>
+                  <button
+                    onClick={triggerShowMe}
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all flex items-center gap-2 group bg-white shadow-2xs text-left cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                      <Eye className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-extrabold text-slate-900 truncate">
+                        {t.assistant.showMeTitle}
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-medium truncate">
+                        {t.assistant.showMeSub}
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {/* 4. Bagian Alat Bantu (Accessibility Chips) */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                    {t.assistant.a11ySectionTitle}
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[
+                      {
+                        label: t.assistant.chipTextTooSmall,
+                        query: isId ? "tulisannya kekecilan tolong perbesar" : "text is too small please make it larger",
+                        title: isId ? "Perbesar ukuran teks halaman" : "Enlarge page text size",
+                      },
+                      {
+                        label: t.assistant.chipGlareScreen,
+                        query: isId ? "layarnya silau tolong mode gelap" : "screen glare please high contrast dark mode",
+                        title: isId ? "Aktifkan kontras tinggi / gelap" : "Enable high contrast mode",
+                      },
+                      {
+                        label: t.assistant.chipReadAloud,
+                        query: isId ? "tolong bacakan halaman ini" : "please read this page aloud",
+                        title: isId ? "Bacakan teks halaman via TTS" : "Read page text via TTS",
+                      },
+                      {
+                        label: t.assistant.chipHardToFocus,
+                        query: isId ? "susah fokus membaca tolong spotlight" : "hard to focus please turn on reading spotlight",
+                        title: isId ? "Aktifkan reading spotlight & jeda animasi" : "Enable reading spotlight & pause animation",
+                      },
+                    ].map((chip) => (
+                      <button
+                        key={chip.label}
+                        type="button"
+                        onClick={() => handleSendMessage(chip.query)}
+                        title={chip.title}
+                        className="text-[10.5px] font-medium whitespace-nowrap bg-slate-50 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition-all cursor-pointer select-none shadow-2xs"
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+
+                    {/* Accessibility Lainnya Button */}
+                    <button
+                      type="button"
+                      onClick={onOpenAccessibilityHub}
+                      className="text-[10.5px] font-bold whitespace-nowrap bg-blue-50/80 hover:bg-blue-100 text-blue-700 hover:text-blue-800 px-2.5 py-1 rounded-full border border-blue-200 transition-all cursor-pointer select-none shadow-2xs flex items-center gap-1"
+                    >
+                      <Accessibility className="w-3 h-3 text-blue-600" />
+                      <span>{t.assistant.btnMoreA11y}</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

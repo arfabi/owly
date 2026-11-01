@@ -151,13 +151,15 @@ export async function POST(req: NextRequest) {
       message: 'Agent 1 (Perception): Analyzing visual screenshot & DOM structure via Meta Muse Spark Open...'
     });
 
+    const isEn = language === 'en';
     const a1SystemPrompt = `Reasoning strength: 32
 You are Agent 1: Perception and Form Profiler for Savvy.AI. You are Meta Muse Spark Open with vision.
 RULES:
-1. Identify formName ONLY from visible text in screenshot or meta.title. If not visible, return Unknown Form.
+1. Identify formName ONLY from visible text in screenshot or meta.title. If not visible, return ${isEn ? '"Public Application Form"' : '"Formulir Publik"'}.
 2. DO NOT hallucinate institution. If logo not visible, institution = domain.
 3. NEVER include user .value in output.
-4. Output MUST be valid JSON schema: {
+4. Output language MUST be ${isEn ? 'English' : 'Bahasa Indonesia'}. Translate all text fields (targetOutcome, category, prerequisites, difficultyLevel, estimatedTime) to ${isEn ? 'English' : 'Bahasa Indonesia'}.
+5. Output MUST be valid JSON schema: {
   "formName": "string",
   "institution": "string",
   "targetOutcome": "string",
@@ -184,18 +186,18 @@ RULES:
       text: `Analyze this active page and form:
 Page Metadata: ${JSON.stringify(sanitizedMeta)}
 DOM Fields Sample: ${JSON.stringify(sanitizedFields.slice(0, 15))}
-Language: ${language === 'en' ? 'English' : 'Bahasa Indonesia'}
-Return ONLY the raw JSON output matching the schema.`
+Language: ${isEn ? 'English' : 'Bahasa Indonesia'}
+Return ONLY the raw JSON output matching the schema in ${isEn ? 'English' : 'Bahasa Indonesia'}.`
     });
 
     let agent1Result = {
-      formName: sanitizedMeta.title || 'Formulir Publik',
+      formName: sanitizedMeta.title || (isEn ? 'Public Application Form' : 'Formulir Publik'),
       institution: domain.replace(/^www\./, ''),
-      targetOutcome: 'Penerbitan Bukti Registrasi / Submit Formulir',
-      category: 'Layanan Publik / Beasiswa',
-      prerequisites: ['KTP / Identitas Resmi', 'Dokumen Pendukung'],
-      difficultyLevel: sanitizedFields.length > 10 ? 'Sedang' : 'Mudah',
-      estimatedTime: sanitizedFields.length > 10 ? '15 - 20 Menit' : '5 - 10 Menit'
+      targetOutcome: isEn ? 'Official Registration Receipt / Form Submission' : 'Penerbitan Bukti Registrasi / Submit Formulir',
+      category: isEn ? 'Public Service / Scholarship' : 'Layanan Publik / Beasiswa',
+      prerequisites: isEn ? ['Official Government ID / Passport', 'Supporting Documents'] : ['KTP / Identitas Resmi', 'Dokumen Pendukung'],
+      difficultyLevel: sanitizedFields.length > 10 ? (isEn ? 'Medium' : 'Sedang') : (isEn ? 'Easy' : 'Mudah'),
+      estimatedTime: sanitizedFields.length > 10 ? (isEn ? '15 - 20 Mins' : '15 - 20 Menit') : (isEn ? '5 - 10 Mins' : '5 - 10 Menit')
     };
 
     try {
@@ -273,15 +275,21 @@ Return ONLY the raw JSON output matching the schema.`
     let agent2Result = {
       officialSource: {
         url: meta.url || `https://${domain}`,
-        badge: isOfficialGov ? 'Official .go.id' : 'AI Guidance',
-        title: officialCitation || `Panduan Pendaftaran ${agent1Result.institution}`
+        badge: isOfficialGov ? (isEn ? 'Official Portal' : 'Official .go.id') : 'AI Guidance',
+        title: officialCitation || (isEn ? `Official Guide ${agent1Result.institution}` : `Panduan Pendaftaran ${agent1Result.institution}`)
       },
-      deadlines: 'Sesuai jadwal resmi instansi',
-      criticalRules: [
+      deadlines: isEn ? 'According to official agency schedule' : 'Sesuai jadwal resmi instansi',
+      criticalRules: isEn ? [
+        'Ensure personal data matches official government identification documents.',
+        'Uploaded documents must be legible and unblurred.'
+      ] : [
         'Pastikan data diri sesuai dengan identitas kependudukan (KTP/Dukcapil).',
         'Dokumen yang diunggah harus jelas dan tidak buram.'
       ],
-      disqualificationTraps: [
+      disqualificationTraps: isEn ? [
+        'Date of birth or national ID mismatched with official database.',
+        'File size exceeds limit or document format invalid.'
+      ] : [
         'Data tanggal lahir atau NIK tidak sinkron dengan database pusat.',
         'Ukuran berkas melebihi kuota sistem atau format file tidak sesuai.'
       ],
@@ -396,33 +404,35 @@ Output JSON format:
       fieldRulesMap: Array<{ fieldId: string; action: string; vaultKey: string | null; confidenceScore: number; validation?: string }>;
       trapsChecklist: string[];
     } = {
-      roadmap: `Isi formulir ${agent1Result.formName} secara bertahap mulai dari data identitas utama hingga berkas lampiran.`,
+      roadmap: isEn
+        ? `Fill the ${agent1Result.formName} progressively starting from primary identity to supporting attachments.`
+        : `Isi formulir ${agent1Result.formName} secara bertahap mulai dari data identitas utama hingga berkas lampiran.`,
       fieldRulesMap: sanitizedFields.map((f: any) => {
         const lowerLabel = (f.label || f.name || f.id).toLowerCase();
         let vaultKey: string | null = null;
-        let action = `Masukkan ${f.label || f.name} sesuai dokumen resmi.`;
-        if (lowerLabel.includes('nik') || lowerLabel.includes('identitas') || lowerLabel.includes('ktp')) {
+        let action = isEn ? `Enter ${f.label || f.name} per official documents.` : `Masukkan ${f.label || f.name} sesuai dokumen resmi.`;
+        if (lowerLabel.includes('nik') || lowerLabel.includes('identitas') || lowerLabel.includes('ktp') || lowerLabel.includes('national id') || lowerLabel.includes('ssn')) {
           vaultKey = 'personal.nik';
-          action = 'Pastikan 16 digit sesuai Dukcapil tanpa spasi.';
+          action = isEn ? 'Ensure 16 digits match government registry without spaces.' : 'Pastikan 16 digit sesuai Dukcapil tanpa spasi.';
         } else if (lowerLabel.includes('nama') || lowerLabel.includes('name')) {
           vaultKey = 'personal.fullName';
-          action = 'Tuliskan nama lengkap tanpa singkatan sesuai KTP/Ijazah.';
+          action = isEn ? 'Enter full legal name without abbreviations per ID/passport.' : 'Tuliskan nama lengkap tanpa singkatan sesuai KTP/Ijazah.';
         } else if (lowerLabel.includes('email')) {
           vaultKey = 'personal.email';
-          action = 'Gunakan email aktif untuk verifikasi dan penerimaan dokumen.';
+          action = isEn ? 'Use an active email for verification and confirmation letters.' : 'Gunakan email aktif untuk verifikasi dan penerimaan dokumen.';
         } else if (lowerLabel.includes('telepon') || lowerLabel.includes('phone') || lowerLabel.includes('hp')) {
           vaultKey = 'personal.phone';
-          action = 'Nomor WhatsApp aktif untuk konfirmasi pengajuan.';
+          action = isEn ? 'Active WhatsApp / mobile number for notifications.' : 'Nomor WhatsApp aktif untuk konfirmasi pengajuan.';
         } else if (lowerLabel.includes('lahir') || lowerLabel.includes('birth')) {
           vaultKey = 'personal.birthDate';
-          action = 'Format tanggal lahir sesuai dokumen akta / KTP.';
+          action = isEn ? 'Date of birth format matching official civil records.' : 'Format tanggal lahir sesuai dokumen akta / KTP.';
         }
         return {
           fieldId: f.id || f.name,
           action,
           vaultKey,
           confidenceScore: 0.9,
-          validation: f.required ? 'Wajib diisi' : 'Opsional'
+          validation: f.required ? (isEn ? 'Required' : 'Wajib diisi') : (isEn ? 'Optional' : 'Opsional')
         };
       }),
       trapsChecklist: agent2Result.disqualificationTraps

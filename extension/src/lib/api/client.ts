@@ -162,13 +162,15 @@ export async function fetchFieldCoachGuidance(
   fieldKey: string,
   fieldName: string = "",
   portalDomain: string = "beasiswalpdp.kemenkeu.go.id",
-  contextText: string = ""
+  contextText: string = "",
+  language: string = "en"
 ): Promise<FieldGuidanceResponse> {
   const startTime = Date.now();
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/coach/field`, {
     fieldKey,
     fieldName,
     portalDomain,
+    language,
   });
 
   try {
@@ -180,7 +182,7 @@ export async function fetchFieldCoachGuidance(
         fieldName,
         portalDomain,
         contextText,
-        language: "id",
+        language,
       }),
     });
 

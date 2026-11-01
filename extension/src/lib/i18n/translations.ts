@@ -35,6 +35,12 @@ export interface ExtensionTranslations {
     btnAnalyzeAgain: string;
     analyzedReadyBadge: string;
     fieldsCountSuffix: string;
+    estimatedTimeLabel: string;
+    sectionsToFillTitle: string;
+    sectionPersonal: string;
+    sectionAcademic: string;
+    sectionDocuments: string;
+    btnCancelAnalysis: string;
     btnGuideStep: string;
     btnAutofillQuick: string;
     explainThisTitle: string;
@@ -260,6 +266,12 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
       btnAnalyzeAgain: "Re-Analyze This Form",
       analyzedReadyBadge: "Form Analyzed & Ready",
       fieldsCountSuffix: "Input Fields Detected",
+      estimatedTimeLabel: "Estimated Time:",
+      sectionsToFillTitle: "Sections to Complete:",
+      sectionPersonal: "Personal Identity & Civil Records",
+      sectionAcademic: "Academic & Program Information",
+      sectionDocuments: "Documents & Verification",
+      btnCancelAnalysis: "Cancel & Return to Overview",
       btnGuideStep: "Guide Field by Field",
       btnAutofillQuick: "1-Click AutoFill",
       explainThisTitle: "Explain This",
@@ -484,6 +496,12 @@ export const translations: Record<SupportedLanguage, ExtensionTranslations> = {
       btnAnalyzeAgain: "Audit Ulang Formulir Ini",
       analyzedReadyBadge: "Formulir Dianalisis & Siap",
       fieldsCountSuffix: "Kolom Pertanyaan Terdeteksi",
+      estimatedTimeLabel: "Estimasi Waktu:",
+      sectionsToFillTitle: "Jumlah yang harus diisi:",
+      sectionPersonal: "Identitas Pribadi & Kependudukan",
+      sectionAcademic: "Latar Belakang Akademik & Program",
+      sectionDocuments: "Dokumen & Verifikasi Berkas",
+      btnCancelAnalysis: "Batalkan / Reset Analisis",
       btnGuideStep: "Pandu Kolom demi Kolom",
       btnAutofillQuick: "1-Click AutoFill",
       explainThisTitle: "Explain This",

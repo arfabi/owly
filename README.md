@@ -1,7 +1,7 @@
 # Owly.AI — Your AI Browser Companion for Forms & Web
 
 <p align="center">
-  <img src="web/public/owly.png" width="96" height="96" alt="Owly.AI Logo" />
+  <img src="assets/owly.png" width="96" height="96" alt="Owly.AI Logo" />
 </p>
 
 <p align="center">
@@ -125,7 +125,7 @@ A few months ago, a spouse tried to renew her driver's license online. Three day
 This happens to millions of people worldwide every single day: an incorrect photo aspect ratio, an obscure regulation buried in a fine-print footnote, and the government portal only notifies you **AFTER** you press Submit. For scholarship seekers, visa applicants, job seekers, and parents enrolling children: **people fail at the form, not at the requirements.**
 
 ### Industry Facts & Verified Data:
-* **67.9% Form Abandonment Rate:** According to industry benchmark studies (Formstack & WPForms Research), over two-thirds of complex online application forms are abandoned before completion due to user confusion and cognitive fatigue.
+* **67.9% Form Abandonment Rate:** According to a joint tracking report by the Baymard Institute and HubSpot, over two-thirds (67.9%) of complex online application forms are abandoned before completion due to confusing field instructions, friction, and cognitive fatigue.
 * **16% Calculation & Data Errors on Financial Aid (FAFSA):** The National College Attainment Network (NCAN) reports that approximately 16% of submitted financial aid applications contain clerical discrepancies that delay critical aid disbursement by 2 to 3 weeks.
 * **Avoidable Clerical Denials in High-Stakes Applications:** Immigration and administrative audit data reveals that clerical discrepancies, unreadable attachments, and minor syntax mismatches are among the leading avoidable causes of initial administrative rejections and processing delays.
 
@@ -160,60 +160,9 @@ Owly.AI implements a **Compound Multi-Agent System (CMAS)** that synergizes the 
 > **Core Principle: "Models Propose; Validators Dispose."**  
 > AI models formulate semantic reasoning and action plans (*proposes*), while local deterministic code scrubs PII, validates mathematical syntax, enforces cryptographic zero-knowledge, and renders DOM feedback (*disposes*). The AI model never touches unencrypted vault credentials, never calculates ID checksums, and never auto-submits.
 
-```mermaid
-flowchart TB
-    subgraph ClientLayer["🖥️ Client Browser Layer (Chrome MV3 & Web Engine)"]
-        UserForm["Web Form Portal\n(Scholarships / Visas / Civil Registry)"]
-        ShadowDOM["Closed Shadow DOM (#owly-root)\n• Beacon Spotlight\n• 14 A11y WCAG Tools ($0 Token)"]
-        SidePanel["Chrome Side Panel MV3 (React App)\n• Coach Tab • Vault Tab\n• Auditor Tab • A11y Tab • IDE Terminal"]
-        WebCrypto["WebCrypto AES-256-GCM\nClient-Side Zero-Knowledge Vault"]
-        PIIGuard["Client-Side PII Masking Scrubber\n(Censor National ID, Tax ID, Phone before transit)"]
-    end
-
-    subgraph GatewayLayer["☁️ Serverless Orchestrator Gateway (Edge / RAM-Only)"]
-        APIAnalyze["POST /api/form/analyze\n(3-Agent CMAS Triad Orchestrator)"]
-        APICoach["POST /api/coach/field\n(Two-Tier Cache & Regulatory RAG)"]
-        APIExplain["POST /api/explain\n(Multimodal Vision Jargon Buster)"]
-        APIEssay["POST /api/essay/coach\n(xHigh-Reasoning Narrative Synthesizer)"]
-        APIAudit["POST /api/photo/audit\n(Multimodal Vision Inspector)"]
-        APIA11y["POST /api/a11y/command\n(Intent Parser to 14 A11y Tools)"]
-    end
-
-    subgraph MuseSparkLayer["🤖 Meta Muse Spark Open Inference Engine"]
-        MuseSpark["Meta Muse Spark Open\n(meta-models/muse-spark-open-1026)\n• 128K Context Window\n• Native Multimodal Vision (image_url)\n• 4-Tier Reasoning Effort (low / med / high / xhigh)\n• Native Tool Calling & Parallel Execution"]
-    end
-
-    subgraph DeterministikLayer["⚙️ Deterministic Zero-Hallucination Tools (0ms)"]
-        FSMValidator["Modular Regex & FSM Validators\n(Pluggable by Country: ID checksums,\nE.164 Phones, RFC 5322 Emails, ICAO Passports)"]
-        SharpBiometrics["Sharp C++ Biometrics Engine\n(Laplacian Sharpness Variance > 100.0\n& Head Bounding Box 70-80% ICAO 9303)"]
-        A11yEngine["14 A11y DOM Controllers\n(Contrast AAA, Dyslexia Font, Focus Line, TTS)"]
-        UndoEngine["In-Memory Redux Undo Stack\n(100% Lossless Form Rollback)"]
-    end
-
-    subgraph DataLayer["🗄️ Supabase PostgreSQL Cloud"]
-        SupaRAG["Table juknis_chunks\n(13 Verified Official Guidelines)"]
-        SupaCache["Table coach_cache\n(<15ms L1/L2 Response & 24h TTL)"]
-        SupaVault["Table user_vault\n(Stores Ciphertext & IV Only)"]
-    end
-
-    UserForm <--> ShadowDOM
-    ShadowDOM <--> SidePanel
-    SidePanel --> PIIGuard
-    SidePanel --> WebCrypto
-    SidePanel <--> GatewayLayer
-
-    APIAnalyze --> MuseSpark
-    APICoach --> SupaCache
-    APICoach --> SupaRAG
-    APICoach --> MuseSpark
-    APIExplain --> MuseSpark
-    APIEssay --> MuseSpark
-    APIAudit --> SharpBiometrics
-    APIA11y --> A11yEngine
-
-    GatewayLayer --> DeterministikLayer
-    WebCrypto -.->|Sync Ciphertext Only| SupaVault
-```
+<p align="center">
+  <img src="assets/meta-tooling.svg" width="100%" alt="Owly.AI — Meta Muse Spark Open Capabilities & CMAS Architecture" />
+</p>
 
 ---
 
@@ -327,7 +276,7 @@ Local deterministic systems run in the client browser at $0 token cost and insta
 2. **WebCrypto AES-256-GCM Zero-Knowledge Vault:** Encryption keys are derived directly from the user's master PIN using PBKDF2 (100,000 iterations). Cloud databases only receive ciphertext and unique 96-bit initialization vectors.
 3. **Client-Side PII Chat Guard:** High-speed regex filters intercept and scrub 16-digit National IDs, Tax IDs, and phone numbers before chat text leaves the browser.
 4. **Modular Deterministic Syntax & Math Validators:** Pluggable by country/jurisdiction (e.g., US SSN checksums, UK National Insurance formats, Indonesian NIK female day+40 date arithmetic, international E.164 phone formats like `+1`/`+44`/`+62`, RFC 5322 emails, and ICAO 9303 passports).
-5. **Ephemeral In-Memory Biometric Inspector (Node.js C++ Sharp):** Validates photo aspect ratio (2x2 in / 35x45 mm), Laplacian blur variance (>100.0), and head proportions strictly in volatile RAM. Bytes are analyzed ephemerally and immediately discarded without disk storage, database persistence, or transmission to third-party generative models.
+5. **Ephemeral In-Memory Biometric Inspector (Multimodal Vision Engine):** Validates photo aspect ratio (2x2 in / 35x45 mm), blur variance, and head proportions strictly in volatile RAM via Meta Muse Spark native vision (`<\|patch\|>`). Bytes are analyzed ephemerally and immediately discarded without disk storage or persistent database retention.
 6. **14 A11y Tools ($0 Token, 0ms):** High-contrast filters, OpenDyslexic typography, jumbo cursor, animation freezing, and ADHD reading ruler injected directly into the active DOM.
 
 ---

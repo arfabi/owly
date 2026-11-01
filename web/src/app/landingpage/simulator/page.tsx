@@ -264,7 +264,7 @@ export default function SimulatorPage() {
                       onChange={(e) => setNama(e.target.value)}
                       onFocus={() => setFocusedField("nama")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="Contoh: Budi Santoso"
+                      placeholder={isId ? "Contoh: Budi Santoso" : "e.g. John Doe"}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                     <p className="text-[11px] text-slate-500 mt-1.5">
@@ -292,7 +292,7 @@ export default function SimulatorPage() {
                       onChange={(e) => setTempatLahir(e.target.value)}
                       onFocus={() => setFocusedField("tempatLahir")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="Contoh: Jakarta Selatan"
+                      placeholder={isId ? "Contoh: Jakarta Selatan" : "e.g. New York City"}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                   </div>
@@ -319,7 +319,7 @@ export default function SimulatorPage() {
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                     <p className="text-[11px] text-slate-500 mt-1.5">
-                      {isId ? "Format: YYYY-MM-DD" : "Format: YYYY-MM-DD"}
+                      {isId ? "Format standar: YYYY-MM-DD (atau klik ikon kalender 📅)" : "Standard format: YYYY-MM-DD (or click calendar icon 📅)"}
                     </p>
                   </div>
 
@@ -456,10 +456,10 @@ export default function SimulatorPage() {
                       onChange={(e) => setJenjang(e.target.value)}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
                     >
-                      <option value="magister_dalam">Magister (S2) Dalam Negeri</option>
-                      <option value="magister_luar">Magister (S2) Luar Negeri</option>
-                      <option value="doktoral_dalam">Doktoral (S3) Dalam Negeri</option>
-                      <option value="doktoral_luar">Doktoral (S3) Luar Negeri</option>
+                      <option value="magister_dalam">{isId ? "Magister (S2) Dalam Negeri" : "Master's Degree (Domestic)"}</option>
+                      <option value="magister_luar">{isId ? "Magister (S2) Luar Negeri" : "Master's Degree (Overseas)"}</option>
+                      <option value="doktoral_dalam">{isId ? "Doktoral (S3) Dalam Negeri" : "Doctoral Degree (Domestic)"}</option>
+                      <option value="doktoral_luar">{isId ? "Doktoral (S3) Luar Negeri" : "Doctoral Degree (Overseas)"}</option>
                     </select>
                   </div>
 
@@ -475,11 +475,11 @@ export default function SimulatorPage() {
                       onChange={(e) => setNegaraTujuan(e.target.value)}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
                     >
-                      <option value="United Kingdom">United Kingdom (UK)</option>
-                      <option value="United States">United States (USA)</option>
+                      <option value="United Kingdom">{isId ? "United Kingdom (Inggris)" : "United Kingdom (UK)"}</option>
+                      <option value="United States">{isId ? "United States (Amerika Serikat)" : "United States (USA)"}</option>
                       <option value="Australia">Australia</option>
-                      <option value="Netherlands">Netherlands (Belanda)</option>
-                      <option value="Japan">Japan (Jepang)</option>
+                      <option value="Netherlands">{isId ? "Netherlands (Belanda)" : "Netherlands"}</option>
+                      <option value="Japan">{isId ? "Japan (Jepang)" : "Japan"}</option>
                       <option value="Indonesia">Indonesia</option>
                     </select>
                   </div>
@@ -495,7 +495,7 @@ export default function SimulatorPage() {
                       name="targetUniversity"
                       value={universitas}
                       onChange={(e) => setUniversitas(e.target.value)}
-                      placeholder="Contoh: University of Oxford"
+                      placeholder={isId ? "Contoh: Universitas Indonesia" : "e.g. University of Oxford"}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -522,7 +522,7 @@ export default function SimulatorPage() {
                       onChange={(e) => setToefl(e.target.value)}
                       onFocus={() => setFocusedField("toefl")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="Contoh: 550"
+                      placeholder={isId ? "Contoh: 550" : "e.g. 550"}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500"
                     />
                     <p className="text-[11px] text-slate-500 mt-1.5">
@@ -553,7 +553,7 @@ export default function SimulatorPage() {
                       onChange={(e) => setIpk(e.target.value)}
                       onFocus={() => setFocusedField("ipk")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="Contoh: 3.75"
+                      placeholder={isId ? "Contoh: 3.75" : "e.g. 3.75"}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -580,7 +580,7 @@ export default function SimulatorPage() {
                       onChange={(e) => setUsia(e.target.value)}
                       onFocus={() => setFocusedField("usia")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="Contoh: 26"
+                      placeholder={isId ? "Contoh: 26" : "e.g. 26"}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500"
                     />
                     <p className="text-[11px] text-slate-500 mt-1.5">

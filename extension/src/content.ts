@@ -618,6 +618,41 @@
     placeholder: string;
     required: boolean;
     type: string;
+    section?: string;
+  }
+
+  function findElementSection(el: HTMLElement): string {
+    try {
+      // 1. Closest fieldset legend
+      const fieldset = el.closest("fieldset");
+      const legend = fieldset?.querySelector("legend");
+      if (legend?.textContent?.trim()) {
+        return legend.textContent.trim().replace(/^[\d\.\-\s]+/, "").slice(0, 45);
+      }
+
+      // 2. Closest section or container with a prominent heading
+      let curr: HTMLElement | null = el.parentElement;
+      let depth = 0;
+      while (curr && depth < 6 && curr !== document.body) {
+        const heading = curr.querySelector("h1, h2, h3, h4, h5, .section-title, .card-title");
+        if (heading && heading !== el && heading.textContent?.trim()) {
+          const text = heading.textContent.trim().replace(/^[\d\.\-\s]+/, "").slice(0, 45);
+          if (text.length > 2) return text;
+        }
+        curr = curr.parentElement;
+        depth++;
+      }
+
+      // 3. Preceding heading sibling
+      let prev = el.previousElementSibling;
+      while (prev) {
+        if (/^H[1-5]$/i.test(prev.tagName) && prev.textContent?.trim()) {
+          return prev.textContent.trim().replace(/^[\d\.\-\s]+/, "").slice(0, 45);
+        }
+        prev = prev.previousElementSibling;
+      }
+    } catch (_) {}
+    return "";
   }
 
   function getInteractiveFormElements(): FormFieldItem[] {
@@ -669,6 +704,7 @@
           placeholder: "",
           required: el.required,
           type: "file",
+          section: findElementSection(badgeTarget) || findElementSection(el),
         });
         return;
       }
@@ -676,20 +712,62 @@
       // Normal input, select, textarea
       const rect = el.getBoundingClientRect();
       const isVisible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== "hidden";
-      if (!isVisible) return;
+      // Radio button groups: group options with same name into a single question
+      if (el.type === "radio" && el.name) {
+        const existingRadio = result.find(
+          (item) => item.type === "radio" && item.name === el.name
+        );
+        if (existingRadio) {
+          visitedEls.add(el);
+          return;
+        }
+
+        const groupContainer = (el.closest(".p-4, .form-group, fieldset, [role='radiogroup'], div") || el.parentElement) as HTMLElement | null;
+        const groupLabel = (groupContainer?.querySelector("label:not([class*='cursor-pointer'])") ||
+          el.closest("fieldset")?.querySelector("legend")) as HTMLElement | null;
+
+        visitedEls.add(el);
+        const groupTitle = groupLabel?.textContent?.trim() || findElementLabel(el) || el.name;
+        const badgeAnchor = groupLabel || groupContainer || el;
+
+        result.push({
+          targetEl: el,
+          badgeTargetEl: badgeAnchor,
+          id: el.name,
+          name: el.name,
+          label: cleanLabelText(groupTitle),
+          placeholder: "",
+          required: el.required,
+          type: "radio",
+          section: findElementSection(badgeAnchor),
+        });
+        return;
+      }
+
+      // Checkbox: anchor to container or parent label to avoid covering text
+      if (el.type === "checkbox") {
+        const parentLabel = el.closest("label") as HTMLElement | null;
+        const groupContainer = (el.closest(".p-4, .form-group, fieldset, div") || el.parentElement) as HTMLElement | null;
+        visitedEls.add(el);
+        const labelText = parentLabel?.textContent?.trim() || findElementLabel(el) || "Persetujuan";
+        const badgeAnchor = groupContainer || parentLabel || el;
+
+        result.push({
+          targetEl: el,
+          badgeTargetEl: badgeAnchor,
+          id: el.id || el.name || "checkbox",
+          name: el.name || "",
+          label: cleanLabelText(labelText),
+          placeholder: "",
+          required: el.required,
+          type: "checkbox",
+          section: findElementSection(badgeAnchor),
+        });
+        return;
+      }
 
       visitedEls.add(el);
-      let label = findElementLabel(el);
-      // For radios / checkboxes, include value or parent label text if available
-      if (el.type === "radio" || el.type === "checkbox") {
-        const parentLbl = el.closest("label")?.textContent?.trim();
-        const val = (el as HTMLInputElement).value;
-        if (parentLbl && !label.includes(parentLbl)) {
-          label = `${label} (${parentLbl})`;
-        } else if (val && val !== "on" && !label.includes(val)) {
-          label = `${label} (${val})`;
-        }
-      }
+      const label = findElementLabel(el);
 
       result.push({
         targetEl: el,
@@ -700,6 +778,7 @@
         placeholder: (el as HTMLInputElement).placeholder || "",
         required: el.required,
         type: el.type || el.tagName.toLowerCase(),
+        section: findElementSection(el),
       });
     });
 
@@ -862,6 +941,25 @@
     index: number;
   }[] = [];
 
+  function getBadgeCoords(anchor: HTMLElement, scrollTop: number, scrollLeft: number): { top: string; left: string } {
+    const rect = anchor.getBoundingClientRect();
+    const isInputRadioOrCheckbox = anchor.tagName === "INPUT" && 
+      ((anchor as HTMLInputElement).type === "radio" || (anchor as HTMLInputElement).type === "checkbox");
+
+    if (isInputRadioOrCheckbox) {
+      // Place to the left of small 16px radio/checkbox so it never covers the button or its label text
+      return {
+        top: `${rect.top + scrollTop - 4}px`,
+        left: `${rect.left + scrollLeft - 26}px`
+      };
+    }
+
+    return {
+      top: `${rect.top + scrollTop - 10}px`,
+      left: `${rect.right + scrollLeft - 12}px`
+    };
+  }
+
   function updateBadgePositions() {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
@@ -878,8 +976,9 @@
         return;
       }
       badgeEl.style.display = "flex";
-      badgeEl.style.top = `${rect.top + scrollTop - 10}px`;
-      badgeEl.style.left = `${rect.right + scrollLeft - 12}px`;
+      const coords = getBadgeCoords(anchor, scrollTop, scrollLeft);
+      badgeEl.style.top = coords.top;
+      badgeEl.style.left = coords.left;
     });
   }
 
@@ -892,14 +991,14 @@
 
     detected.forEach((item, idx) => {
       const fieldIndex = idx + 1; // 1-based display
-      const rect = item.badgeTargetEl.getBoundingClientRect();
+      const coords = getBadgeCoords(item.badgeTargetEl, scrollTop, scrollLeft);
 
       const badge = document.createElement("div");
       badge.className = "savvy-field-number-badge";
       badge.textContent = `${fieldIndex}`;
       badge.title = `Kolom #${fieldIndex}: ${item.label} (Klik untuk panduan)`;
-      badge.style.top = `${rect.top + scrollTop - 10}px`;
-      badge.style.left = `${rect.right + scrollLeft - 12}px`;
+      badge.style.top = coords.top;
+      badge.style.left = coords.left;
 
       badge.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -1394,6 +1493,7 @@
         placeholder: d.placeholder,
         required: d.required,
         type: d.type,
+        section: d.section || "",
       }));
 
       const meta = {
