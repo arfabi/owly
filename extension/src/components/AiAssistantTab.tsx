@@ -725,7 +725,9 @@ export function AiAssistantTab({
           liveUrl,
           liveTitle,
           screenshotBase64,
-          null
+          null,
+          null,
+          isId ? "id" : "en"
         );
 
         setMessages((prev) => [
@@ -825,7 +827,9 @@ export function AiAssistantTab({
         liveUrl,
         liveTitle,
         attachedImageBase64,
-        attachedMeta
+        attachedMeta,
+        null,
+        isId ? "id" : "en"
       );
       let finalReply = data.reply || "";
       let badgeLabel = "Owly.AI";
@@ -866,7 +870,8 @@ export function AiAssistantTab({
             toolName: data.toolCall.name,
             toolArgs: data.toolCall.arguments,
             toolResult: { success: !!screenDataUrl },
-          }
+          },
+          isId ? "id" : "en"
         );
 
         if (turn2Data.sessionId) setChatSessionId(turn2Data.sessionId);

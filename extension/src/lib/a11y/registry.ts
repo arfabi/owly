@@ -1,6 +1,6 @@
 /**
- * Savvy Accessibility Unified Registry & Agentic Tooling
- * Sesuai arsitektur accessibility-hub-plan.md dengan 14 Tool Deterministik Nyata Savvy
+ * Owly Accessibility Unified Registry & Agentic Tooling
+ * Sesuai arsitektur accessibility-hub-plan.md dengan 14 Tool Deterministik Nyata Owly
  */
 
 export interface ToolOption {
@@ -132,7 +132,7 @@ export const A11Y_TOOLS: A11yToolDef[] = [
   },
 ];
 
-// Presets Kebutuhan Khusus (Sesuai Profil Nyata Savvy)
+// Presets Kebutuhan Khusus (Sesuai Profil Nyata Owly)
 export const A11Y_PROFILES: Record<string, { label: string; levels: Record<string, number> }> = {
   adhd: {
     label: "ADHD Focus",
@@ -169,7 +169,7 @@ export const A11Y_FUNCTION_SCHEMAS = [
               "pauseAnim", "hideImages", "dyslexiaFont", "bigCursor", "liveTooltips",
               "lineHeight", "textAlign", "colorSat"
             ],
-            description: "ID fitur aksesibilitas Savvy."
+            description: "ID fitur aksesibilitas Owly."
           },
           value: {
             type: "string",

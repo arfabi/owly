@@ -99,7 +99,8 @@ export async function sendChatMessage(
   pageTitle?: string,
   imageBase64?: string | null,
   meta?: PageMetadata | null,
-  toolExecution?: ToolExecutionPayload | null
+  toolExecution?: ToolExecutionPayload | null,
+  lang?: "en" | "id"
 ): Promise<ChatResponse> {
   const startTime = Date.now();
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/chat`, {
@@ -113,6 +114,7 @@ export async function sendChatMessage(
     sessionId: sessionId || "new_session",
     isToolReturn: !!toolExecution,
     toolName: toolExecution?.toolName,
+    lang,
   });
 
   try {
@@ -128,6 +130,7 @@ export async function sendChatMessage(
         imageBase64,
         meta,
         toolExecution,
+        lang,
       }),
     });
 

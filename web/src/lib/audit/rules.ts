@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Pre-Submit Regex & Consistency FSM Validator (Web Showcase)
+// OWLY.AI — Pre-Submit Regex & Consistency FSM Validator (Web Showcase)
 // Instantaneous (<50ms) client-side verification preventing disqualification
 // ============================================================================
 

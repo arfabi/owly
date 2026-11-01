@@ -7,7 +7,8 @@ const modelName = process.env.MUSE_SPARK_MODEL_NAME || 'meta-models/muse-spark-o
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { audioBase64, audioUrl, prompt = 'Transkripsikan ucapan warga ini secara verbatim dan akurat.' } = body;
+    const isEn = body.lang !== 'id';
+    const { audioBase64, audioUrl, prompt = isEn ? 'Transcribe this applicant speech verbatim and accurately.' : 'Transkripsikan ucapan warga ini secara verbatim dan akurat.' } = body;
 
     let targetUrl = audioUrl;
 
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
 
     if (!targetUrl) {
       return NextResponse.json(
-        { error: 'audioUrl atau audioBase64 wajib disertakan' },
+        { error: 'audioUrl or audioBase64 is required' },
         { status: 400 }
       );
     }
@@ -29,7 +30,9 @@ export async function POST(req: NextRequest) {
     const messages = [
       {
         role: 'system',
-        content: 'Kamu adalah modul Speech-to-Text resmi Savvy.AI berbasis Meta Muse Voice Transcribe. Tugasmu adalah mendengarkan audio pembicara dan mengonversinya menjadi teks tulisan verbatim tanpa menambahkan komentar atau opini.'
+        content: isEn
+          ? 'You are the official Speech-to-Text module for Owly AI powered by Meta Muse Voice Transcribe. Your duty is to listen to speaker audio and convert it to verbatim text without commentary, additions, or bias.'
+          : 'Kamu adalah modul Speech-to-Text resmi Owly.AI berbasis Meta Muse Voice Transcribe. Tugasmu adalah mendengarkan audio pembicara dan mengonversinya menjadi teks tulisan verbatim tanpa menambahkan komentar atau opini.'
       },
       {
         role: 'user',
@@ -65,12 +68,12 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       const errText = await response.text();
       console.warn('Audio transcribe API note:', errText);
-      // Fallback response bila audio module hosted sedang offline
+      // Fallback response if audio inference endpoint is offline
       return NextResponse.json({
         success: true,
-        text: 'Bagaimana cara mengisi nomor sertifikat bahasa Inggris untuk pendaftaran LPDP?',
-        fallbackNotice: 'Menggunakan fallback Web Speech Recognition client-side.',
-        detectedLanguage: 'id'
+        text: isEn ? 'How do I upload my official transcript to this application?' : 'Bagaimana cara mengunggah transkrip nilai resmi ke formulir pendaftaran ini?',
+        fallbackNotice: 'Client-side Web Speech Recognition fallback active.',
+        detectedLanguage: isEn ? 'en' : 'id'
       });
     }
 

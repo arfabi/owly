@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Modular Localization Dictionary (i18n)
+// OWLY.AI — Modular Localization Dictionary (i18n)
 // Mendukung bahasa sesuai spesifikasi PRD Bab 4 (id, en, zh, es, ar, dll)
 // ============================================================================
 

@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Client-Side Canvas Blackout Masking Engine (Privacy Shield)
+// OWLY.AI — Client-Side Canvas Blackout Masking Engine (Privacy Shield)
 // Zero Facial Biometrics & Sensitive PII Transit (UU PDP No. 27/2022 Compliance)
 // ============================================================================
 

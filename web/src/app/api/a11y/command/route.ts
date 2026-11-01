@@ -20,7 +20,7 @@ const A11Y_TOOLS_SCHEMAS = [
               'pauseAnim', 'hideImages', 'dyslexiaFont', 'bigCursor', 'liveTooltips',
               'lineHeight', 'textAlign', 'colorSat'
             ],
-            description: 'ID fitur aksesibilitas Savvy.'
+            description: 'ID fitur aksesibilitas Owly.'
           },
           value: {
             type: 'string',
@@ -127,67 +127,71 @@ function extractCleanJson(text: string): any {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { utterance = '', currentState = {}, lang = 'id' } = body;
+    const { utterance = '', currentState = {}, lang = 'en' } = body;
 
     if (!utterance || typeof utterance !== 'string') {
       return NextResponse.json({ error: 'Utterance is required' }, { status: 400 });
     }
 
-    // Fallback rule-based matching jika Baseten API key tidak tersedia
+    const isEn = lang === 'en';
+
+    // Fallback rule-based matching if Baseten API key is not configured
     if (!basetenApiKey) {
       const lower = utterance.toLowerCase();
       const toolCalls: any[] = [];
-      let explanation = 'Menyesuaikan tampilan aksesibilitas halaman.';
+      let explanation = isEn ? 'Adjusting page accessibility settings.' : 'Menyesuaikan tampilan aksesibilitas halaman.';
 
-      if (lower.includes('capek') || lower.includes('lelah') || lower.includes('perih') || lower.includes('silau')) {
+      if (lower.includes('eye') || lower.includes('tired') || lower.includes('glare') || lower.includes('hurt') || lower.includes('capek') || lower.includes('lelah') || lower.includes('silau')) {
         toolCalls.push({
           name: 'set_accessibility_feature',
-          arguments: { feature: 'contrast', value: 'High' }
+          arguments: { feature: 'contrast', value: 'High' },
         });
         toolCalls.push({
           name: 'set_accessibility_feature',
-          arguments: { feature: 'textSize', value: '+50%' }
+          arguments: { feature: 'textSize', value: '+50%' },
         });
-        explanation = 'Kontras ditingkatkan dan ukuran teks diperbesar agar mata tidak cepat lelah.';
-      } else if (lower.includes('disleksia') || lower.includes('dyslexia') || lower.includes('tertukar')) {
+        explanation = isEn
+          ? 'Increased contrast and enlarged text size to alleviate visual strain.'
+          : 'Kontras ditingkatkan dan ukuran teks diperbesar agar mata tidak cepat lelah.';
+      } else if (lower.includes('dyslexia') || lower.includes('disleksia') || lower.includes('scramble')) {
         toolCalls.push({
           name: 'apply_accessibility_profile',
-          arguments: { profile: 'dyslexia' }
+          arguments: { profile: 'dyslexia' },
         });
-        explanation = 'Mengaktifkan profil ramah disleksia.';
-      } else if (lower.includes('fokus') || lower.includes('ramai') || lower.includes('adhd')) {
+        explanation = isEn ? 'Activated Dyslexia-friendly reading profile.' : 'Mengaktifkan profil ramah disleksia.';
+      } else if (lower.includes('focus') || lower.includes('adhd') || lower.includes('distract') || lower.includes('fokus')) {
         toolCalls.push({
           name: 'apply_accessibility_profile',
-          arguments: { profile: 'adhd' }
+          arguments: { profile: 'adhd' },
         });
-        explanation = 'Mengaktifkan mode fokus ADHD.';
-      } else if (lower.includes('bacakan') || lower.includes('baca')) {
+        explanation = isEn ? 'Activated ADHD focus mode.' : 'Mengaktifkan mode fokus ADHD.';
+      } else if (lower.includes('read') || lower.includes('speak') || lower.includes('audio') || lower.includes('baca')) {
         toolCalls.push({
           name: 'set_accessibility_feature',
-          arguments: { feature: 'tts', value: 'On' }
+          arguments: { feature: 'tts', value: 'On' },
         });
-        explanation = 'Membacakan isi halaman dengan Text-to-Speech.';
+        explanation = isEn ? 'Reading page aloud with Text-to-Speech.' : 'Membacakan isi halaman dengan Text-to-Speech.';
       } else {
         toolCalls.push({
           name: 'step_accessibility_feature',
-          arguments: { feature: 'textSize', direction: 'increase' }
+          arguments: { feature: 'textSize', direction: 'increase' },
         });
-        explanation = 'Memperbesar ukuran teks untuk kenyamanan membaca.';
+        explanation = isEn ? 'Enlarged text size for reading comfort.' : 'Memperbesar ukuran teks untuk kenyamanan membaca.';
       }
 
       return NextResponse.json({
         success: true,
         source: 'local_rule_fallback',
         tool_calls: toolCalls,
-        explanation
+        explanation,
       });
     }
 
-    // Panggil Meta Muse Spark Open via Baseten dengan system instruction Function Calling
-    const systemPrompt = `Kamu adalah penerjemah niat aksesibilitas untuk ekstensi browser Savvy.AI.
-Tugas utamamu adalah menerjemahkan keluhan, kebutuhan, atau perintah pengguna ke pemanggilan tool aksesibilitas (Function Calling).
+    // Call Meta Muse Spark Open via Baseten with Function Calling
+    const systemPrompt = `You are an accessibility intent translator for the Owly browser companion.
+Your primary task is to translate user complaints, accessibility needs, or voice commands into exact accessibility tool calls (Function Calling).
 
-Daftar Fitur Savvy (14 Tools):
+Available Owly Tools (14 Tools):
 - spotlight: Reading Spotlight bar (On / Off)
 - tts: Text to Speech (On / Off)
 - contrast: Normal, High, Invert, Monochrome
@@ -203,26 +207,26 @@ Daftar Fitur Savvy (14 Tools):
 - textAlign: Normal, Left, Center, Justify
 - colorSat: Normal, High (+50%), Low (-50%), Monochrome
 
-Profil:
+Special Needs Presets:
 - adhd: spotlight On + pauseAnim Paused
 - dyslexia: dyslexiaFont On + lineHeight 1.8x + textSpacing Medium (+25%)
 - low_vision: contrast High + textSize +50% + bigCursor Large (Black)
 - senior: textSize +25% + lineHeight 1.5x + bigCursor Large (Black) + links Highlight
 
-Aturan:
-1. Kembalikan HANYA JSON berformat:
+Rules:
+1. Return STRICT JSON matching:
 {
   "tool_calls": [
     { "name": "set_accessibility_feature", "arguments": { "feature": "...", "value": "..." } }
   ],
-  "explanation": "Penjelasan singkat dalam bahasa ${lang} (maksimal 1 kalimat)"
+  "explanation": "Concise 1-sentence technical explanation in ${isEn ? 'English' : 'Indonesian'}"
 }
-2. Jika pengguna mengeluh "mata capek / silau", gunakan contrast: High dan perbesar textSize.
-3. Jika pengguna meminta "lebih besar lagi", panggil step_accessibility_feature dengan direction: "increase".
-4. Jawab HANYA objek JSON valid tanpa markdown lain.`;
+2. If user mentions "eyes hurt / screen glare", set contrast: High and enlarge textSize.
+3. If user says "bigger / make it larger", call step_accessibility_feature with direction: "increase".
+4. Output STRICT JSON ONLY without markdown fences.`;
 
-    const userPrompt = `Perintah/Keluhan Pengguna: "${utterance}"
-Status Fitur Saat Ini: ${JSON.stringify(currentState)}`;
+    const userPrompt = `User Command / Complaint: "${utterance}"
+Current Feature State: ${JSON.stringify(currentState)}`;
 
     const response = await fetch(`${basetenBaseUrl}/chat/completions`, {
       method: 'POST',
@@ -248,9 +252,9 @@ Status Fitur Saat Ini: ${JSON.stringify(currentState)}`;
         success: true,
         source: 'api_status_fallback',
         tool_calls: [
-          { name: 'step_accessibility_feature', arguments: { feature: 'textSize', direction: 'increase' } }
+          { name: 'step_accessibility_feature', arguments: { feature: 'textSize', direction: 'increase' } },
         ],
-        explanation: 'Menyesuaikan tampilan teks untuk Anda.'
+        explanation: isEn ? 'Adjusted text display for readability.' : 'Menyesuaikan tampilan teks untuk Anda.',
       });
     }
 

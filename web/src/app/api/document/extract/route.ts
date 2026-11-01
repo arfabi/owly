@@ -23,119 +23,41 @@ function extractCleanJson(text: string): any {
   }
 }
 
-// Fallback regex extractor from OCR / reasoning text
-function extractFieldsFromText(text: string): any[] {
+// Universal generic key-value fallback parser (handles ANY document format)
+function extractGenericKeyValuePairs(text: string, defaultDocType: string): any[] {
   if (!text) return [];
   const fields: any[] = [];
+  const lines = text.split(/\r?\n/);
+  const seenKeys = new Set<string>();
 
-  // NIK (16 digits)
-  const nikMatch = text.match(/(?:NIK|Nomor Induk Kependudukan)\D*(\d{16})/i) || text.match(/\b(\d{16})\b/);
-  if (nikMatch && nikMatch[1]) {
-    fields.push({
-      id: 'nik',
-      name: 'NIK',
-      value: nikMatch[1].trim(),
-      aliases: ['Nomor Induk Kependudukan', 'ID Number'],
-      sourceTag: 'KTP Republik Indonesia',
-    });
-  }
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('{') || trimmed.startsWith('}')) continue;
 
-  // Nama Lengkap
-  const namaMatch = text.match(/Nama(?:\s*Lengkap)?\s*[:=\-]?\s*([A-Za-z\s.,']+?)(?:\n|\r|Tempat|Tgl|Lahir|Jenis|Alamat|NIK|$)/i);
-  if (namaMatch && namaMatch[1] && namaMatch[1].trim().length > 2) {
-    const cleanNama = namaMatch[1].trim().replace(/\s+/g, ' ');
-    if (!cleanNama.toLowerCase().includes('ktp') && !cleanNama.toLowerCase().includes('republik')) {
-      fields.push({
-        id: 'nama_lengkap',
-        name: 'Nama Lengkap',
-        value: cleanNama.toUpperCase(),
-        aliases: ['Nama', 'Full Name'],
-        sourceTag: 'KTP Republik Indonesia',
-      });
+    // Matches patterns like "Field Name : Value" or "Field Name = Value"
+    const match = trimmed.match(/^([A-Za-z0-9\s/()._-]{2,35})\s*[:=-]\s*([^\r\n]+)$/);
+    if (match && match[1] && match[2]) {
+      const rawKey = match[1].trim();
+      const rawVal = match[2].trim().replace(/^["']|["',]$/g, '').trim();
+
+      const cleanKey = rawKey.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').slice(0, 30);
+      if (
+        rawVal &&
+        rawVal.length > 0 &&
+        rawVal.toLowerCase() !== 'null' &&
+        !seenKeys.has(cleanKey) &&
+        !rawKey.toLowerCase().includes('documenttype')
+      ) {
+        seenKeys.add(cleanKey);
+        fields.push({
+          id: cleanKey,
+          name: rawKey,
+          value: rawVal,
+          aliases: [rawKey],
+          sourceTag: defaultDocType,
+        });
+      }
     }
-  }
-
-  // Tempat / Tanggal Lahir
-  const ttlMatch = text.match(/(?:Tempat\/Tgl Lahir|Tempat[,\s]+Tanggal Lahir)\s*[:=\-]?\s*([A-Za-z\s]+)[,\/]\s*(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
-  if (ttlMatch) {
-    if (ttlMatch[1]) {
-      fields.push({
-        id: 'tempat_lahir',
-        name: 'Tempat Lahir',
-        value: ttlMatch[1].trim().toUpperCase(),
-        aliases: ['Place of Birth'],
-        sourceTag: 'KTP Republik Indonesia',
-      });
-    }
-    if (ttlMatch[2]) {
-      fields.push({
-        id: 'tanggal_lahir',
-        name: 'Tanggal Lahir',
-        value: ttlMatch[2].replace(/\//g, '-').trim(),
-        aliases: ['Date of Birth'],
-        sourceTag: 'KTP Republik Indonesia',
-      });
-    }
-  }
-
-  // Jenis Kelamin
-  const genderMatch = text.match(/(?:Jenis Kelamin|Gender)\s*[:=\-]?\s*(LAKI-LAKI|PEREMPUAN)/i);
-  if (genderMatch && genderMatch[1]) {
-    fields.push({
-      id: 'jenis_kelamin',
-      name: 'Jenis Kelamin',
-      value: genderMatch[1].toUpperCase(),
-      aliases: ['Gender', 'Sex'],
-      sourceTag: 'KTP Republik Indonesia',
-    });
-  }
-
-  // Alamat KTP
-  const alamatMatch = text.match(/Alamat\s*[:=\-]?\s*([^\n\r]+)/i);
-  if (alamatMatch && alamatMatch[1] && alamatMatch[1].trim().length > 5) {
-    fields.push({
-      id: 'alamat',
-      name: 'Alamat KTP',
-      value: alamatMatch[1].trim().toUpperCase(),
-      aliases: ['Address', 'Domisili'],
-      sourceTag: 'KTP Republik Indonesia',
-    });
-  }
-
-  // Agama
-  const agamaMatch = text.match(/Agama\s*[:=\-]?\s*(ISLAM|KRISTEN|KATOLIK|HINDU|BUDDHA|KONGHUCU)/i);
-  if (agamaMatch && agamaMatch[1]) {
-    fields.push({
-      id: 'agama',
-      name: 'Agama',
-      value: agamaMatch[1].toUpperCase(),
-      aliases: ['Religion'],
-      sourceTag: 'KTP Republik Indonesia',
-    });
-  }
-
-  // Status Perkawinan
-  const statusMatch = text.match(/Status\s*Perkawinan\s*[:=\-]?\s*(BELUM KAWIN|KAWIN|CERAI HIDUP|CERAI MATI)/i);
-  if (statusMatch && statusMatch[1]) {
-    fields.push({
-      id: 'status_perkawinan',
-      name: 'Status Perkawinan',
-      value: statusMatch[1].toUpperCase(),
-      aliases: ['Marital Status'],
-      sourceTag: 'KTP Republik Indonesia',
-    });
-  }
-
-  // Kewarganegaraan
-  const wniMatch = text.match(/Kewarganegaraan\s*[:=\-]?\s*(WNI|WNA)/i);
-  if (wniMatch && wniMatch[1]) {
-    fields.push({
-      id: 'kewarganegaraan',
-      name: 'Kewarganegaraan',
-      value: wniMatch[1].toUpperCase(),
-      aliases: ['Citizenship'],
-      sourceTag: 'KTP Republik Indonesia',
-    });
   }
 
   return fields;
@@ -148,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     if (!imageBase64) {
       return NextResponse.json(
-        { error: 'imageBase64 (dokumen KTP/Paspor) wajib disertakan' },
+        { error: 'imageBase64 (dokumen KTP/Ijazah/Paspor/SIM) wajib disertakan' },
         { status: 400 }
       );
     }
@@ -158,35 +80,42 @@ export async function POST(req: NextRequest) {
       formattedImageUrl = `data:image/png;base64,${formattedImageUrl}`;
     }
 
-    const systemPrompt = `You are Owly Multimodal Document Extractor AI, powered by Meta Muse Spark Open.
-Your task: Accurately read and transcribe citizen identity fields from this official identity card (KTP Republik Indonesia, Passport, KK).
-Read all text clearly visible on the document.
-Fields to extract:
-- NIK (16 digits)
-- Nama Lengkap (Full Name)
-- Tempat Lahir (Place of birth, strictly city/regency)
-- Tanggal Lahir (Date of birth, formatted as DD-MM-YYYY)
-- Jenis Kelamin (Gender: LAKI-LAKI or PEREMPUAN)
-- Alamat KTP (Complete street address with RT/RW, Kel/Desa, Kecamatan)
-- Agama (Religion)
-- Status Perkawinan (Marital status)
-- Pekerjaan (Occupation)
-- Kewarganegaraan (Citizenship: WNI or WNA)
-- Golongan Darah (Blood type: A, B, AB, O)
+    const universalSystemPrompt = `You are Owly Universal Document Extractor AI, powered by Meta Muse Spark Open.
+Your task: Accurately read, transcribe, and extract all official fields from ANY government, academic, credential, or legal document (such as:
+- Ijazah / University Degree / High School Diploma
+- Transkrip Nilai / Academic Transcript
+- e-KTP / National ID Card / Kartu Keluarga
+- Paspor / Passport / Visa
+- SIM / Driver's License (from Texas, USA, Indonesia, or any international jurisdiction)
+- Sertifikat / Akta Kelahiran / Surat Keterangan).
 
-CRITICAL INSTRUCTION:
-Return ONLY valid JSON matching this exact structure:
+CRITICAL INSTRUCTIONS:
+1. Automatically detect and specify the exact document type in "documentType" (e.g. "Ijazah Sarjana (S1)", "Texas Driver License", "KTP Republik Indonesia", "Academic Transcript", "Paspor Republik Indonesia").
+2. Transcribe EVERY single field with non-empty text visible on the document.
+3. For each field, provide:
+   - "id": A clean snake_case identifier (e.g., "nomor_ijazah", "universitas", "ipk", "program_studi", "dl_number", "nik", "nama_lengkap", "tanggal_lahir", "alamat")
+   - "name": Clean human-readable label (e.g., "Nomor Ijazah", "Universitas", "IPK / GPA", "Program Studi", "Driver License Number", "NIK")
+   - "value": The exact extracted string value as written on the document
+   - "aliases": Array of common alternate labels in Indonesian and English for smart form autofilling
+   - "sourceTag": The document title
+
+Output MUST be strictly valid JSON matching this structure:
 {
-  "documentType": "KTP Republik Indonesia",
+  "documentType": "Document Title",
   "fields": [
-    { "id": "nik", "name": "NIK", "value": "3171...", "aliases": ["Nomor Induk Kependudukan", "ID Number"], "sourceTag": "KTP Republik Indonesia" },
-    { "id": "nama_lengkap", "name": "Nama Lengkap", "value": "...", "aliases": ["Nama", "Full Name"], "sourceTag": "KTP Republik Indonesia" }
+    {
+      "id": "field_id",
+      "name": "Field Name",
+      "value": "Extracted Value",
+      "aliases": ["Alternate Label 1", "Alternate Label 2"],
+      "sourceTag": "Document Title"
+    }
   ]
 }
-If a field is not present or not legible in the image, DO NOT include it in the fields list. Only include fields with actual legible text values.`;
+If a field is not present or not legible in the image, DO NOT include it. Only extract fields with actual legible text values.`;
 
     const messages: any[] = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: universalSystemPrompt },
       {
         role: 'user',
         content: [
@@ -196,7 +125,7 @@ If a field is not present or not legible in the image, DO NOT include it in the 
           },
           {
             type: 'text',
-            text: 'Extract all official citizen identity fields visible on this document into structured JSON.',
+            text: 'Extract all official credential and identity fields visible on this document into structured JSON.',
           },
         ],
       },
@@ -242,6 +171,8 @@ If a field is not present or not legible in the image, DO NOT include it in the 
       }
     }
 
+    const docType = parsed?.documentType || 'Official Document';
+
     // 3. Extract and filter valid fields (must have real, non-empty, non-dummy values)
     let extractedFields: any[] = [];
     if (parsed && Array.isArray(parsed.fields)) {
@@ -258,23 +189,23 @@ If a field is not present or not legible in the image, DO NOT include it in the 
       );
     }
 
-    // 4. If structured JSON had no valid fields, use regex text parser on both content & reasoning
+    // 4. If structured JSON was empty or malformed, use generic key-value parser across reasoning & content
     if (extractedFields.length === 0) {
-      const fallbackRegexFields = extractFieldsFromText(`${rawContent} ${reasoningContent}`);
-      if (fallbackRegexFields.length > 0) {
-        extractedFields = fallbackRegexFields;
+      const genericFields = extractGenericKeyValuePairs(`${rawContent}\n${reasoningContent}`, docType);
+      if (genericFields.length > 0) {
+        extractedFields = genericFields;
       }
     }
 
-    // 5. If STILL no fields found, return clear 422 error (do NOT return fake placeholder)
+    // 5. If STILL no fields found, return clear 422 error
     if (extractedFields.length === 0) {
       return NextResponse.json(
         {
           success: false,
           error:
             language === 'id'
-              ? 'Tidak ada data identitas yang terbaca dari gambar ini. Pastikan foto e-KTP / Paspor terang, teks terlihat jelas, dan tidak terpotong.'
-              : 'No identity fields could be recognized from this image. Please ensure the ID card or passport photo is well-lit, fully visible, and not blurred.',
+              ? 'Tidak ada data resmi yang terbaca dari gambar ini. Pastikan foto dokumen (KTP, Ijazah, SIM, atau Paspor) terlihat utuh, terang, dan teksnya jelas.'
+              : 'No identity or credential fields could be recognized from this image. Please ensure the document (ID, Diploma, Driver License, or Passport) is well-lit, fully visible, and unblurred.',
           fields: [],
         },
         { status: 422 }
@@ -283,7 +214,7 @@ If a field is not present or not legible in the image, DO NOT include it in the 
 
     return NextResponse.json({
       success: true,
-      documentType: parsed?.documentType || 'KTP Republik Indonesia',
+      documentType: docType,
       fields: extractedFields,
     });
   } catch (error: any) {

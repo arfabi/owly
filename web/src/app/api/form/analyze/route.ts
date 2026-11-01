@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
 
     const isEn = language === 'en';
     const a1SystemPrompt = `Reasoning strength: 32
-You are Agent 1: Perception and Form Profiler for Savvy.AI. You are Meta Muse Spark Open with vision.
+You are Agent 1: Perception and Form Profiler for Owly.AI. You are Meta Muse Spark Open with vision.
 RULES:
 1. Identify formName ONLY from visible text in screenshot or meta.title. If not visible, return ${isEn ? '"Public Application Form"' : '"Formulir Publik"'}.
 2. DO NOT hallucinate institution. If logo not visible, institution = domain.
@@ -297,7 +297,7 @@ Return ONLY the raw JSON output matching the schema in ${isEn ? 'English' : 'Bah
     };
 
     const a2SystemPrompt = `Reasoning strength: 32
-You are Agent 2: Regulation Researcher for Savvy.AI.
+You are Agent 2: Regulation Researcher for Owly.AI.
 CRITICAL PRIVACY: NEVER include PII (nik, email, name) in research. Query = ${searchQuery}
 If no .go.id result, return isOfficial false, fallback to AI Guidance.
 Output valid JSON:
@@ -377,7 +377,7 @@ Output valid JSON:
     });
 
     const a3SystemPrompt = `Reasoning strength: ${dynamicReasoningTokens}
-You are Agent 3: Decision and Synthesis - High Reasoning for Savvy.AI.
+You are Agent 3: Decision and Synthesis - High Reasoning for Owly.AI.
 Input: Agent1 JSON + Agent2 JSON + DOM fields
 TASK: Field Matching, Validation Strategy, Priority Ordering, Trap Detection
 RULES:

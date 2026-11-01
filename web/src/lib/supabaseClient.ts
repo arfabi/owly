@@ -80,7 +80,7 @@ export async function getCurrentUserProfile() {
     return {
       id: user.id,
       email: user.email || rawMeta.email || '',
-      full_name: rawMeta.full_name || rawMeta.name || 'Pengguna Savvy',
+      full_name: rawMeta.full_name || rawMeta.name || 'Pengguna Owly',
       avatar_url: rawMeta.avatar_url || rawMeta.picture || rawMeta.picture?.data?.url || '',
       auth_provider: user.app_metadata?.provider || 'oauth'
     };

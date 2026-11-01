@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Client-Side Voice Activity Detection (VAD) Engine
+// OWLY.AI — Client-Side Voice Activity Detection (VAD) Engine
 // Zero latency speech energy detector using Web Audio API AnalyserNode
 // ============================================================================
 

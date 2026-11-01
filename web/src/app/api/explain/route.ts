@@ -9,14 +9,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       imageBase64,
-      contextLabel = 'Bagian Formulir / Dokumen',
-      portalUrl = 'beasiswalpdp.kemenkeu.go.id',
-      language = 'id'
+      contextLabel = 'Form Section / Document',
+      portalUrl = 'official-portal.gov',
+      language = 'en',
     } = body;
 
     if (!imageBase64) {
       return NextResponse.json(
-        { error: 'imageBase64 (potongan gambar cuplikan) wajib disertakan' },
+        { error: 'imageBase64 (visual snip image buffer) is required' },
         { status: 400 }
       );
     }
@@ -27,20 +27,39 @@ export async function POST(req: NextRequest) {
       formattedImageUrl = `data:image/png;base64,${formattedImageUrl}`;
     }
 
-    const systemPrompt = `Kamu adalah Savvy Visual Explainer & Jargon Buster — asisten AI multimodal untuk pendaftar formulir publik dan beasiswa resmi.
+    const isEn = language === 'en';
+
+    const systemPrompt = isEn
+      ? `You are the Owly Universal Visual Explainer & Jargon Buster — an intelligent multimodal AI assistant for applicants navigating complex government, visa, scholarship, and administrative portals.
+Your task: Analyze cropped visual snips of web forms, official stamps, seal specimens, document clauses, or confusing bureaucratic terminology, and explain them clearly in plain language without intimidating jargon.`
+      : `Kamu adalah Owly Visual Explainer & Jargon Buster — asisten AI multimodal untuk pendaftar formulir publik dan beasiswa resmi.
 Tugasmu: Menganalisis potongan visual gambar (snip) dari formulir, stempel, dokumen, atau istilah birokrasi, lalu menjelaskannya secara gamblang kepada warga biasa tanpa bahasa birokrasi yang rumit.`;
 
-    const userInstruction = `Analisis gambar cuplikan (snip) ini dengan seksama.
+    const userInstruction = isEn
+      ? `Carefully analyze this visual crop (snip) from an official portal:
+- Section Context: "${contextLabel}"
+- Portal: "${portalUrl}"
+- Language: English
+
+Provide a clear, structured JSON explanation without markdown code fences:
+{
+  "title": "Identified Term / Document Element Name",
+  "plain_explanation": "Plain-language explanation of what this element or clause means (1-2 clear paragraphs).",
+  "legal_implication": "Why authorities mandate this element and the regulatory consequences if it is omitted or incorrect.",
+  "specimen_tips": "Physical or digital verification markers of a genuine document (e.g., official colored seals, digital signatures, valid registration numbers).",
+  "action_recommendation": "Concrete, actionable step the applicant should take right now."
+}`
+      : `Analisis gambar cuplikan (snip) ini dengan seksama.
 - Konteks Bagian: "${contextLabel}"
 - Portal: "${portalUrl}"
-- Bahasa: ${language === 'en' ? 'English' : 'Bahasa Indonesia'}
+- Bahasa: Bahasa Indonesia
 
 Berikan penjelasan terstruktur dalam format JSON valid tanpa tanda markdown dengan struktur persis berikut:
 {
   "title": "Nama Istilah / Elemen Dokumen yang Teridentifikasi",
   "plain_explanation": "Penjelasan arti istilah/elemen ini dalam bahasa awam yang sangat mudah dipahami (1-2 paragraf).",
   "legal_implication": "Mengapa elemen/dokumen ini diwajibkan oleh panitia dan apa akibatnya jika salah unggah atau tidak memenuhi syarat.",
-  "specimen_tips": "Ciri-ciri fisik dokumen yang sah (misal: stempel basah berwarna, tanda tangan basah/elektronik BSrE, nomor registrasi resmi).",
+  "specimen_tips": "Ciri-ciri fisik dokumen yang sah (misal: stempel basah berwarna, tanda tangan basah/elektronik, nomor registrasi resmi).",
   "action_recommendation": "Langkah konkret yang harus dilakukan pendaftar saat ini."
 }`;
 
@@ -52,37 +71,37 @@ Berikan penjelasan terstruktur dalam format JSON valid tanpa tanda markdown deng
           {
             type: 'image_url',
             image_url: {
-              url: formattedImageUrl
-            }
+              url: formattedImageUrl,
+            },
           },
           {
             type: 'text',
-            text: userInstruction
-          }
-        ]
-      }
+            text: userInstruction,
+          },
+        ],
+      },
     ];
 
     const response = await fetch(`${basetenBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${basetenApiKey}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${basetenApiKey}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: modelName,
         messages,
         reasoning_effort: 'medium',
         temperature: 0.2,
-        max_tokens: 800
-      })
+        max_tokens: 800,
+      }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
       console.error('Baseten Multimodal Vision API Error:', errText);
       return NextResponse.json(
-        { error: 'Gagal menganalisis visual dokumen via model AI', details: errText },
+        { error: 'Failed to analyze document visual snip via AI vision model', details: errText },
         { status: 502 }
       );
     }
@@ -99,11 +118,17 @@ Berikan penjelasan terstruktur dalam format JSON valid tanpa tanda markdown deng
     } catch (parseErr) {
       console.warn('Fallback regex parsing for explain result:', rawContent);
       parsedResult = {
-        title: contextLabel || 'Hasil Analisis Visual',
+        title: contextLabel || (isEn ? 'Visual Analysis Result' : 'Hasil Analisis Visual'),
         plain_explanation: rawContent,
-        legal_implication: 'Pastikan dokumen memenuhi seluruh kriteria verifikasi berkas resmi.',
-        specimen_tips: 'Periksa keaslian tanda tangan, stempel resmi, dan tanggal penerbitan dokumen.',
-        action_recommendation: 'Unggah file dengan resolusi jernih dan ukuran tidak melebihi batas portal.'
+        legal_implication: isEn
+          ? 'Ensure the document meets all official verification and submission criteria.'
+          : 'Pastikan dokumen memenuhi seluruh kriteria verifikasi berkas resmi.',
+        specimen_tips: isEn
+          ? 'Check the validity of signatures, official seals, and issuance dates.'
+          : 'Periksa keaslian tanda tangan, stempel resmi, dan tanggal penerbitan dokumen.',
+        action_recommendation: isEn
+          ? 'Upload a high-resolution, uncompressed file within portal size limits.'
+          : 'Unggah file dengan resolusi jernih dan ukuran tidak melebihi batas portal.',
       };
     }
 

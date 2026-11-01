@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemPrompt = `Kamu adalah Savvy Essay Coach — pakar penulisan esai beasiswa prestisius (seperti LPDP, Chevening, Fulbright, AAS).
+    const systemPrompt = `Kamu adalah Owly Essay Coach — pakar penulisan esai beasiswa prestisius (seperti LPDP, Chevening, Fulbright, AAS).
 Aturan Mutlak (Strict Factual Adherence):
 1. DILARANG KERAS MENGARANG FAKTA PALSU (ZERO HALLUCINATION). Hanya gunakan fakta, pengalaman, instansi, atau cita-cita yang diberikan di dalam poin-poin pengguna.
 2. Ubah bullet points yang terpisah dan kasar menjadi sebuah narasi esai formal, akademis, meyakinkan, dan kohesif.

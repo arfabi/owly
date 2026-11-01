@@ -9,24 +9,29 @@ const basetenApiKey = process.env.BASETEN_API_KEY || '';
 const basetenBaseUrl = process.env.BASETEN_BASE_URL || 'https://inference.baseten.co/v1';
 const modelName = process.env.MUSE_SPARK_MODEL_NAME || 'meta-models/muse-spark-open-1026';
 
-// 1. Regex Scrubber untuk Deteksi PII Sensitif
-const PII_REGEX_NIK = /\b[1-9]\d{15}\b/g;
-const PII_REGEX_NPWP = /\b\d{2}\.?\d{3}\.?\d{3}\.?\d{1}-?\d{3}\.?\d{3}\b/g;
-const PII_REGEX_CARD = /\b(?:\d{4}[ -]?){3}\d{4}\b/g;
+// 1. Universal PII Regex Scrubber (GDPR / Privacy Shield / Global Data Protection)
+const PII_REGEX_NATIONAL_ID = /\b[1-9]\d{15}\b/g; // 16-digit National IDs / NIK
+const PII_REGEX_SSN = /\b\d{3}-\d{2}-\d{4}\b/g; // US SSN
+const PII_REGEX_TAX = /\b\d{2}\.?\d{3}\.?\d{3}\.?\d{1}-?\d{3}\.?\d{3}\b/g; // Tax IDs / NPWP
+const PII_REGEX_CARD = /\b(?:\d{4}[ -]?){3}\d{4}\b/g; // Credit/Debit Card Numbers
 
 function sanitizePII(text: string): { cleanText: string; hasPII: boolean } {
   let hasPII = false;
-  let cleanText = text.replace(PII_REGEX_NIK, () => {
+  let cleanText = text.replace(PII_REGEX_NATIONAL_ID, () => {
     hasPII = true;
-    return '[NIK_DISENSOR]';
+    return '[NATIONAL_ID_REDACTED]';
   });
-  cleanText = cleanText.replace(PII_REGEX_NPWP, () => {
+  cleanText = cleanText.replace(PII_REGEX_SSN, () => {
     hasPII = true;
-    return '[NPWP_DISENSOR]';
+    return '[SSN_REDACTED]';
+  });
+  cleanText = cleanText.replace(PII_REGEX_TAX, () => {
+    hasPII = true;
+    return '[TAX_ID_REDACTED]';
   });
   cleanText = cleanText.replace(PII_REGEX_CARD, () => {
     hasPII = true;
-    return '[NOMOR_KARTU_DISENSOR]';
+    return '[CARD_NUMBER_REDACTED]';
   });
   return { cleanText, hasPII };
 }
@@ -46,21 +51,26 @@ export async function POST(req: NextRequest) {
       pageTitle = '',
       imageBase64 = null,
       meta = null,
+      lang = 'en',
     } = body;
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json({ error: 'Pesan tidak boleh kosong' }, { status: 400 });
+      return NextResponse.json({ error: 'Message cannot be empty' }, { status: 400 });
     }
 
-    // 1. Sensor PII (UU PDP Guard)
+    const isEn = lang !== 'id';
+
+    // 1. Privacy Scrubber (GDPR / Data Protection Acts)
     const { cleanText, hasPII } = sanitizePII(message);
     if (hasPII) {
       agent_logs.push({
         domain: 'SECURITY',
-        message: 'UU PDP Scrubber: Blocked sensitive PII in prompt (NIK/NPWP/Card).'
+        message: 'Data Privacy Guard: Blocked sensitive PII in prompt (SSN/National ID/Card/Tax ID).'
       });
       return NextResponse.json({
-        reply: 'Demi keamanan dan privasi datamu (UU PDP), mohon untuk tidak mengirimkan nomor identitas pribadi (seperti NIK, NPWP, atau nomor kartu) ke dalam kolom chat. Silakan simpan dan enkripsi data tersebut di Vault Data Pribadi kamu.',
+        reply: isEn
+          ? 'For your security and privacy (GDPR / Data Protection Compliance), please do not paste sensitive personal credentials (such as SSN, National ID, or credit card numbers) into the chat. Please securely store and autofill them from your encrypted Zero-Knowledge Vault.'
+          : 'Demi keamanan dan privasi data Anda (Kepatuhan UU PDP / Perlindungan Data), mohon untuk tidak mengirimkan nomor identitas sensitif (seperti NIK, SSN, NPWP, atau nomor kartu kredit) ke dalam chat. Anda dapat menyimpannya dengan aman di Vault Data Pribadi terenkripsi.',
         piiBlocked: true,
         agent_logs
       });
@@ -68,10 +78,10 @@ export async function POST(req: NextRequest) {
 
     agent_logs.push({
       domain: 'SECURITY',
-      message: 'UU PDP Scrubber: Verified clean prompt, 0 PII leaks detected.'
+      message: 'Data Privacy Guard: Clean prompt verified, 0 PII leaks detected.'
     });
 
-    // 2. Ambil atau buat sesi chat
+    // 2. Retrieve or initialize chat session
     let activeSessionId = sessionId;
     let compactedSummary: string | null = null;
     let currentMessageCount = 0;
@@ -137,19 +147,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Susun Context Payload adaptif untuk Muse Spark Open di Baseten
-    const isScholarshipPortal = portalDomain.toLowerCase().includes('lpdp') || portalDomain.toLowerCase().includes('beasiswa');
-    const isImmigrationPortal = portalDomain.toLowerCase().includes('paspor') || portalDomain.toLowerCase().includes('visa') || portalDomain.toLowerCase().includes('imigrasi');
-
+    // 4. Construct adaptive Context Payload for Meta Muse Spark Open on Baseten
     const metaInfoLines: string[] = [];
-    if (meta?.description) metaInfoLines.push(`- Meta Deskripsi Halaman: "${meta.description}"`);
+    if (meta?.description) metaInfoLines.push(`- Meta Description: "${meta.description}"`);
     if (meta?.keywords) metaInfoLines.push(`- Meta Keywords: "${meta.keywords}"`);
     if (meta?.ogTitle && meta.ogTitle !== pageTitle) metaInfoLines.push(`- OpenGraph Title: "${meta.ogTitle}"`);
-    if (meta?.ogDescription && meta.ogDescription !== meta.description) metaInfoLines.push(`- OpenGraph Deskripsi: "${meta.ogDescription}"`);
-    if (meta?.lang) metaInfoLines.push(`- Bahasa Halaman: "${meta.lang}"`);
-    if (imageBase64) metaInfoLines.push(`- Lampiran Gambar: Tangkapan layar area visual berhasil dilampirkan.`);
+    if (meta?.ogDescription && meta.ogDescription !== meta.description) metaInfoLines.push(`- OpenGraph Description: "${meta.ogDescription}"`);
+    if (meta?.lang) metaInfoLines.push(`- Page Language: "${meta.lang}"`);
+    if (imageBase64) metaInfoLines.push(`- Visual Attachment: Active screen capture / snip attached.`);
 
-    const systemPromptContent = `Kamu adalah Savvy AI — Smart Form & Public Service Web Companion yang ramah, solutif, empatik, dan cerdas.
+    const systemPromptContent = isEn
+      ? `You are Owly AI — an intelligent, empathetic, and knowledgeable Public Service & Form Companion.
+Current User Web Page Context:
+- Domain: "${portalDomain || 'Web Page'}"
+${pageUrl ? `- URL: "${pageUrl}"` : ''}
+${pageTitle ? `- Page Title: "${pageTitle}"` : ''}
+${metaInfoLines.length > 0 ? metaInfoLines.join('\n') : ''}
+
+Assistant Guidelines:
+1. Provide highly relevant, contextual, and clear guidance based on the active website, form instructions, metadata, and visual attachments.
+2. If the user asks about visual elements, images, button locations, layout styling, or clothing/photo requirements that you cannot currently see, call the deterministic tool 'capture_current_screen' to request an automatic screen capture.
+3. Maintain universal applicability across official global portals (visa applications like US DS-160/UKVI, university admissions like Common App/UCAS, government services, or employment registries).
+4. If personal credentials or sensitive identity records are needed, remind the user to securely store and autofill them from their encrypted Zero-Knowledge Vault.
+5. Provide concise, direct, and well-structured answers in English.`
+      : `Kamu adalah Owly AI — Smart Form & Public Service Web Companion yang ramah, solutif, empatik, dan cerdas.
 Konteks Halaman Pengguna Saat Ini:
 - Website / Domain: "${portalDomain || 'Halaman Web'}"
 ${pageUrl ? `- URL Halaman: "${pageUrl}"` : ''}
@@ -157,25 +178,24 @@ ${pageTitle ? `- Judul Halaman: "${pageTitle}"` : ''}
 ${metaInfoLines.length > 0 ? metaInfoLines.join('\n') : ''}
 
 Pedoman Asisten:
-1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website, meta informasi, dan tangkapan layar area yang mereka tanyakan saat ini (baik berupa tabel, perbandingan data, instruksi formulir, diagram, teks regulasi, foto/gambar, atau konten web lainnya).
-2. Jika pengguna bertanya tentang tampilan visual, gambar, foto, warna pakaian/baju/objek di layar, tombol, atau tata letak yang belum Anda lihat gambarnya, Anda memiliki TOOL 'capture_current_screen' untuk meminta tangkapan layar otomatis.
-3. JANGAN mengasumsikan pengguna sedang mendaftar beasiswa KECUALI domain/halaman yang dibuka memang tentang beasiswa (${isScholarshipPortal ? 'aktif: portal beasiswa' : 'bukan portal beasiswa'}) atau pengguna sendiri yang spesifik bertanya tentang beasiswa!
-4. Jika pengguna membuka portal imigrasi/paspor, visa, OSS, perizinan, formulir pendaftaran kerja, atau website umum lainnya, jawablah secara tepat sasaran sesuai konteks topik tersebut.
-5. Jika ada informasi yang membutuhkan data identitas pribadi (seperti NIK, NPWP, atau nomor kartu), ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi (UU PDP).
-6. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
+1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website, meta informasi, dan tangkapan layar area yang mereka tanyakan saat ini.
+2. Jika pengguna bertanya tentang tampilan visual, gambar, foto, warna pakaian/baju/objek di layar, tombol, atau tata letak yang belum Anda lihat gambarnya, panggil tool 'capture_current_screen' untuk meminta tangkapan layar otomatis.
+3. Berlaku universal untuk seluruh portal publik, pendaftaran visa, universitas, perizinan, dan formulir administratif.
+4. Jika membutuhkan data identitas pribadi, ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi.
+5. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
 
     const AVAILABLE_TOOLS = [
       {
         type: "function",
         function: {
           name: "capture_current_screen",
-          description: "Ambil tangkapan layar (screenshot) halaman web aktif pengguna saat ini. Panggil tool ini JIKA pengguna menanyakan tentang foto, gambar, warna baju/pakaian, objek visual, diagram, tombol/elemen tertentu di layar, atau apa pun yang membutuhkan pengamatan visual langsung pada layar pengguna.",
+          description: "Captures a screenshot of the user's active viewport. Call this tool IF the user asks about photos, images, visual elements, button locations, page layout, or anything requiring visual observation of the screen.",
           parameters: {
             type: "object",
             properties: {
               reason: {
                 type: "string",
-                description: "Alasan mengapa screenshot layar pengguna dibutuhkan untuk menjawab pertanyaan."
+                description: "Reason why a screenshot of the user's viewport is necessary to answer the inquiry."
               }
             },
             required: ["reason"]
@@ -191,20 +211,20 @@ Pedoman Asisten:
       }
     ];
 
-    // Injeksi memori ringkasan jika ada
+    // Inject compacted memory summary if available
     if (compactedSummary) {
       messagesPayload.push({
         role: 'system',
-        content: `[Memori Profil Pendaftar]: ${compactedSummary}`
+        content: `[Applicant Profile Context Memory]: ${compactedSummary}`
       });
     }
 
-    // Tambahkan 10 pesan percakapan terakhir
+    // Add sliding window of last 10 conversation turns
     if (historyMessages.length > 0) {
       messagesPayload.push(...historyMessages);
     }
 
-    // 5. Eksekusi Model — Cek apakah ini Turn 2 (Tool Execution Return) atau Turn 1
+    // 5. Model Execution — Turn 2 (Tool Execution Return) or Turn 1 (Initial Prompt)
     const { toolExecution = null } = body;
     let response: Response;
 
@@ -218,13 +238,13 @@ Pedoman Asisten:
         data: { toolCallId: toolExecution.toolCallId }
       });
 
-      // Tambahkan history pesan dari Turn 1
+      // Add user message from Turn 1
       messagesPayload.push({
         role: 'user',
         content: cleanText
       });
 
-      // Asisten memanggil tool
+      // Assistant tool call
       messagesPayload.push({
         role: 'assistant',
         content: null,
@@ -236,26 +256,28 @@ Pedoman Asisten:
               name: toolExecution.toolName || 'capture_current_screen',
               arguments: typeof toolExecution.toolArgs === 'string'
                 ? toolExecution.toolArgs
-                : JSON.stringify(toolExecution.toolArgs || { reason: 'Observasi visual layar' })
+                : JSON.stringify(toolExecution.toolArgs || { reason: 'Visual viewport observation' })
             }
           }
         ]
       });
 
-      // Respons dari tool
+      // Tool response
       messagesPayload.push({
         role: 'tool',
         tool_call_id: toolExecution.toolCallId || 'call_capture_screen',
-        content: 'Tangkapan layar halaman aktif berhasil diambil dan dilampirkan oleh Savvy Agent.'
+        content: 'Screenshot of active viewport captured and attached successfully.'
       });
 
-      // Pesan multimodal dengan gambar screenshot yang diminta
+      // Multimodal vision message with attached screenshot
       messagesPayload.push({
         role: 'user',
         content: [
           {
             type: 'text',
-            text: `Berikut adalah tangkapan layar (screenshot) halaman saat ini yang diminta. Silakan amati dan jawab pertanyaan saya secara akurat: "${cleanText}"`
+            text: isEn
+              ? `Here is the requested screenshot of the active viewport. Please observe it carefully and answer my inquiry: "${cleanText}"`
+              : `Berikut adalah tangkapan layar (screenshot) halaman saat ini yang diminta. Silakan amati dan jawab pertanyaan saya secara akurat: "${cleanText}"`
           },
           {
             type: 'image_url',
@@ -487,7 +509,7 @@ async function triggerCompacting(sessionId: string, fullContext: any[]) {
           ...fullContext,
           {
             role: 'user',
-            content: 'Ekstrak dan rangkum fakta profil pendaftar ini (nama, tujuan beasiswa, latar belakang pendidikan, IPK, skor bahasa, dan kendala) dalam maksimal 2 kalimat padat untuk memori konteks sesi mendatang.'
+            content: 'Extract and summarize key applicant profile facts (name, application goal, educational background, GPA, language test scores, and constraints) in at most 2 dense sentences for future session context memory.'
           }
         ],
         temperature: 0.1,
@@ -508,3 +530,4 @@ async function triggerCompacting(sessionId: string, fullContext: any[]) {
     console.error('[Compacting] Error generating summary:', err);
   }
 }
+

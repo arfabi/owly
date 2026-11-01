@@ -7,13 +7,19 @@ const modelName = process.env.MUSE_SPARK_MODEL_NAME || 'meta-models/muse-spark-o
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { query, candidates, pageTitle = '', pageUrl = '' } = body;
+    const { query, candidates, pageTitle = '', pageUrl = '', language = 'en' } = body;
+
+    const isEn = language === 'en';
 
     if (!query || !candidates || !Array.isArray(candidates) || candidates.length === 0) {
-      return NextResponse.json({ matchedIndex: null, confidence: 0, reason: 'Tidak ada kandidat elemen' });
+      return NextResponse.json({
+        matchedIndex: null,
+        confidence: 0,
+        reason: isEn ? 'No candidate elements provided' : 'Tidak ada kandidat elemen',
+      });
     }
 
-    const systemPrompt = `You are an element matcher agent for Savvy.AI browser companion.
+    const systemPrompt = `You are an element matcher agent for the Owly browser companion.
 Task: Given a user query seeking an element on a webpage, analyze the candidate HTML elements and pick the single best match.
 
 Candidate elements on the page:
@@ -27,30 +33,34 @@ Evaluation Instructions:
 2. Provide a confidence score between 0.0 and 1.0.
 3. If no element matches or confidence is below 0.8, set "matchedIndex" to null and confidence to a value < 0.8.
 4. Output STRICT JSON ONLY matching this schema:
-{"matchedIndex": number | null, "confidence": number, "reason": "Alasan singkat dalam Bahasa Indonesia"}
-Do NOT output codeblocks or other commentary.`;
+{"matchedIndex": number | null, "confidence": number, "reason": "Concise technical explanation in English"}
+Do NOT output codeblocks, markdown fences, or other commentary.`;
 
     const response = await fetch(`${basetenBaseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${basetenApiKey}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${basetenApiKey}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: modelName,
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Cari elemen untuk: "${query}"` }
+          { role: 'user', content: `Locate matching interactive element for: "${query}"` },
         ],
         temperature: 0.1,
-        max_tokens: 150
-      })
+        max_tokens: 150,
+      }),
     });
 
     if (!response.ok) {
       const err = await response.text();
       console.warn('[Element Match Baseten Error]', err);
-      return NextResponse.json({ matchedIndex: null, confidence: 0, reason: 'Gagal menghubungi model AI' });
+      return NextResponse.json({
+        matchedIndex: null,
+        confidence: 0,
+        reason: isEn ? 'Failed to contact AI reasoning model' : 'Gagal menghubungi model AI',
+      });
     }
 
     const completion = await response.json();

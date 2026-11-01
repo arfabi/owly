@@ -128,7 +128,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Simulated Browser Webpage Content & Savvy Side Panel */}
+          {/* Simulated Browser Webpage Content & Owly Side Panel */}
           <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[460px] bg-white">
             {/* Left: Simulated Portal Form */}
             <div className="lg:col-span-7 p-6 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-200 relative bg-[#fafafa]">
@@ -181,7 +181,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right: Savvy.AI Floating Side Panel */}
+            {/* Right: Owly.AI Floating Side Panel */}
             <div className="lg:col-span-5 p-5 bg-white flex flex-col justify-between border-l border-slate-100">
               <div>
                 {/* Agent Header */}

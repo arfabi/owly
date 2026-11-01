@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Multimodal Document Vision Extractor (Muse Spark Open via Baseten)
+// OWLY.AI — Multimodal Document Vision Extractor (Muse Spark Open via Baseten)
 // Ephemeral, zero-retention extraction complying with UU PDP No. 27/2022
 // ============================================================================
 
@@ -59,7 +59,7 @@ export async function extractDocumentWithMask(
       rawText: explanation,
     };
   } catch (err: any) {
-    console.error("[Savvy.AI DocExtractor] Error:", err);
+    console.error("[Owly.AI DocExtractor] Error:", err);
     throw err;
   }
 }

@@ -73,7 +73,8 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
       const localReport = runClientSideComprehensiveAudit(
         snapshot.fields || [],
         snapshot.pageUploadContext || { pageWideFileInstructions: [], attachedFilesMetadata: [] },
-        vaultItems
+        vaultItems,
+        isId ? "id" : "en"
       );
 
       // Step 3: Call AI Agentic Endpoint for scattered page instructions (Optional AI augmentation)
@@ -107,9 +108,9 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
             id: `ai_${Date.now()}_${Math.random().toString(36).substring(7)}`,
             fieldId: aiItem.fieldId || "page",
             fieldName: aiItem.fieldId || "page",
-            fieldLabel: aiItem.fieldId || "Instruksi Halaman",
+            fieldLabel: aiItem.fieldId || (isId ? "Instruksi Halaman" : "Page Guideline"),
             level: aiItem.level || "yellow",
-            badge: aiItem.badge || "BERKAS",
+            badge: aiItem.badge || "ATTACHMENT",
             message: aiItem.message,
             hint: aiItem.hint,
           });
@@ -165,6 +166,33 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
     setSaveToVaultToast(true);
     agentLog.security("🔐 Reverse onboarding: Valid form data saved to AES-256 local Vault.");
     setTimeout(() => setSaveToVaultToast(false), 4000);
+  };
+
+  // Localized badge mapper (supports universal English & Indonesian)
+  const getLocalizedBadge = (badge: string, isApplied?: boolean | string): string => {
+    if (Boolean(isApplied)) return isId ? "TERATASI" : "RESOLVED";
+    const b = (badge || "").toUpperCase();
+    switch (b) {
+      case "WAJIB":
+      case "REQUIRED":
+        return isId ? "WAJIB" : "REQUIRED";
+      case "FORMAT":
+        return "FORMAT";
+      case "SUMBER":
+      case "DISCREPANCY":
+        return isId ? "SUMBER" : "DISCREPANCY";
+      case "BERKAS":
+      case "ATTACHMENT":
+      case "FILE":
+        return isId ? "BERKAS" : "ATTACHMENT";
+      case "ATURAN":
+      case "RULE":
+        return isId ? "ATURAN" : "RULE";
+      case "VALID":
+        return "VALID";
+      default:
+        return badge;
+    }
   };
 
   return (
@@ -303,7 +331,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
               {report.issues.map((issue) => {
                 const isRed = issue.level === "red";
                 const isYellow = issue.level === "yellow";
-                const isApplied = issue.action?.fieldId && appliedFieldIds.has(issue.action.fieldId);
+                const isApplied = Boolean(issue.action?.fieldId && appliedFieldIds.has(issue.action.fieldId));
 
                 return (
                   <div
@@ -332,7 +360,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
                               : "bg-emerald-600 text-white"
                           }`}
                         >
-                          {isApplied ? "TERATASI" : issue.badge}
+                          {getLocalizedBadge(issue.badge, isApplied)}
                         </span>
                         <h4 className="font-extrabold text-xs text-slate-900 leading-tight">
                           {issue.fieldLabel}

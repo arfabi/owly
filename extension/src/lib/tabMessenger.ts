@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Robust Tab Messenger & Dynamic Content Script Injector
+// OWLY.AI — Robust Tab Messenger & Dynamic Content Script Injector
 // Handles Chrome MV3 connection lifecycle without 'Receiving end does not exist'
 // ============================================================================
 

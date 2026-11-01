@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Client-Side Deterministic & Zero-Knowledge Vault Form Auditor
+// OWLY.AI — Client-Side Deterministic & Zero-Knowledge Vault Form Auditor
 // Ultra-fast (<5ms), zero API cost, mathematical accuracy, 100% private.
 // ============================================================================
 
@@ -53,7 +53,7 @@ export interface AuditIssue {
   fieldName: string;
   fieldLabel: string;
   level: "red" | "yellow" | "green";
-  badge: "WAJIB" | "FORMAT" | "SUMBER" | "BERKAS" | "VALID";
+  badge: "REQUIRED" | "FORMAT" | "DISCREPANCY" | "ATTACHMENT" | "RULE" | "VALID" | "WAJIB" | "SUMBER" | "BERKAS" | "ATURAN";
   message: string;
   hint?: string;
   juknisRef?: string;
@@ -190,9 +190,11 @@ function levenshteinDistance(a: string, b: string): number {
 export function runClientSideComprehensiveAudit(
   fields: ScrapedFormField[],
   pageUploadContext: PageUploadContext,
-  vaultItems: VaultProfileItem[] = []
+  vaultItems: VaultProfileItem[] = [],
+  language: "en" | "id" = "en"
 ): ComprehensiveAuditReport {
   const issues: AuditIssue[] = [];
+  const isEn = language === "en";
 
   // Indexing map untuk pencocokan nalar silang antar-kolom di form
   const fieldMap: Record<string, ScrapedFormField> = {};
@@ -225,7 +227,7 @@ export function runClientSideComprehensiveAudit(
 
   // Evaluasi setiap field satu per satu (Non-Blocking)
   fields.forEach((f) => {
-    const label = f.label || f.name || f.fieldId || "Kolom";
+    const label = f.label || f.name || f.fieldId || (isEn ? "Field" : "Kolom");
     const val = f.currentValue.trim();
     const lowerLabel = label.toLowerCase();
     const type = f.rules.type.toLowerCase();
@@ -242,11 +244,15 @@ export function runClientSideComprehensiveAudit(
         fieldName: f.name,
         fieldLabel: label,
         level: "red",
-        badge: "WAJIB",
-        message: `Field '${label}' wajib diisi (terdapat tanda asterik * / required).`,
-        hint: f.rules.placeholder ? `Contoh pengisian: ${f.rules.placeholder}` : "Lengkapi kolom ini sebelum mengirim berkas.",
+        badge: "REQUIRED",
+        message: isEn
+          ? `Field '${label}' is required (marked with asterisk * / required attribute).`
+          : `Field '${label}' wajib diisi (terdapat tanda asterik * / required).`,
+        hint: f.rules.placeholder
+          ? (isEn ? `Example: ${f.rules.placeholder}` : `Contoh pengisian: ${f.rules.placeholder}`)
+          : (isEn ? "Please complete this field before submitting." : "Lengkapi kolom ini sebelum mengirim berkas."),
         action: {
-          label: "Sorot Kolom di Web",
+          label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web",
           actionType: "HIGHLIGHT",
           fieldId: f.fieldId,
           fieldName: f.name,
@@ -264,10 +270,12 @@ export function runClientSideComprehensiveAudit(
         fieldLabel: label,
         level: "red",
         badge: "FORMAT",
-        message: `Isian '${label}' kurang dari batas minimal form (${val.length}/${f.rules.minLength} karakter).`,
-        hint: f.rules.placeholder ? `Format acuan: ${f.rules.placeholder}` : undefined,
+        message: isEn
+          ? `'${label}' is shorter than the minimum form requirement (${val.length}/${f.rules.minLength} characters).`
+          : `Isian '${label}' kurang dari batas minimal form (${val.length}/${f.rules.minLength} karakter).`,
+        hint: f.rules.placeholder ? (isEn ? `Format guide: ${f.rules.placeholder}` : `Format acuan: ${f.rules.placeholder}`) : undefined,
         action: {
-          label: "Sorot Kolom di Web",
+          label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web",
           actionType: "HIGHLIGHT",
           fieldId: f.fieldId,
           fieldName: f.name,
@@ -278,10 +286,10 @@ export function runClientSideComprehensiveAudit(
     if (!val) return; // Kolom opsional yang kosong tidak diaudit formatnya
 
     // =========================================================================
-    // LAYER 2: FORMAT BAKU STANDAR INDONESIA & NALAR SILANG
+    // LAYER 2: FORMAT BAKU STANDAR & NALAR SILANG
     // =========================================================================
 
-    // 2.1 Audit NIK
+    // 2.1 Audit NIK / National ID
     if (lowerLabel.includes("nik") || lowerLabel.includes("no. ktp") || lowerLabel.includes("nomor induk kependudukan")) {
       const nikRes = validateIndonesianNIK(val);
       if (!nikRes.isValid) {
@@ -292,25 +300,22 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: nikRes.reason || "Format NIK tidak valid.",
-          hint: "NIK wajib 16 digit angka numerik sesuai e-KTP Dukcapil.",
+          message: isEn ? (nikRes.reason || "Invalid National ID format.") : (nikRes.reason || "Format NIK tidak valid."),
+          hint: isEn ? "National ID must be 16 numeric digits conforming to official identity standards." : "NIK wajib 16 digit angka numerik sesuai e-KTP Dukcapil.",
           juknisRef: "UU Adminduk No. 24/2013",
-          action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       } else {
         // NIK Valid format, lakukan Nalar Silang terhadap Tanggal Lahir form jika ada
         const { birthDay, birthMonth, isFemale } = nikRes.parsed!;
         if (formBirthDate) {
-          // Normalisasi format tanggal lahir form (cth: "17-08-1995" atau "1995-08-17" atau "17/08/1995")
           const parts = formBirthDate.split(/[-/]/).map((p) => parseInt(p, 10));
           let formDay = 0;
           let formMonth = 0;
           if (parts[0] > 1900) {
-            // YYYY-MM-DD
             formMonth = parts[1];
             formDay = parts[2];
           } else {
-            // DD-MM-YYYY
             formDay = parts[0];
             formMonth = parts[1];
           }
@@ -323,9 +328,11 @@ export function runClientSideComprehensiveAudit(
               fieldLabel: label,
               level: "red",
               badge: "FORMAT",
-              message: `Tanggal lahir pada NIK (${birthDay}/${birthMonth}) tidak cocok dengan tanggal lahir di form (${formDay}/${formMonth}).`,
-              hint: "Periksa kembali ketikan NIK atau tanggal lahir Anda agar tidak gugur verifikasi administrasi.",
-              action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+              message: isEn
+                ? `Date of birth encoded in ID (${birthDay}/${birthMonth}) does not match the form's birth date (${formDay}/${formMonth}).`
+                : `Tanggal lahir pada NIK (${birthDay}/${birthMonth}) tidak cocok dengan tanggal lahir di form (${formDay}/${formMonth}).`,
+              hint: isEn ? "Double-check your entered ID or birth date to prevent pre-screening disqualification." : "Periksa kembali ketikan NIK atau tanggal lahir Anda agar tidak gugur verifikasi administrasi.",
+              action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
             });
           }
         }
@@ -342,17 +349,19 @@ export function runClientSideComprehensiveAudit(
               fieldLabel: label,
               level: "red",
               badge: "FORMAT",
-              message: `Gender yang terenkode di NIK (${isFemale ? "Perempuan (+40)" : "Laki-laki"}) tidak cocok dengan jenis kelamin yang dipilih (${formGender}).`,
-              hint: "Pada NIK resmi Dukcapil, tanggal lahir perempuan ditambah 40 (rentang 41–71).",
-              action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+              message: isEn
+                ? `Gender encoded in ID (${isFemale ? "Female" : "Male"}) does not match the selected form gender (${formGender}).`
+                : `Gender yang terenkode di NIK (${isFemale ? "Perempuan (+40)" : "Laki-laki"}) tidak cocok dengan jenis kelamin yang dipilih (${formGender}).`,
+              hint: isEn ? "Official registry standard encodes gender offset in birth day digits." : "Pada NIK resmi Dukcapil, tanggal lahir perempuan ditambah 40 (rentang 41–71).",
+              action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
             });
           }
         }
       }
     }
 
-    // 2.2 Audit No Handphone
-    else if (lowerLabel.includes("hp") || lowerLabel.includes("handphone") || lowerLabel.includes("telepon") || lowerLabel.includes("whatsapp") || type === "tel") {
+    // 2.2 Audit No Handphone / Phone Number
+    else if (lowerLabel.includes("hp") || lowerLabel.includes("handphone") || lowerLabel.includes("telepon") || lowerLabel.includes("phone") || lowerLabel.includes("whatsapp") || type === "tel") {
       const phoneRes = validateIndonesianPhone(val);
       if (!phoneRes.isValid) {
         issues.push({
@@ -362,9 +371,9 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: phoneRes.reason || "Format nomor HP tidak valid.",
-          hint: "Contoh format standar: 08123456789 atau +628123456789 (10–13 digit).",
-          action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          message: isEn ? (phoneRes.reason || "Invalid phone number format.") : (phoneRes.reason || "Format nomor HP tidak valid."),
+          hint: isEn ? "Standard format example: +1 555-123-4567 or international E.164 format (10–13 digits)." : "Contoh format standar: 08123456789 atau +628123456789 (10–13 digit).",
+          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
@@ -379,14 +388,18 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: `Format alamat email '${val}' tidak valid menurut standar RFC 5322.`,
-          hint: "Pastikan memuat tanda '@' dan domain resmi penyedia email (contoh: nama@domain.com).",
-          action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          message: isEn
+            ? `Email address format '${val}' is invalid according to RFC 5322.`
+            : `Format alamat email '${val}' tidak valid menurut standar RFC 5322.`,
+          hint: isEn
+            ? "Must contain '@' and a valid provider domain (e.g. name@domain.com)."
+            : "Pastikan memuat tanda '@' dan domain resmi penyedia email (contoh: nama@domain.com).",
+          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
 
-    // 2.4 Audit Paspor
+    // 2.4 Audit Passport
     else if (lowerLabel.includes("paspor") || lowerLabel.includes("passport")) {
       const passRes = validatePassportICAO(val);
       if (!passRes.isValid) {
@@ -397,38 +410,42 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: passRes.reason || "Format nomor paspor tidak sesuai standar ICAO.",
-          hint: "Standar paspor RI: 1 huruf kapital diikuti 7–8 digit angka.",
-          action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          message: isEn ? (passRes.reason || "Passport number format does not comply with ICAO standards.") : (passRes.reason || "Format nomor paspor tidak sesuai standar ICAO."),
+          hint: isEn ? "Standard passport: 1 uppercase letter followed by 7–8 digits." : "Standar paspor RI: 1 huruf kapital diikuti 7–8 digit angka.",
+          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
 
-    // 2.5 Audit Nama Lengkap (Typo karakter angka / simbol)
-    else if (lowerLabel.includes("nama") && !lowerLabel.includes("ibu") && !lowerLabel.includes("kampus") && !lowerLabel.includes("prodi")) {
-      if (val.length < 3) {
-        issues.push({
-          id: `name_len_${f.fieldId}`,
-          fieldId: f.fieldId,
-          fieldName: f.name,
-          fieldLabel: label,
-          level: "red",
-          badge: "FORMAT",
-          message: "Nama lengkap terlalu pendek (kurang dari 3 huruf).",
-          action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
-        });
-      } else if (/\d/.test(val)) {
-        issues.push({
-          id: `name_num_${f.fieldId}`,
-          fieldId: f.fieldId,
-          fieldName: f.name,
-          fieldLabel: label,
-          level: "red",
-          badge: "FORMAT",
-          message: `Nama lengkap mengandung angka numerik ('${val}'). Nama harus bersih sesuai dokumen resmi.`,
-          hint: "Hapus karakter angka atau ketikan tidak sengaja.",
-          action: { label: "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
-        });
+    // 2.5 Audit Full Name (Typo numeric / symbols)
+    else if (lowerLabel.includes("nama") || lowerLabel.includes("name")) {
+      if (!lowerLabel.includes("ibu") && !lowerLabel.includes("mother") && !lowerLabel.includes("kampus") && !lowerLabel.includes("university")) {
+        if (val.length < 3) {
+          issues.push({
+            id: `name_len_${f.fieldId}`,
+            fieldId: f.fieldId,
+            fieldName: f.name,
+            fieldLabel: label,
+            level: "red",
+            badge: "FORMAT",
+            message: isEn ? "Full name is too short (fewer than 3 letters)." : "Nama lengkap terlalu pendek (kurang dari 3 huruf).",
+            action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          });
+        } else if (/\d/.test(val)) {
+          issues.push({
+            id: `name_num_${f.fieldId}`,
+            fieldId: f.fieldId,
+            fieldName: f.name,
+            fieldLabel: label,
+            level: "red",
+            badge: "FORMAT",
+            message: isEn
+              ? `Full name contains numeric digits ('${val}'). Name must be clean according to official documents.`
+              : `Nama lengkap mengandung angka numerik ('${val}'). Nama harus bersih sesuai dokumen resmi.`,
+            hint: isEn ? "Remove numeric digits or accidental typos." : "Hapus karakter angka atau ketikan tidak sengaja.",
+            action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          });
+        }
       }
     }
 
@@ -436,7 +453,6 @@ export function runClientSideComprehensiveAudit(
     // LAYER 3: ZERO-KNOWLEDGE CLIENT-SIDE VAULT RECONCILER (TYPO CATCHER)
     // =========================================================================
     if (vaultItems && vaultItems.length > 0) {
-      // Cari data vault yang bersesuaian dengan field ini
       const matchingVaultItem = vaultItems.find((vi) => {
         const vName = vi.name.toLowerCase();
         if (lowerLabel.includes(vName) || vName.includes(lowerLabel)) return true;
@@ -448,13 +464,11 @@ export function runClientSideComprehensiveAudit(
 
       if (matchingVaultItem && matchingVaultItem.value && val) {
         const vaultVal = matchingVaultItem.value.trim();
-        // Bandingkan jika tidak persis sama tapi mirip (typo manusia)
         if (val.toLowerCase() !== vaultVal.toLowerCase()) {
           const dist = levenshteinDistance(val, vaultVal);
           const maxLen = Math.max(val.length, vaultVal.length);
           const similarity = 1 - dist / maxLen;
 
-          // Jika ada perbedaan 1 s/d 3 karakter pada kata dengan panjang cukup
           if (dist >= 1 && dist <= 3 && similarity > 0.65) {
             issues.push({
               id: `vault_mismatch_${f.fieldId}`,
@@ -462,11 +476,15 @@ export function runClientSideComprehensiveAudit(
               fieldName: f.name,
               fieldLabel: label,
               level: "yellow",
-              badge: "SUMBER",
-              message: `Form tertulis '${val}', berbeda dengan dokumen Vault '${vaultVal}'.`,
-              hint: `Terdeteksi potensi salah ketik (${dist} karakter berbeda). Sumber: ${matchingVaultItem.sourceTag || "Vault Pribadi"}.`,
+              badge: "DISCREPANCY",
+              message: isEn
+                ? `Form has '${val}', which differs from verified Vault record '${vaultVal}'.`
+                : `Form tertulis '${val}', berbeda dengan dokumen Vault '${vaultVal}'.`,
+              hint: isEn
+                ? `Potential typo detected (${dist} characters different). Source: ${matchingVaultItem.sourceTag || "Personal Vault"}.`
+                : `Terdeteksi potensi salah ketik (${dist} karakter berbeda). Sumber: ${matchingVaultItem.sourceTag || "Vault Pribadi"}.`,
               action: {
-                label: `Pakai Data Vault: "${vaultVal}"`,
+                label: isEn ? `Use Vault Data: "${vaultVal}"` : `Pakai Data Vault: "${vaultVal}"`,
                 actionType: "REPLACE_VALUE",
                 replaceValue: vaultVal,
                 fieldId: f.fieldId,
@@ -484,9 +502,9 @@ export function runClientSideComprehensiveAudit(
   // =========================================================================
   if (pageUploadContext?.attachedFilesMetadata && pageUploadContext.attachedFilesMetadata.length > 0) {
     pageUploadContext.attachedFilesMetadata.forEach((att) => {
-      // 4.1 Cek ukuran file > 2 MB jika ada catatan 500 KB di halaman
+      // 4.1 Cek ukuran file > 512 KB jika ada catatan 500 KB di halaman
       const has500KbLimit = pageUploadContext.pageWideFileInstructions.some((inst) =>
-        /500\s*kb|0\.5\s*mb/i.test(inst)
+        /500\s*kb|0\.5\s*mb|maksimal 500|max.*500/i.test(inst)
       );
 
       if (has500KbLimit && att.fileSizeKb > 512) {
@@ -494,22 +512,30 @@ export function runClientSideComprehensiveAudit(
           id: `file_size_${att.fieldName}`,
           fieldId: att.fieldName,
           fieldName: att.fieldName,
-          fieldLabel: `Berkas: ${att.fileName}`,
+          fieldLabel: isEn ? `Attachment: ${att.fileName}` : `Berkas: ${att.fileName}`,
           level: "red",
-          badge: "BERKAS",
-          message: `Ukuran berkas (${att.fileSizeKb} KB) melebihi batas 500 KB yang tertera pada petunjuk halaman.`,
-          hint: "Kompres ukuran berkas foto/PDF Anda agar di bawah 500 KB sebelum diunggah.",
+          badge: "ATTACHMENT",
+          message: isEn
+            ? `File size (${att.fileSizeKb} KB) exceeds the 500 KB limit indicated in page instructions.`
+            : `Ukuran berkas (${att.fileSizeKb} KB) melebihi batas 500 KB yang tertera pada petunjuk halaman.`,
+          hint: isEn
+            ? "Compress your photo or PDF document to under 500 KB before uploading."
+            : "Kompres ukuran berkas foto/PDF Anda agar di bawah 500 KB sebelum diunggah.",
         });
       } else if (att.fileSizeKb > 5120) {
         issues.push({
           id: `file_size_max_${att.fieldName}`,
           fieldId: att.fieldName,
           fieldName: att.fieldName,
-          fieldLabel: `Berkas: ${att.fileName}`,
+          fieldLabel: isEn ? `Attachment: ${att.fileName}` : `Berkas: ${att.fileName}`,
           level: "red",
-          badge: "BERKAS",
-          message: `Ukuran berkas (${Math.round(att.fileSizeKb / 1024)} MB) melebihi batas umum portal formulir (5 MB).`,
-          hint: "Perkecil ukuran dokumen agar proses unggah tidak gagal/timeout.",
+          badge: "ATTACHMENT",
+          message: isEn
+            ? `File size (${Math.round(att.fileSizeKb / 1024)} MB) exceeds the general portal threshold (5 MB).`
+            : `Ukuran berkas (${Math.round(att.fileSizeKb / 1024)} MB) melebihi batas umum portal formulir (5 MB).`,
+          hint: isEn
+            ? "Reduce document file size to prevent upload failure or server timeout."
+            : "Perkecil ukuran dokumen agar proses unggah tidak gagal/timeout.",
         });
       }
 
@@ -520,11 +546,15 @@ export function runClientSideComprehensiveAudit(
           id: `file_ext_${att.fieldName}`,
           fieldId: att.fieldName,
           fieldName: att.fieldName,
-          fieldLabel: `Berkas: ${att.fileName}`,
+          fieldLabel: isEn ? `Attachment: ${att.fileName}` : `Berkas: ${att.fileName}`,
           level: "red",
-          badge: "BERKAS",
-          message: `Format berkas '.${att.fileExtension.toUpperCase()}' biasanya ditolak oleh sistem birokrasi.`,
-          hint: "Harap gunakan format PDF atau JPG/PNG standar.",
+          badge: "ATTACHMENT",
+          message: isEn
+            ? `File format '.${att.fileExtension.toUpperCase()}' is typically rejected by administrative portals.`
+            : `Format berkas '.${att.fileExtension.toUpperCase()}' biasanya ditolak oleh sistem birokrasi.`,
+          hint: isEn
+            ? "Please upload a standard PDF or JPG/PNG document."
+            : "Harap gunakan format PDF atau JPG/PNG standar.",
         });
       }
     });

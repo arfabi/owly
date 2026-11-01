@@ -175,6 +175,7 @@ export function VaultTab({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccessToast, setUploadSuccessToast] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // New Item Form State
   const [newName, setNewName] = useState("");
@@ -357,16 +358,15 @@ export function VaultTab({
   };
 
   // Real AI Document Upload with Meta Muse Spark Open Multimodal Vision
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const processUploadedFile = async (file: File) => {
     if (!file) return;
 
     // Visual AI Vision requires image formats
     if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") {
       setUploadSuccessToast(
         isId
-          ? "Ekstraksi visual AI memerlukan format gambar (JPG, JPEG, PNG, WEBP). Harap unggah foto KTP/Paspor Anda."
-          : "Visual AI extraction requires image format (JPG, JPEG, PNG, WEBP). Please upload an image of your ID."
+          ? "Ekstraksi visual AI memerlukan format gambar (JPG, JPEG, PNG, WEBP). Harap unggah foto dokumen Anda."
+          : "Visual AI extraction requires image format (JPG, JPEG, PNG, WEBP). Please upload an image of your document."
       );
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -387,7 +387,7 @@ export function VaultTab({
 
       // 2. Call /api/document/extract
       let fields: ProfileItem[] = [];
-      let docType = "KTP Republik Indonesia";
+      let docType = "Official Document";
 
       const baseUrl = await getEffectiveApiBaseUrl();
       const res = await fetch(`${baseUrl}/api/document/extract`, {
@@ -419,16 +419,16 @@ export function VaultTab({
         throw new Error(
           errJson?.error ||
             (isId
-              ? "Dokumen tidak dapat terbaca. Pastikan foto KTP/Paspor terang dan teks jelas."
-              : "Document unreadable. Please ensure the ID photo is well-lit and clear.")
+              ? "Dokumen tidak dapat terbaca. Pastikan foto dokumen terang dan teks jelas."
+              : "Document unreadable. Please ensure the document photo is well-lit and clear.")
         );
       }
 
       if (fields.length === 0) {
         throw new Error(
           isId
-            ? "Tidak ada data identitas yang terbaca dari gambar ini. Pastikan foto e-KTP/Paspor terang, tidak buram, dan teks terlihat jelas."
-            : "No identity fields could be recognized from this image. Please ensure the ID photo is bright and clear."
+            ? "Tidak ada data resmi yang terbaca dari gambar ini. Pastikan foto dokumen (KTP, Ijazah, SIM, atau Paspor) terang dan teks terlihat jelas."
+            : "No identity fields could be recognized from this image. Please ensure the document photo is bright and clear."
         );
       }
 
@@ -448,8 +448,8 @@ export function VaultTab({
 
       setUploadSuccessToast(
         isId
-          ? `Ekstraksi ${file.name} berhasil! ${fields.length} data identitas resmi otomatis ditambahkan ke Vault.`
-          : `Extraction for ${file.name} succeeded! ${fields.length} official identity fields added to Vault.`
+          ? `Ekstraksi ${file.name} berhasil! ${fields.length} data resmi otomatis ditambahkan ke Vault.`
+          : `Extraction for ${file.name} succeeded! ${fields.length} official fields added to Vault.`
       );
     } catch (err: any) {
       console.error("[VaultTab] Upload extract error:", err);
@@ -465,6 +465,33 @@ export function VaultTab({
         fileInputRef.current.value = "";
       }
       setTimeout(() => setUploadSuccessToast(null), 6000);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processUploadedFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processUploadedFile(file);
     }
   };
 
@@ -636,19 +663,46 @@ export function VaultTab({
       {/* ==================================================================== */}
       {/* 3. BOTTOM CARD: UPLOAD DOCUMENT & PRIVACY CONSENT BANNER             */}
       {/* ==================================================================== */}
-      <div className="border-2 border-dashed border-blue-400/80 bg-white rounded-2xl p-5 text-center space-y-3.5 shadow-2xs">
+      <div
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => !isUploading && fileInputRef.current?.click()}
+        className={`border-2 border-dashed rounded-2xl p-5 text-center space-y-3.5 shadow-2xs transition-all cursor-pointer relative group ${
+          isDragging
+            ? "border-savvy-blue bg-blue-50/80 scale-[1.01] ring-4 ring-blue-100 shadow-md"
+            : "border-blue-400/80 bg-white hover:border-savvy-blue hover:bg-slate-50/60"
+        }`}
+      >
         {/* Upload Icon */}
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-blue-50 border border-blue-200/80 flex items-center justify-center text-savvy-blue shadow-2xs">
+        <div
+          className={`w-12 h-12 mx-auto rounded-2xl flex items-center justify-center transition-all shadow-2xs ${
+            isDragging
+              ? "bg-savvy-blue text-white scale-110"
+              : "bg-blue-50 border border-blue-200/80 text-savvy-blue group-hover:scale-105"
+          }`}
+        >
           <UploadCloud className="w-6 h-6" />
         </div>
 
         {/* Title & Description */}
         <div>
           <h4 className="font-extrabold text-sm text-slate-900 leading-tight">
-            {t.vault.uploadDocCardTitle}
+            {isDragging
+              ? isId
+                ? "Lepaskan Berkas di Sini!"
+                : "Drop Document Here!"
+              : t.vault.uploadDocCardTitle}
           </h4>
           <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-[320px] mx-auto">
-            {t.vault.uploadDocCardSubtitle}
+            {isDragging
+              ? isId
+                ? "AI akan langsung mengekstrak seluruh data dari dokumen ini."
+                : "AI will immediately extract all fields from this document."
+              : isId
+              ? "Tarik & lepas (drag and drop) atau klik untuk memilih foto KTP, SIM, Ijazah, atau Paspor."
+              : t.vault.uploadDocCardSubtitle}
           </p>
         </div>
 
@@ -657,15 +711,15 @@ export function VaultTab({
           type="file"
           ref={fileInputRef}
           onChange={handleFileUpload}
-          accept=".pdf,.png,.jpg,.jpeg,.webp"
+          accept=".png,.jpg,.jpeg,.webp"
           className="hidden"
         />
 
         {/* Upload Button */}
         <button
-          onClick={() => fileInputRef.current?.click()}
+          type="button"
           disabled={isUploading}
-          className="py-2.5 px-6 rounded-xl bg-white border border-slate-300 hover:border-savvy-blue text-savvy-blue font-extrabold text-xs shadow-2xs hover:bg-blue-50/50 transition-all cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+          className="py-2.5 px-6 rounded-xl bg-white border border-slate-300 group-hover:border-savvy-blue text-savvy-blue font-extrabold text-xs shadow-2xs hover:bg-blue-50/50 transition-all cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50 pointer-events-none"
         >
           {isUploading ? (
             <>
@@ -673,7 +727,7 @@ export function VaultTab({
               <span>{t.vault.uploadingDoc}</span>
             </>
           ) : (
-            <span>{t.vault.btnUploadDoc}</span>
+            <span>{isId ? "Pilih Berkas atau Tarik ke Sini" : t.vault.btnUploadDoc}</span>
           )}
         </button>
 

@@ -1,12 +1,12 @@
 // ============================================================================
-// SAVVY.AI — Agentic Execution Logger
+// OWLY.AI — Agentic Execution Logger
 // Memberikan observabilitas visual transparan di Chrome DevTools Console:
-// [Savvy Agent: Perception] -> Observasi DOM, fokus kolom, mutasi, rute
-// [Savvy Agent: Reasoning]   -> Analisis Juknis, pengambilan keputusan, AI prompt
-// [Savvy Agent: Action]      -> Eksekusi Autofill, Undo, Spotlight, A11y
-// [Savvy Agent: Security]    -> WebCrypto AES-256-GCM, UU PDP PII Scrubber
-// [Savvy Agent: Voice]       -> VAD Voicebot, AudioContext RMS, PTT
-// [Savvy Agent: Planner]     -> Transisi status agent, quick starter routing
+// [Owly Agent: Perception] -> Observasi DOM, fokus kolom, mutasi, rute
+// [Owly Agent: Reasoning]   -> Analisis Juknis, pengambilan keputusan, AI prompt
+// [Owly Agent: Action]      -> Eksekusi Autofill, Undo, Spotlight, A11y
+// [Owly Agent: Security]    -> WebCrypto AES-256-GCM, UU PDP PII Scrubber
+// [Owly Agent: Voice]       -> VAD Voicebot, AudioContext RMS, PTT
+// [Owly Agent: Planner]     -> Transisi status agent, quick starter routing
 // ============================================================================
 
 export type AgentDomain = 
@@ -19,11 +19,11 @@ export type AgentDomain =
   | "GATEWAY";
 
 const BADGE_STYLES: Record<AgentDomain, { bg: string; color: string; icon: string }> = {
-  PLANNER: { bg: "#7045ED", color: "#FFFFFF", icon: "🧭" },     // Savvy Purple
-  PERCEPTION: { bg: "#398CF5", color: "#FFFFFF", icon: "👁️" },  // Savvy Blue
+  PLANNER: { bg: "#7045ED", color: "#FFFFFF", icon: "🧭" },     // Owly Purple
+  PERCEPTION: { bg: "#398CF5", color: "#FFFFFF", icon: "👁️" },  // Owly Blue
   REASONING: { bg: "#0D9488", color: "#FFFFFF", icon: "🧠" },   // Emerald/Teal
   ACTION: { bg: "#F59E0B", color: "#000000", icon: "⚡" },      // Amber
-  SECURITY: { bg: "#EF5350", color: "#FFFFFF", icon: "🛡️" },    // Savvy Red
+  SECURITY: { bg: "#EF5350", color: "#FFFFFF", icon: "🛡️" },    // Owly Red
   VOICE: { bg: "#6366F1", color: "#FFFFFF", icon: "🎙️" },       // Indigo
   GATEWAY: { bg: "#0284C7", color: "#FFFFFF", icon: "☁️" },     // Sky Blue (Cloud Gateway)
 };
@@ -48,7 +48,7 @@ export function logAgent(domain: AgentDomain, message: string, data?: any, broad
 
   if (data !== undefined) {
     console.log(
-      `%c${cfg.icon} [Savvy Agent: ${domain}]%c ${timestamp}%c ${message}`,
+      `%c${cfg.icon} [Owly Agent: ${domain}]%c ${timestamp}%c ${message}`,
       badgeStyle,
       timeStyle,
       msgStyle,
@@ -56,7 +56,7 @@ export function logAgent(domain: AgentDomain, message: string, data?: any, broad
     );
   } else {
     console.log(
-      `%c${cfg.icon} [Savvy Agent: ${domain}]%c ${timestamp}%c ${message}`,
+      `%c${cfg.icon} [Owly Agent: ${domain}]%c ${timestamp}%c ${message}`,
       badgeStyle,
       timeStyle,
       msgStyle

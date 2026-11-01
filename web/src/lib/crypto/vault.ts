@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Client-Side WebCrypto AES-256-GCM Vault Engine (Web Showcase)
+// OWLY.AI — Client-Side WebCrypto AES-256-GCM Vault Engine (Web Showcase)
 // Zero-Knowledge Encryption: Server never sees raw data or passphrase
 // ============================================================================
 

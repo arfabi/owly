@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Content Script (Chrome Manifest V3)
+// OWLY.AI — Content Script (Chrome Manifest V3)
 // Injeksi Closed Shadow DOM, Field Detection, dan Accessibility Controller
 // ============================================================================
 
@@ -66,9 +66,9 @@
     const msgStyle = `color: #0F172A; font-weight: 600; font-size: 12px;`;
 
     if (data !== undefined) {
-      console.log(`%c${cfg.icon} [Savvy Agent: ${domain}]%c ${timestamp}%c ${message}`, badgeStyle, timeStyle, msgStyle, data);
+      console.log(`%c${cfg.icon} [Owly Agent: ${domain}]%c ${timestamp}%c ${message}`, badgeStyle, timeStyle, msgStyle, data);
     } else {
-      console.log(`%c${cfg.icon} [Savvy Agent: ${domain}]%c ${timestamp}%c ${message}`, badgeStyle, timeStyle, msgStyle);
+      console.log(`%c${cfg.icon} [Owly Agent: ${domain}]%c ${timestamp}%c ${message}`, badgeStyle, timeStyle, msgStyle);
     }
 
     try {
@@ -161,7 +161,7 @@
     shadowRoot = hostContainer.attachShadow({ mode: "open" });
     (window as any).__SAVVY_SHADOW_ROOT__ = shadowRoot;
   } catch (err) {
-    console.warn("[Savvy.AI] Shadow root attachment fallback:", err);
+    console.warn("[Owly.AI] Shadow root attachment fallback:", err);
     shadowRoot = (window as any).__SAVVY_SHADOW_ROOT__ || (document.body as any);
   }
 
@@ -1252,7 +1252,7 @@
   }
 
   const domObserver = new MutationObserver((mutations) => {
-    // Ignore mutations on savvy root container to prevent infinite feedback loops
+    // Ignore mutations on owly root container to prevent infinite feedback loops
     const hasExternalMutation = mutations.some((m) => {
       return hostContainer ? (m.target !== hostContainer && !hostContainer.contains(m.target as Node)) : true;
     });
@@ -1277,23 +1277,35 @@
   // SHOW ME: Cascading Element Finder (Level 1 & Level 2)
   // ============================================================================
   const SYNONYM_DICTIONARY: Record<string, string[]> = {
+    // Universal English Primary Keys
+    "register": ["sign up", "signup", "register", "create account", "join", "apply", "daftar", "registrasi", "buat akun"],
+    "sign up": ["register", "signup", "create account", "join", "daftar", "buat akun"],
+    "signup": ["sign up", "register", "create account", "join", "daftar"],
+    "sign in": ["login", "log in", "signin", "enter", "masuk"],
+    "login": ["log in", "sign in", "signin", "enter", "masuk"],
+    "upload": ["attach", "browse", "choose file", "select file", "add file", "unggah", "pilih berkas"],
+    "attach": ["upload", "browse", "choose file", "select file", "add document", "unggah"],
+    "download": ["save as", "export", "get file", "unduh", "ambil file"],
+    "requirements": ["eligibility", "criteria", "terms", "qualifications", "prerequisites", "syarat", "persyaratan"],
+    "eligibility": ["requirements", "criteria", "terms", "qualifications", "syarat"],
+    "help": ["support", "faq", "guide", "contact", "documentation", "bantuan"],
+    "payment": ["fee", "cost", "checkout", "pay", "billing", "biaya", "tarif"],
+    "submit": ["send", "apply", "finish", "complete", "proceed", "kirim", "ajukan"],
+    "next": ["continue", "proceed", "forward", "lanjut", "berikutnya"],
+    "cancel": ["abort", "close", "dismiss", "reset", "batal"],
+    // Regional Cross-Mapping
     "bikin akun": ["sign up", "signup", "register", "daftar", "registrasi", "buat akun", "create account", "join"],
     "buat akun": ["sign up", "signup", "register", "daftar", "registrasi", "create account", "join"],
     "daftar": ["sign up", "signup", "register", "registrasi", "buat akun", "apply", "pendaftaran"],
     "masuk": ["login", "log in", "sign in", "signin", "masuk"],
-    "login": ["log in", "sign in", "signin", "masuk"],
-    "signup": ["sign up", "register", "daftar", "registrasi", "buat akun"],
     "keluar": ["logout", "log out", "sign out", "keluar"],
     "unggah": ["upload", "unggah", "pilih berkas", "pilih file", "choose file", "browse"],
-    "upload": ["unggah", "pilih berkas", "pilih file", "choose file", "browse"],
     "unduh": ["download", "unduh", "unduh berkas", "ambil file"],
-    "download": ["unduh", "unduh berkas", "ambil file"],
     "syarat": ["persyaratan", "kriteria", "ketentuan", "eligibility", "terms", "requirement"],
     "persyaratan": ["syarat", "kriteria", "ketentuan", "eligibility", "terms", "requirement"],
     "bantuan": ["help", "bantuan", "faq", "panduan", "hubungi kami", "contact", "support"],
     "biaya": ["tarif", "harga", "biaya", "fee", "cost", "pembayaran", "payment"],
     "kirim": ["submit", "kirim", "send", "ajukan", "lanjut", "next"],
-    "submit": ["kirim", "send", "ajukan", "simpan", "save"],
     "simpan": ["save", "simpan", "submit"],
     "batal": ["cancel", "batal", "reset"],
   };
@@ -2602,7 +2614,7 @@
         break;
 
       default:
-        console.log("[Savvy.AI Content] Toggled feature:", feature, enabled, value);
+        console.log("[Owly.AI Content] Toggled feature:", feature, enabled, value);
     }
   }
 

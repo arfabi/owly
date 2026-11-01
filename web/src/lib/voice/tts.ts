@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Native Browser TTS Engine (Web Speech API) - Web Showcase
+// OWLY.AI — Native Browser TTS Engine (Web Speech API) - Web Showcase
 // Zero latency, zero cloud cost, 100% on-device speech synthesis
 // ============================================================================
 
@@ -54,7 +54,7 @@ class BrowserTtsEngine {
 
   public speak(text: string, options: TtsOptions = {}): void {
     if (!this.synth) {
-      console.warn("[Savvy.AI TTS] Web Speech API not supported in this browser.");
+      console.warn("[Owly.AI TTS] Web Speech API not supported in this browser.");
       options.onError?.(new Error("Web Speech API not supported"));
       return;
     }

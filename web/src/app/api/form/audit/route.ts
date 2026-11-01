@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
         source: 'empty_form_guardrail',
         aiFindings: [],
         recommendations: [
-          'Tidak ada kolom formulir aktif yang terdeteksi di tab saat ini.',
-          'Silakan pastikan tab browser Anda berada pada halaman formulir (seperti Form Simulator) sebelum menjalankan audit.',
+          'No active form fields detected on the current page.',
+          'Please ensure your active browser tab is displaying a valid form before running the audit.',
         ],
       });
     }
@@ -77,13 +77,13 @@ export async function POST(req: NextRequest) {
       const fallbackFindings: any[] = [];
       if (pageInstructions.length > 0 && attachedFiles.length > 0) {
         attachedFiles.forEach((file) => {
-          if (file.fileSizeKb > 512 && pageInstructions.some((p) => /500\s*kb|0\.5\s*mb/i.test(p))) {
+          if (file.fileSizeKb > 512 && pageInstructions.some((p) => /500\s*kb|0\.5\s*mb|maksimal 500|max.*500/i.test(p))) {
             fallbackFindings.push({
               fieldId: file.fieldName || 'upload',
               level: 'red',
-              badge: 'BERKAS',
-              message: `Ukuran berkas '${file.fileName}' (${file.fileSizeKb} KB) melebihi batas 500 KB yang tertera pada catatan halaman.`,
-              hint: 'Kompres dokumen Anda sebelum submit.',
+              badge: 'ATTACHMENT',
+              message: `File size for '${file.fileName}' (${file.fileSizeKb} KB) exceeds the 500 KB limit indicated in page instructions.`,
+              hint: 'Compress your document before submitting.',
             });
           }
         });
@@ -94,49 +94,49 @@ export async function POST(req: NextRequest) {
         source: 'local_heuristic_engine',
         aiFindings: fallbackFindings,
         recommendations: [
-          'Seluruh validasi format standar telah diverifikasi secara deterministik di sisi klien.',
-          'Pastikan berkas dokumen asli siap dilampirkan sebelum menekan tombol submit.',
+          'All standard format validations have been verified deterministically on the client.',
+          'Ensure your original supporting documents are prepared before submitting.',
         ],
       });
     }
 
     const fieldsSummary = nonSensitiveFields
-      .map((f: any) => `- Kolom "${f.label || f.fieldId}" (${f.rules?.type || 'input'}): ${f.hasValue ? `Terisi ("${f.currentValue}")` : 'KOSONG / Belum Diisi'} ${f.rules?.isRequired ? '[WAJIB]' : '[Opsional]'}`)
+      .map((f: any) => `- Field "${f.label || f.fieldId}" (${f.rules?.type || 'input'}): ${f.hasValue ? `Populated ("${f.currentValue}")` : 'EMPTY / Unfilled'} ${f.rules?.isRequired ? '[REQUIRED]' : '[Optional]'}`)
       .join('\n');
 
     // Call Meta Muse Spark Open on Baseten with high reasoning effort to evaluate ambiguous page instructions
-    const systemPrompt = `Anda adalah Savvy Form Auditor Agent berbasis Meta Muse Spark Open.
-Tugas Anda adalah mengevaluasi apakah ada aturan bersyarat, kontradiksi logika, atau batasan berkas yang dilanggar berdasarkan instruksi formulir:
+    const systemPrompt = `You are the Owly Universal Form Auditor Agent powered by Meta Muse Spark Open.
+Your task is to analyze form data, detect conditional rule violations, logical contradictions, or attachment constraint discrepancies:
 
-Keluarkan hasil evaluasi dalam format JSON murni tanpa markdown:
+Output the evaluation in raw JSON format without markdown code fences:
 {
   "aiFindings": [
     {
-      "fieldId": "string (id kolom)",
-      "level": "red",
-      "badge": "ATURAN",
-      "message": "Deskripsi masalah yang ramah dan solutif",
-      "hint": "Saran perbaikan konkret"
+      "fieldId": "string (field id or upload name)",
+      "level": "red" | "yellow",
+      "badge": "RULE" | "ATTACHMENT" | "FORMAT" | "REQUIRED",
+      "message": "Clear, professional, and actionable explanation of the issue",
+      "hint": "Concrete recommendation or guideline fix"
     }
   ],
   "recommendations": ["string"]
 }`;
 
-    const userContent = `Lakukan audit kepatuhan formulir pada domain '${meta.domain || 'form-web'}' (${meta.title || 'Formulir Publik'}).
+    const userContent = `Conduct a comprehensive form compliance audit on domain '${meta.domain || 'form-web'}' (${meta.title || 'Public Application'}).
 
-Data Kolom Terdeteksi (${nonSensitiveFields.length} kolom):
+Detected Form Fields (${nonSensitiveFields.length} fields):
 ${fieldsSummary}
 
-Instruksi / Catatan Kaki Halaman:
-${pageInstructions.length > 0 ? pageInstructions.join('\n') : 'Tidak ada catatan khusus.'}
+Page Footnotes & Guidelines:
+${pageInstructions.length > 0 ? pageInstructions.join('\n') : 'No special page notes.'}
 
-Berkas / File Terlampir:
-${attachedFiles.length > 0 ? JSON.stringify(attachedFiles, null, 2) : 'Belum ada berkas terlampir.'}
+Attached Documents / Upload Metadata:
+${attachedFiles.length > 0 ? JSON.stringify(attachedFiles, null, 2) : 'No files currently attached.'}
 
-Lakukan penalaran mendalam (high reasoning) untuk mendeteksi:
-1. Kolom wajib yang masih kosong.
-2. Kontradiksi data antar kolom (misal beasiswa luar negeri tapi dokumen bahasa asing kosong, dsb).
-3. Ketidaksesuaian berkas lampiran dengan catatan instruksi halaman.`;
+Perform deep Chain-of-Thought reasoning to identify:
+1. Missing mandatory fields.
+2. Contradictions between dependent fields (e.g., claiming a foreign degree without providing language certification, or conflicting selection logic).
+3. Attached file non-compliance with page-wide instruction limits (e.g. file size exceeding 500 KB, invalid formats).`;
 
     const basetenRes = await fetch(`${basetenBaseUrl}/chat/completions`, {
       method: 'POST',
@@ -158,12 +158,12 @@ Lakukan penalaran mendalam (high reasoning) untuk mendeteksi:
     });
 
     if (!basetenRes.ok) {
-      console.warn('[Savvy AI] Baseten audit call returned non-200, returning fallback.');
+      console.warn('[Owly AI] Baseten audit call returned non-200, returning fallback.');
       return NextResponse.json({
         success: true,
         source: 'fallback',
         aiFindings: [],
-        recommendations: ['Formulir aman dan telah diperiksa oleh engine deterministik Savvy.'],
+        recommendations: ['Formulir aman dan telah diperiksa oleh engine deterministik Owly.'],
       });
     }
 
