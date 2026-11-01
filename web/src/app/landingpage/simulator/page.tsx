@@ -319,7 +319,9 @@ export default function SimulatorPage() {
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
                     <p className="text-[11px] text-slate-500 mt-1.5">
-                      {isId ? "Format standar: YYYY-MM-DD (atau klik ikon kalender 📅)" : "Standard format: YYYY-MM-DD (or click calendar icon 📅)"}
+                      {isId
+                        ? "Format standar data: YYYY-MM-DD (Tampilan mm/dd/yyyy pada kolom disesuaikan otomatis oleh setelan bahasa browser Anda, atau pilih via kalender 📅)"
+                        : "Standard data format: YYYY-MM-DD (The mm/dd/yyyy inside the box is localized by your browser's language setting, or select via calendar 📅)"}
                     </p>
                   </div>
 

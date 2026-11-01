@@ -25,7 +25,7 @@ import {
 } from "../lib/audit/clientAuditor";
 import { agentLog } from "../lib/agentLogger";
 import { sendTabMessage } from "../lib/tabMessenger";
-import { API_BASE_URL } from "../lib/api/client";
+import { getEffectiveApiBaseUrl } from "../lib/api/client";
 
 interface AuditorTabProps {
   onNavigateTab?: (tab: "guide" | "vault" | "audit") => void;
@@ -60,11 +60,14 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
     try {
       // Step 1: Scrape real active form snapshot from webpage
       const scrapeRes = await sendTabMessage({ type: "EXTRACT_FORM_AUDIT_DATA" });
-      const snapshot = scrapeRes?.data || {
-        fields: [],
-        pageUploadContext: { pageWideFileInstructions: [], attachedFilesMetadata: [] },
-        meta: {},
+      const raw: any = scrapeRes?.data?.fields ? scrapeRes.data : (scrapeRes?.data?.data || scrapeRes?.data || {});
+      const snapshot = {
+        fields: Array.isArray(raw.fields) ? raw.fields : [],
+        pageUploadContext: raw.pageUploadContext || { pageWideFileInstructions: [], attachedFilesMetadata: [] },
+        meta: raw.meta || {},
       };
+
+      agentLog.perception(`📊 Form Audit Snapshot: ${snapshot.fields.length} fields, ${snapshot.pageUploadContext.attachedFilesMetadata.length} files on '${snapshot.meta.domain || "web-page"}'`);
 
       // Step 2: Execute Client-Side Deterministic & Local Vault Reconciler (<5ms, Zero API Cost)
       const localReport = runClientSideComprehensiveAudit(
@@ -76,7 +79,8 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
       // Step 3: Call AI Agentic Endpoint for scattered page instructions (Optional AI augmentation)
       let aiFindings: any[] = [];
       try {
-        const auditApiUrl = `${API_BASE_URL}/api/form/audit`;
+        const baseUrl = await getEffectiveApiBaseUrl();
+        const auditApiUrl = `${baseUrl}/api/form/audit`;
         const fetchRes = await fetch(auditApiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

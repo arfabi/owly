@@ -27,7 +27,7 @@ interface FieldItem {
   howTo: string;
   example: string;
   pitfall: string;
-  vaultKey?: "nik" | "nama" | "tanggal_lahir" | "alamat" | "email" | "no_hp";
+  vaultKey?: "nik" | "nama" | "tempat_lahir" | "tanggal_lahir" | "alamat" | "email" | "no_hp";
   fallbackValue?: string;
   type?: string;
 }
@@ -37,27 +37,39 @@ export function mapRawFieldToItem(raw: any, isId: boolean): FieldItem {
   const label = (raw.label || raw.name || raw.id || "Field").trim();
   const lower = `${label} ${raw.name || ""} ${raw.id || ""}`.toLowerCase();
 
-  let vaultKey: "nik" | "nama" | "tanggal_lahir" | "alamat" | "email" | "no_hp" | undefined = undefined;
+  let vaultKey: "nik" | "nama" | "tempat_lahir" | "tanggal_lahir" | "alamat" | "email" | "no_hp" | undefined = undefined;
   let fallbackValue = "";
 
   if (lower.includes("nik") || lower.includes("identitas") || lower.includes("ktp") || lower.includes("national id")) {
     vaultKey = "nik";
-    fallbackValue = "3271041908980002";
   } else if (lower.includes("nama") || lower.includes("name") || lower.includes("fullname")) {
     vaultKey = "nama";
-    fallbackValue = isId ? "Budi Santoso" : "John Doe";
-  } else if (lower.includes("lahir") || lower.includes("birth") || lower.includes("dob") || raw.type === "date") {
+  } else if (
+    lower.includes("tempat lahir") ||
+    lower.includes("place of birth") ||
+    lower.includes("birth place") ||
+    lower.includes("birthplace") ||
+    lower.includes("pob") ||
+    (lower.includes("tempat") && !lower.includes("tinggal"))
+  ) {
+    vaultKey = "tempat_lahir";
+  } else if (
+    lower.includes("tanggal lahir") ||
+    lower.includes("date of birth") ||
+    lower.includes("birth date") ||
+    lower.includes("birthdate") ||
+    lower.includes("dob") ||
+    raw.type === "date" ||
+    lower.includes("lahir") ||
+    lower.includes("birth")
+  ) {
     vaultKey = "tanggal_lahir";
-    fallbackValue = "1998-08-19";
   } else if (lower.includes("alamat") || lower.includes("address") || lower.includes("domisili")) {
     vaultKey = "alamat";
-    fallbackValue = isId ? "Jl. Sudirman No. 45, Jakarta Pusat" : "123 Main Street, Suite 400";
   } else if (lower.includes("email") || lower.includes("surel") || raw.type === "email") {
     vaultKey = "email";
-    fallbackValue = "budi.santoso@alumni.ui.ac.id";
   } else if (lower.includes("telepon") || lower.includes("phone") || lower.includes("hp") || lower.includes("whatsapp")) {
     vaultKey = "no_hp";
-    fallbackValue = "081234567890";
   }
 
   return {
@@ -96,7 +108,7 @@ function getDefaultFields(isId: boolean): FieldItem[] {
         ? "Jangan gunakan NIK lama pada fotokopi Kartu Keluarga jika Anda baru saja pindah domisili."
         : "Do not use an outdated identification number if you have recently relocated your registered residence.",
       vaultKey: "nik",
-      fallbackValue: "3271041908980002",
+      fallbackValue: "",
     },
     {
       id: "nama_lengkap",
@@ -115,7 +127,7 @@ function getDefaultFields(isId: boolean): FieldItem[] {
         ? "Perbedaan satu huruf antara KTP dan Ijazah dapat menyebabkan verifikasi manual tertolak."
         : "A single letter mismatch with educational diplomas may cause manual verification rejection.",
       vaultKey: "nama",
-      fallbackValue: "Budi Santoso",
+      fallbackValue: "",
     },
   ];
 }
@@ -141,14 +153,7 @@ export function FormsGuideTab({
   const [fields, setFields] = useState<FieldItem[]>(() => getDefaultFields(isId));
   const [currentFieldIndex, setCurrentFieldIndex] = useState(0);
   const [hasAutofilled, setHasAutofilled] = useState(false);
-  const [vaultData, setVaultData] = useState<Record<string, string>>({
-    nik: "3271041908980002",
-    nama: "Budi Santoso",
-    tanggal_lahir: "1998-08-19",
-    alamat: "Jl. Sudirman No. 45, Jakarta Pusat",
-    email: "budi.santoso@alumni.ui.ac.id",
-    no_hp: "081234567890",
-  });
+  const [vaultData, setVaultData] = useState<Record<string, string>>({});
 
   // Two-tier AI Guidance Cache (L1 state + L2 chrome.storage)
   const [aiGuidanceCache, setAiGuidanceCache] = useState<Record<string, {
@@ -177,7 +182,9 @@ export function FormsGuideTab({
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
       chrome.storage.local.get(["savvy_vault_plain"], (res) => {
         if (res?.savvy_vault_plain && typeof res.savvy_vault_plain === "object") {
-          setVaultData((prev) => ({ ...prev, ...(res.savvy_vault_plain as Record<string, string>) }));
+          setVaultData(res.savvy_vault_plain as Record<string, string>);
+        } else {
+          setVaultData({});
         }
       });
     }
@@ -376,7 +383,6 @@ export function FormsGuideTab({
   // Determine Vault Data preview value
   const rawVaultVal =
     (currentField.vaultKey && vaultData[currentField.vaultKey]) ||
-    currentField.fallbackValue ||
     "";
 
   const getMaskedVal = (val: string) => {
@@ -389,7 +395,7 @@ export function FormsGuideTab({
 
   // Single-Field Autofill action
   const handleFillFromVault = () => {
-    if (!isVaultUnlocked) {
+    if (!isVaultUnlocked || !rawVaultVal) {
       if (onNavigateTab) {
         onNavigateTab("vault");
       }
@@ -545,18 +551,32 @@ export function FormsGuideTab({
                 </span>
                 <div className="font-mono font-bold text-xs text-slate-800 mt-0.5">
                   {hasVaultKey
-                    ? displayVaultVal
+                    ? rawVaultVal
+                      ? displayVaultVal
+                      : isId
+                      ? "(Belum ada data di Vault)"
+                      : "(No data in Vault)"
                     : currentField.type === "file"
-                    ? (isId ? "Unggah berkas langsung di halaman" : "Upload file directly on web page")
-                    : (isId ? "Diisi / dipilih langsung pada formulir" : "Fill / select directly on form")}
+                    ? isId
+                      ? "Unggah berkas langsung di halaman"
+                      : "Upload file directly on web page"
+                    : isId
+                    ? "Diisi / dipilih langsung pada formulir"
+                    : "Fill / select directly on form"}
                 </div>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500">
                 {hasVaultKey
                   ? isVaultUnlocked
-                    ? (isId ? "Terbuka" : "Unlocked")
-                    : (isId ? "Terkunci" : "Locked")
-                  : (isId ? "Manual / Web" : "Manual / Web")}
+                    ? isId
+                      ? "Terbuka"
+                      : "Unlocked"
+                    : isId
+                    ? "Terkunci"
+                    : "Locked"
+                  : isId
+                  ? "Manual / Web"
+                  : "Manual / Web"}
               </span>
             </div>
           </div>
@@ -569,6 +589,8 @@ export function FormsGuideTab({
             className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer ${
               !isVaultUnlocked
                 ? "bg-slate-100 text-slate-600 border border-slate-300 hover:bg-slate-200"
+                : !rawVaultVal
+                ? "bg-slate-100 text-slate-500 border border-slate-300 hover:bg-slate-200"
                 : hasAutofilled
                 ? "bg-savvy-green text-white hover:opacity-95"
                 : "bg-savvy-gradient text-white hover:opacity-95 shadow-sm shadow-savvy-blue/20"
@@ -579,6 +601,11 @@ export function FormsGuideTab({
                 <Lock className="w-3.5 h-3.5 text-slate-500" />
                 <span>{isId ? "Buka Vault untuk Mengisi Kolom" : "Unlock Vault to Fill Field"}</span>
               </>
+            ) : !rawVaultVal ? (
+              <>
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                <span>{isId ? "Data Belum Ada di Vault (Buka Vault)" : "No Data in Vault (Open Vault)"}</span>
+              </>
             ) : hasAutofilled ? (
               <>
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -587,7 +614,7 @@ export function FormsGuideTab({
             ) : (
               <>
                 <Zap className="w-3.5 h-3.5" />
-                <span>{isId ? `Isi Kolom Ini dari Vault (${displayVaultVal.slice(0, 8)}...)` : `Fill Field from Vault (${displayVaultVal.slice(0, 8)}...)`}</span>
+                <span>{isId ? `Isi Kolom Ini dari Vault (${displayVaultVal.slice(0, 10)}...)` : `Fill Field from Vault (${displayVaultVal.slice(0, 10)}...)`}</span>
               </>
             )}
           </button>

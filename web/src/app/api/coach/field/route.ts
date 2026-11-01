@@ -110,13 +110,17 @@ Task: Generate a 4-element guidance card for this form field in clear American E
 - Portal: "${portalDomain}"
 - Form Context: "${contextText || 'Public Form Registration'}"
 
+CRITICAL FIELD RULES:
+- For "Place of Birth" / "Tempat Lahir": This refers strictly to the CITY or REGENCY of birth (e.g. "Jakarta", "Kudus", "Surabaya", "London") as recorded on official birth certificate / passport. Do NOT instruct the user to include country names (do NOT say "City, Country" or "Paris, France"). Official identity forms require strictly the City/Municipality.
+- For "Date of Birth" / "Tanggal Lahir": Refers strictly to calendar date (YYYY-MM-DD), never place or city.
+
 ${ragContext ? `${ragContext}\n(IMPORTANT: Prioritize the official guideline citation above!)` : 'Use accurate, official standards.'}
 
 Format output MUST be valid strictly formatted JSON without markdown:
 {
   "meaning": "Clear 1-2 sentence explanation of what this field means.",
   "how_to_fill": "Step-by-step instructions on how to fill this field correctly.",
-  "example": "A concrete valid format example.",
+  "example": "A concrete valid format example (e.g. for Place of Birth: Jakarta or Kudus).",
   "pitfalls": "Common traps or pitfalls that cause application disqualification.",
   "confirmation_ref": "${officialCitation || 'Official Portal Guidelines'}",
   "source_type": "${officialCitation ? 'official' : 'ai_guidance'}"
@@ -127,13 +131,17 @@ Tugas: Buat kartu panduan 4-elemen untuk kolom formulir berikut:
 - Portal: "${portalDomain}"
 - Konteks Formulir: "${contextText || 'Pendaftaran Formulir Publik'}"
 
+ATURAN KHUSUS KOLOM:
+- Untuk "Tempat Lahir" / "Place of Birth": Ini merujuk HANYA pada KOTA atau KABUPATEN tempat kelahiran (cth: "Jakarta", "Kudus", "Surabaya", "Bandung") sesuai Akta Kelahiran / KTP / Paspor resmi. JANGAN meminta nama negara (jangan sebut Paris, Prancis atau USA). Kolom tempat lahir kependudukan selalu meminta nama kota/kabupaten.
+- Untuk "Tanggal Lahir" / "Date of Birth": Merujuk hanya pada tanggal lahir (YYYY-MM-DD), bukan kota atau tempat.
+
 ${ragContext ? `${ragContext}\n(PENTING: Utamakan kutipan juknis resmi di atas untuk menjawab!)` : 'Gunakan aturan standar birokrasi Indonesia yang resmi dan akurat.'}
 
 Format output HARUS berupa JSON valid tanpa markdown, dengan struktur persis berikut:
 {
   "meaning": "Penjelasan maksud kolom ini dalam 1-2 kalimat bahasa awam yang sangat mudah dipahami.",
   "how_to_fill": "Instruksi langkah demi langkah cara mengisi kolom ini dengan benar.",
-  "example": "Contoh isian konkret yang valid dan sesuai format.",
+  "example": "Contoh isian konkret yang valid dan sesuai format (cth untuk Tempat Lahir: Jakarta atau Kudus).",
   "pitfalls": "Jebakan atau kesalahan umum yang sering menyebabkan diskualifikasi atau gagal administrasi.",
   "confirmation_ref": "${officialCitation || 'Pedoman Umum Formulir Publik'}",
   "source_type": "${officialCitation ? 'official' : 'ai_guidance'}"
@@ -151,9 +159,10 @@ Format output HARUS berupa JSON valid tanpa markdown, dengan struktur persis ber
           { role: 'system', content: 'You are a precise JSON generator for form guidance. Always output strictly valid JSON.' },
           { role: 'user', content: prompt }
         ],
-        reasoning_effort: 'low',
-        temperature: 0.2,
-        max_tokens: 1000
+        reasoning_effort: 'high',
+        temperature: 0.1,
+        max_tokens: 2048,
+        response_format: { type: 'json_object' }
       })
     });
 

@@ -1515,7 +1515,7 @@
     if (message.type === "EXTRACT_FORM_AUDIT_DATA") {
       const snapshot = extractFormAuditSnapshot();
       agentLog.action(`🔍 EXTRACT_FORM_AUDIT_DATA: Scraped ${snapshot.fields.length} active inputs and ${snapshot.pageUploadContext.attachedFilesMetadata.length} attached files for audit.`);
-      sendResponse({ success: true, data: snapshot });
+      sendResponse({ success: true, ...snapshot });
       return;
     }
 

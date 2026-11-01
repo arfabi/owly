@@ -7,6 +7,24 @@ import { agentLog } from "../agentLogger";
 
 export const API_BASE_URL = "https://owly-ai.vercel.app";
 
+export async function getEffectiveApiBaseUrl(): Promise<string> {
+  if (typeof chrome !== "undefined" && chrome.storage?.local) {
+      const stored: any = await chrome.storage.local.get(["savvy_api_base_url"]);
+      if (stored?.savvy_api_base_url && typeof stored.savvy_api_base_url === "string") {
+        return stored.savvy_api_base_url;
+      }
+  }
+  if (typeof chrome !== "undefined" && chrome.tabs?.query) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.url && (tab.url.includes("localhost:3000") || tab.url.includes("127.0.0.1:3000"))) {
+        return "http://localhost:3000";
+      }
+    } catch {}
+  }
+  return API_BASE_URL;
+}
+
 export interface PageMetadata {
   description?: string;
   keywords?: string;

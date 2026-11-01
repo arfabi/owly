@@ -423,7 +423,27 @@ Output JSON format:
         } else if (lowerLabel.includes('telepon') || lowerLabel.includes('phone') || lowerLabel.includes('hp')) {
           vaultKey = 'personal.phone';
           action = isEn ? 'Active WhatsApp / mobile number for notifications.' : 'Nomor WhatsApp aktif untuk konfirmasi pengajuan.';
-        } else if (lowerLabel.includes('lahir') || lowerLabel.includes('birth')) {
+        } else if (
+          lowerLabel.includes('tempat') ||
+          lowerLabel.includes('place of birth') ||
+          lowerLabel.includes('birth place') ||
+          lowerLabel.includes('birthplace') ||
+          lowerLabel.includes('pob')
+        ) {
+          vaultKey = 'personal.birthPlace';
+          action = isEn
+            ? 'Enter city or regency of birth matching your official birth certificate or passport (e.g. Jakarta, Kudus).'
+            : 'Tuliskan kota/kabupaten tempat lahir persis sesuai Akta Kelahiran/KTP (cth: Jakarta, Kudus).';
+        } else if (
+          lowerLabel.includes('tanggal') ||
+          lowerLabel.includes('date of birth') ||
+          lowerLabel.includes('birth date') ||
+          lowerLabel.includes('birthdate') ||
+          lowerLabel.includes('dob') ||
+          f.type === 'date' ||
+          lowerLabel.includes('lahir') ||
+          lowerLabel.includes('birth')
+        ) {
           vaultKey = 'personal.birthDate';
           action = isEn ? 'Date of birth format matching official civil records.' : 'Format tanggal lahir sesuai dokumen akta / KTP.';
         }

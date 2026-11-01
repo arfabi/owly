@@ -50,11 +50,24 @@ export async function POST(req: NextRequest) {
     const pageInstructions: string[] = pageUploadContext.pageWideFileInstructions || [];
     const attachedFiles: any[] = pageUploadContext.attachedFilesMetadata || [];
 
-    // Filter fields that have values to analyze scattered instructions
+    // Guardrail: If no fields were detected, return immediately without wasting tokens
+    if (!fields || fields.length === 0) {
+      return NextResponse.json({
+        success: true,
+        source: 'empty_form_guardrail',
+        aiFindings: [],
+        recommendations: [
+          'Tidak ada kolom formulir aktif yang terdeteksi di tab saat ini.',
+          'Silakan pastikan tab browser Anda berada pada halaman formulir (seperti Form Simulator) sebelum menjalankan audit.',
+        ],
+      });
+    }
+
+    // Filter fields that have values to analyze scattered instructions (strip PII from values)
     const nonSensitiveFields = (fields as any[]).map((f) => ({
       fieldId: f.fieldId,
       label: f.label,
-      valueLength: (f.currentValue || '').length,
+      currentValue: stripPII(f.currentValue || ''),
       hasValue: !!f.currentValue,
       rules: f.rules,
     }));
@@ -87,28 +100,43 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const fieldsSummary = nonSensitiveFields
+      .map((f: any) => `- Kolom "${f.label || f.fieldId}" (${f.rules?.type || 'input'}): ${f.hasValue ? `Terisi ("${f.currentValue}")` : 'KOSONG / Belum Diisi'} ${f.rules?.isRequired ? '[WAJIB]' : '[Opsional]'}`)
+      .join('\n');
+
     // Call Meta Muse Spark Open on Baseten with high reasoning effort to evaluate ambiguous page instructions
     const systemPrompt = `Anda adalah Savvy Form Auditor Agent berbasis Meta Muse Spark Open.
-Tugas Anda adalah mengevaluasi apakah ada aturan bersyarat atau batasan berkas yang dilanggar berdasarkan instruksi halaman web:
-Instruksi Halaman Terdeteksi:
-${pageInstructions.length > 0 ? pageInstructions.map((p, i) => `${i + 1}. "${p}"`).join('\n') : 'Tidak ada catatan khusus.'}
+Tugas Anda adalah mengevaluasi apakah ada aturan bersyarat, kontradiksi logika, atau batasan berkas yang dilanggar berdasarkan instruksi formulir:
 
-Berkas Terlampir:
-${attachedFiles.length > 0 ? JSON.stringify(attachedFiles, null, 2) : 'Belum ada berkas terlampir.'}
-
-Keluarkan hasil evaluasi dalam format JSON murni:
+Keluarkan hasil evaluasi dalam format JSON murni tanpa markdown:
 {
   "aiFindings": [
     {
-      "fieldId": "string",
-      "level": "red" | "yellow" | "green",
-      "badge": "BERKAS" | "FORMAT" | "ATURAN",
+      "fieldId": "string (id kolom)",
+      "level": "red",
+      "badge": "ATURAN",
       "message": "Deskripsi masalah yang ramah dan solutif",
-      "hint": "Saran mitigasi"
+      "hint": "Saran perbaikan konkret"
     }
   ],
   "recommendations": ["string"]
 }`;
+
+    const userContent = `Lakukan audit kepatuhan formulir pada domain '${meta.domain || 'form-web'}' (${meta.title || 'Formulir Publik'}).
+
+Data Kolom Terdeteksi (${nonSensitiveFields.length} kolom):
+${fieldsSummary}
+
+Instruksi / Catatan Kaki Halaman:
+${pageInstructions.length > 0 ? pageInstructions.join('\n') : 'Tidak ada catatan khusus.'}
+
+Berkas / File Terlampir:
+${attachedFiles.length > 0 ? JSON.stringify(attachedFiles, null, 2) : 'Belum ada berkas terlampir.'}
+
+Lakukan penalaran mendalam (high reasoning) untuk mendeteksi:
+1. Kolom wajib yang masih kosong.
+2. Kontradiksi data antar kolom (misal beasiswa luar negeri tapi dokumen bahasa asing kosong, dsb).
+3. Ketidaksesuaian berkas lampiran dengan catatan instruksi halaman.`;
 
     const basetenRes = await fetch(`${basetenBaseUrl}/chat/completions`, {
       method: 'POST',
@@ -120,18 +148,12 @@ Keluarkan hasil evaluasi dalam format JSON murni:
         model: modelName,
         messages: [
           { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Audit formulir pada domain '${meta.domain || 'form-web'}' dengan ${nonSensitiveFields.length} kolom terdeteksi. Berikan JSON evaluasi kepatuhan berkas dan catatan halaman.`,
-          },
+          { role: 'user', content: userContent },
         ],
         temperature: 0.1,
-        reasoning_effort: 'high',
-        chat_template_kwargs: {
-          thinking: {
-            reasoning_effort: 'high',
-          },
-        },
+        reasoning_effort: 'medium',
+        max_tokens: 2500,
+        response_format: { type: 'json_object' },
       }),
     });
 
