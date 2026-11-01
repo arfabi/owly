@@ -39,7 +39,7 @@
 |---|:---:|---|---|
 | **Impact** | 30% | Solves real clerical rejections; copilot-not-autopilot philosophy; never auto-submits; 14 built-in accessibility tools ($0 tokens) | [Problem & Impact](#-the-problem--human-impact) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
 | **Use of Meta AI** | 25% | **9 specialized agents + Deep Essay Synthesizer**; native multimodal vision (`<\|patch\|>`), direct audio streaming (`<\|audio\|>`), autonomous tool calling, full 4-tier reasoning effort (`low` / `medium` / `high` / `xhigh`), structured schema outputs | [5 Core Capabilities & 9 Agents](#-in-depth-utilization-of-meta-muse-spark-open) · [Architecture](#️-system-architecture-compound-multi-agent-system-cmas) |
-| **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#️-system-architecture-compound-multi-agent-system-cmas) · [20/20 Verification Results](#-automated-end-to-end-verification-results-2020-pass) |
+| **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#️-system-architecture-compound-multi-agent-system-cmas) · [Verification Spec (`feature/verification.md`)](feature/verification.md) |
 | **Demo & UX** | 25% | 3-min video walkthrough · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [Demo Video](https://youtu.be/placeholder) · [Live App](https://owly-ai.vercel.app) · [4-Step Test Guide](#-4-quick-steps-to-test-in-60-seconds) |
 
 ### ⚡ 4 Quick Steps to Test in 60 Seconds:
@@ -93,8 +93,6 @@
 - [🔬 In-Depth Utilization of Meta Muse Spark Open](#-in-depth-utilization-of-meta-muse-spark-open)
   - [1. 5 Core Meta Capabilities Exploited](#1-5-core-meta-capabilities-exploited)
   - [2. The 9 Meta Cognitive Agents](#2-the-9-meta-cognitive-agents-core-triad--specialized-tasks)
-- [🔒 Deterministic Layer & Client-Side Zero-Knowledge Vault Architecture](#-deterministic-layer--client-side-zero-knowledge-vault-architecture)
-- [🧪 Automated End-to-End Verification Results (15/15 Behavioral PASS)](#-automated-end-to-end-verification-results-1515-behavioral-pass)
 - [🚀 Self-Hosted & Local Development Installation Guide](#-self-hosted--local-development-installation-guide)
   - [Step 1: Clone the Repository](#step-1-clone-the-repository)
   - [Step 2: Set Up Supabase Database & Apply Schema](#step-2-set-up-supabase-database--apply-schema)
@@ -244,45 +242,6 @@ Owly's multi-agent system orchestrates a sequential **Core 3-Agent Triad** for i
 > 📖 **Deep-Dive CMAS Architecture Specification:**  
 > For the complete multi-agent interaction protocol, token-saving cost escalation ladder, autonomous guardrails, and telemetry domains, see the master architecture document:  
 > 👉 **[Read the Full CMAS & Multi-Agent Architecture Specification (`feature/agentic.md`)](feature/agentic.md)**
-
----
-
-## 🔒 Deterministic Layer & Client-Side Zero-Knowledge Vault Architecture
-
-Local deterministic guardrails run in the client browser at $0 token cost and 0 ms latency, strictly separating document OCR ingestion from photo compliance audits:
-
-1. **Client-Side Canvas Biometric Blackout (Document OCR Ingestion):** When scanning identity documents (national ID cards, passports, transcripts) for autofill, an in-memory HTML5 Canvas blacks out facial portraits and signature boxes before the image is dispatched to Meta Muse Spark native vision (`<|patch|>`). **Zero facial biometric data ever leaves the client device for document extraction.**
-2. **Client-Side Encrypted Vault (Zero-Knowledge Architecture):** Encryption keys are derived locally in browser RAM from the user's master PIN using W3C WebCrypto PBKDF2 (100,000 rounds) and AES-256-GCM. In our Zero-Knowledge storage model (analogous to Bitwarden/1Password), the server and database possess zero knowledge of the master key or decrypted credentials.
-3. **Client-Side PII Chat Guard:** High-speed regex filters intercept and scrub 16-digit National IDs, Tax IDs, and phone numbers before chat text leaves the browser.
-4. **Modular Deterministic Syntax & Math Validators:** Pluggable by country/jurisdiction (e.g., US SSN checksums, UK National Insurance formats, Indonesian NIK female day+40 date arithmetic, international E.164 phone formats like `+1`/`+44`/`+62`, RFC 5322 emails, and ICAO 9303 passports).
-5. **Deterministic In-Memory Pasfoto Compliance Inspector:** Separate from document extraction, when applicants check passport/visa photos, technical compliance (1:1 or 3:4 aspect ratio, file size, Laplacian focus sharpness variance, and background uniformity) is audited deterministically in-memory using Sharp (C++), with zero pixel modification and instantaneous RAM disposal.
-6. **14 A11y Tools ($0 Token, 0ms):** High-contrast filters, OpenDyslexic typography, jumbo cursor, animation freezing, and ADHD reading ruler injected directly into the active DOM.
-
----
-
-## 🧪 Automated End-to-End Verification Results (15/15 Behavioral PASS)
-
-Owly.AI undergoes rigorous automated testing via [`web/scripts/e2e_verification.mjs`](web/scripts/e2e_verification.mjs), structured into **15 Core Behavioral & Security Pipeline Tests** (15/15 PASS) and **5 Infrastructure Sanity Checks** (5/5 PASS) with a **100% Pass Rate (20/20 Total)**.
-
-All comprehensive test assertions, raw terminal execution logs, cryptographic validation traces, and architecture guarantees are documented in our dedicated specification:
-
-👉 **[Read the Full Verification Specification & Test Results (`feature/verification.md`)](feature/verification.md)**
-
-### Verification Summary Matrix
-
-| Category | Passed | Target / Benchmark | Status |
-|---|---|---|---|
-| **Core Behavioral & Security Pipeline Tests** | 15 / 15 | 100% Pass Rate | ✅ PASS |
-| **Environment & Infrastructure Sanity Checks** | 5 / 5 | 100% Pass Rate | ✅ PASS |
-| **Zero Raw PII Transit Guarantee** | Verified | 0 Plaintext Leaks in Transit | ✅ VERIFIED |
-| **Interactive Single-Turn Latency (Low Effort)** | 816 ms | < 2,500 ms (p50: 650ms, p95: 950ms) | ✅ PASS |
-| **Deep Reasoning Latency (High / CoT Effort)** | 2.1s – 4.2s | Adaptive thinking budget per task | ✅ BENCHMARKED |
-| **Model ID Compliance (`muse-spark-open-1026`)** | Verified | Exact Meta Open Model ID | ✅ VERIFIED |
-
-To run the test suite locally:
-```bash
-node web/scripts/e2e_verification.mjs
-```
 
 ---
 
