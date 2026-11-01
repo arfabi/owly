@@ -14,6 +14,23 @@
     (window as any).__OWLY_EXTENSION_INSTALLED__ = true;
   } catch (_) {}
 
+  // Synchronous native DOM click listener to preserve user gesture token for side panel open
+  document.addEventListener(
+    "click",
+    (event) => {
+      const target = event.target as HTMLElement | null;
+      const btn = target?.closest?.("[data-owly-action='open-sidepanel'], #owly-access-btn");
+      if (btn) {
+        try {
+          if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
+            chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL_REQUEST" }).catch(() => {});
+          }
+        } catch (_) {}
+      }
+    },
+    true
+  );
+
   // Web simulator communication bridge
   window.addEventListener("message", (event) => {
     if (event.data?.type === "OWLY_PING") {

@@ -113,9 +113,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // console.log("[Savvy.AI Background] Message received:", message.type, "from tab:", sender.tab?.id);
 
   if (message.type === "OPEN_SIDEPANEL_REQUEST") {
-    if (sender.tab?.windowId && (chrome as any).sidePanel?.open) {
-      (chrome as any).sidePanel.open({ windowId: sender.tab.windowId }).catch((err: any) => {
-        console.warn("[Owly Background] Failed to open side panel:", err);
+    if ((chrome as any).sidePanel?.open) {
+      const openOptions = sender.tab?.id ? { tabId: sender.tab.id } : { windowId: sender.tab?.windowId };
+      (chrome as any).sidePanel.open(openOptions).catch((err: any) => {
+        console.warn("[Owly Background] Primary sidePanel.open failed:", err);
+        if (sender.tab?.windowId && openOptions.tabId) {
+          (chrome as any).sidePanel.open({ windowId: sender.tab.windowId }).catch((fallbackErr: any) => {
+            console.warn("[Owly Background] Fallback sidePanel.open with windowId also failed:", fallbackErr);
+          });
+        }
       });
     }
     sendResponse({ status: "opening" });

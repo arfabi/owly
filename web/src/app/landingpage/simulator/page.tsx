@@ -168,8 +168,8 @@ export default function SimulatorPage() {
             </p>
             <p className="text-emerald-100 text-[11px]">
               {isId
-                ? "Side panel otomatis aktif mendampingi pengisian form ini."
-                : "Side panel is now actively accompanying this form."}
+                ? "Membuka side panel... Jika panel belum muncul, klik icon Owly di toolbar browser."
+                : "Opening side panel... If it doesn't open automatically, click the Owly icon in your browser toolbar."}
             </p>
           </div>
         </div>
@@ -901,6 +901,8 @@ export default function SimulatorPage() {
 
               {/* Big Access Button */}
               <button
+                id="owly-access-btn"
+                data-owly-action="open-sidepanel"
                 type="button"
                 onClick={handleAccessWithOwly}
                 className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all transform active:scale-95 cursor-pointer"

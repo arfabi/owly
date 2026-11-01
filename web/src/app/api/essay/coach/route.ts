@@ -63,9 +63,9 @@ Format Output HARUS berupa JSON valid tanpa markdown, dengan struktur persis ber
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        reasoning_effort: 'high', // Penalaran mendalam untuk struktur esai
+        reasoning_effort: 'xhigh', // Penalaran maksimal (xhigh) untuk sintesis narasi esai & evaluasi kriteria
         temperature: 0.3,
-        max_tokens: 1000
+        max_tokens: 1500
       })
     });
 

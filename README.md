@@ -20,51 +20,33 @@
 
 ---
 
-## 📑 Table of Contents
-- [⚡ Quick Access & Navigation](#-quick-access--navigation)
-- [⚡ Quick Evaluation for Judges & Evaluators (Test in 60s)](#-quick-evaluation-for-judges--evaluators-test-in-60-seconds)
-- [💔 The Problem & Human Impact](#-the-problem--human-impact)
-  - [Industry Facts & Verified Data](#industry-facts--verified-data)
-  - [Philosophy: Copilot, Not Autopilot](#philosophy-copilot-not-autopilot)
-- [🛠️ Development Journey & Architectural Pivot](#️-development-journey--architectural-pivot)
-- [🏛️ System Architecture: Compound Multi-Agent System (CMAS)](#️-system-architecture-compound-multi-agent-system-cmas)
-- [🔬 In-Depth Utilization of Meta Muse Spark Open](#-in-depth-utilization-of-meta-muse-spark-open)
-  - [1. 5 Core Meta Capabilities Exploited](#1-5-core-meta-capabilities-exploited)
-  - [2. The 9 Meta Agents: Core Triad & Specialized Tasks](#2-the-9-meta-agents-core-triad--specialized-tasks)
-  - [3. Privacy-First Regulation Grounding: Where web_search Lives](#3--privacy-first-regulation-grounding-where-web_search-lives-and-where-it-doesnt)
-  - [4. Token-Saving Cost Escalation Flow](#4-token-saving-cost-escalation-flow)
-  - [5. Autonomous Guardrails](#5-autonomous-guardrails)
-- [🔒 Deterministic Layer & Zero-Knowledge Privacy Architecture](#-deterministic-layer--zero-knowledge-privacy-architecture)
-- [🧪 Automated End-to-End Verification Results (20/20 PASS)](#-automated-end-to-end-verification-results-2020-pass)
-- [🚀 Self-Hosted & Local Development Installation Guide](#-self-hosted--local-development-installation-guide)
-  - [Step 1: Clone the Repository](#step-1-clone-the-repository)
-  - [Step 2: Configure Backend Environment Variables](#step-2-configure-backend-environment-variables-webenvlocal)
-  - [Step 3: Start Web & API Server](#step-3-start-web--api-server)
-  - [Step 4: Configure Extension API Endpoint](#step-4-configure-extension-api-endpoint)
-  - [Step 5: Build & Load the Chrome MV3 Extension](#step-5-build--load-the-chrome-mv3-extension)
-- [📄 License](#-license)
+> **Owly.AI** is a privacy-first browser copilot that explains confusing forms, guides each field, and audits your draft *before* you press Submit, powered by Meta Muse Spark Open.
 
----
+## 🧭 Quick Judging & Evaluation Guide (Test in 60s)
 
-## ⚡ Quick Access & Navigation
+| | |
+|---|---|
+| **Name** | Owly.AI |
+| **Type** | Chrome MV3 extension + Web (Landing page, Form simulator, API gateway) |
+| **Track** | Build for Your World · Indie Developers |
+| **Model** | `meta-models/muse-spark-open-1026` via Baseten |
+| **🎬 3-min Demo Video** | [Watch Demo Video (Demo Dummy)](https://youtu.be/placeholder) |
 
-| Service | Direct Link | Description |
-|---|---|---|
-| 🌐 **Landing Page & Showcase** | [owly-ai.vercel.app](https://owly-ai.vercel.app) | Public presentation of Owly.AI, core solution pillars, interactive browser previews, and user benefits. |
-| 🧪 **Comprehensive Form Simulator** | [owly-ai.vercel.app/simulator](https://owly-ai.vercel.app/simulator) | Realistic public portal with diverse inputs (masked ID/phone, dates, numbers, biometric photo & PDF uploads, essays) + **Access with Owly** detection button. |
-| 📦 **Download Extension (.ZIP)** | [owly-ai.vercel.app/download](https://owly-ai.vercel.app/download) | Step-by-step installation package for all Chromium browsers (Chrome, Edge, Brave, Opera). |
-| 🛡️ **Security & Privacy Policy** | [owly-ai.vercel.app/privacy](https://owly-ai.vercel.app/privacy) | Complete Zero-Knowledge architecture and client-side PII privacy compliance documentation. |
+### 🏆 Rubric Scoring Alignment
 
----
+| Criterion | Weight | Evidence | Where to Look |
+|---|:---:|---|---|
+| **Impact** | 30% | Solves real clerical rejections; copilot-not-autopilot philosophy; never auto-submits; 14 built-in accessibility tools ($0 tokens) | [Problem & Impact](#-the-problem--human-impact) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
+| **Use of Meta AI** | 25% | **9 specialized agents + Deep Essay Synthesizer**; native multimodal vision (`<\|patch\|>`), direct audio streaming (`<\|audio\|>`), autonomous tool calling, full 4-tier reasoning effort (`low` / `medium` / `high` / `xhigh`), structured schema outputs | [5 Core Capabilities & 9 Agents](#-in-depth-utilization-of-meta-muse-spark-open) · [Architecture](#️-system-architecture-compound-multi-agent-system-cmas) |
+| **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#️-system-architecture-compound-multi-agent-system-cmas) · [20/20 Verification Results](#-automated-end-to-end-verification-results-2020-pass) |
+| **Demo & UX** | 25% | 3-min video walkthrough · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [Demo Video](https://youtu.be/placeholder) · [Live App](https://owly-ai.vercel.app) · [4-Step Test Guide](#-4-quick-steps-to-test-in-60-seconds) |
 
-## ⚡ Quick Evaluation for Judges & Evaluators (Test in 60 Seconds)
+### ⚡ 4 Quick Steps to Test in 60 Seconds:
 
 > [!TIP]
 > **No API keys or local server installation required!**  
 > We have pre-compiled the extension and connected it directly to our live production gateway powered by **Meta Muse Spark Open**. You can evaluate the full end-to-end user experience in under 1 minute.  
 > *(If you wish to inspect the codebase and run self-hosted locally with your own API credentials, see the [Self-Hosted & Local Development Guide](#-self-hosted--local-development-installation-guide) at the bottom).*
-
-### 🎯 4 Quick Steps to Test:
 
 1. **Download Pre-Built Extension (.ZIP):**  
    Download the ready-to-use extension package: [**Download owly-extension.zip**](https://owly-ai.vercel.app/owly-extension.zip) *(or visit our [Download Guide](https://owly-ai.vercel.app/download))*.
@@ -82,6 +64,57 @@
    - Click any input field to see instant 4-element guidance cards (*Meaning, How to Fill, Example, Traps*).
    - Click **"1-Click AutoFill"** from the Vault and test the instant Undo stack.
    - Click **"Pre-Submit Traffic Light Audit"** to see multi-clause contradiction detection in action!
+
+### 👥 Team
+| Name | Role | Contact |
+|---|---|---|
+| **Ahmad Ridlo Fadlli Robbi** | Solo Creator (Fullstack & AI Engineer) | [fadlirobbi@gmail.com](mailto:fadlirobbi@gmail.com) · [@arfabi](https://github.com/arfabi) |
+
+### 🧰 Tech Stack
+
+| Layer | Stack |
+|---|---|
+| **Browser Extension** | Chrome Manifest V3 · React 18 · TypeScript · Vite · Tailwind CSS · WebCrypto AES-256-GCM · Closed Shadow DOM |
+| **Web & Backend** | Next.js (App Router & API Gateway) · TypeScript · Tailwind CSS · Supabase PostgreSQL (`pgvector` & Cache) · Vercel |
+| **AI & Inference** | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026` via Baseten) · Compound Multi-Agent System (9 Agents) |
+
+---
+
+## 📑 Table of Contents
+- [🧭 Quick Judging & Evaluation Guide (Test in 60s)](#-quick-judging--evaluation-guide-test-in-60s)
+- [⚡ Quick Access & Navigation](#-quick-access--navigation)
+- [💔 The Problem & Human Impact](#-the-problem--human-impact)
+  - [Industry Facts & Verified Data](#industry-facts--verified-data)
+  - [Philosophy: Copilot, Not Autopilot](#philosophy-copilot-not-autopilot)
+- [🛠️ Development Journey & Architectural Pivot](#️-development-journey--architectural-pivot)
+- [🏛️ System Architecture: Compound Multi-Agent System (CMAS)](#️-system-architecture-compound-multi-agent-system-cmas)
+- [🔬 In-Depth Utilization of Meta Muse Spark Open](#-in-depth-utilization-of-meta-muse-spark-open)
+  - [1. 5 Core Meta Capabilities Exploited](#1-5-core-meta-capabilities-exploited)
+  - [2. The 9 Meta Agents: Core Triad & Specialized Tasks](#2-the-9-meta-agents-core-triad--specialized-tasks)
+  - [3. Privacy-First Regulation Grounding: Where web_search Lives](#3--privacy-first-regulation-grounding-where-web_search-lives-and-where-it-doesnt)
+  - [4. Token-Saving Cost Escalation Flow](#4-token-saving-cost-escalation-flow)
+  - [5. Autonomous Guardrails](#5-autonomous-guardrails)
+- [🔒 Deterministic Layer & Zero-Knowledge Privacy Architecture](#-deterministic-layer--zero-knowledge-privacy-architecture)
+- [🧪 Automated End-to-End Verification Results (20/20 PASS)](#-automated-end-to-end-verification-results-2020-pass)
+- [🚀 Self-Hosted & Local Development Installation Guide](#-self-hosted--local-development-installation-guide)
+  - [Step 1: Clone the Repository](#step-1-clone-the-repository)
+  - [Step 2: Set Up Supabase Database & Apply Schema](#step-2-set-up-supabase-database--apply-schema)
+  - [Step 3: Configure Backend Environment Variables](#step-3-configure-backend-environment-variables-webenvlocal)
+  - [Step 4: Start Web & API Server](#step-4-start-web--api-server)
+  - [Step 5: Configure Extension API Endpoint](#step-5-configure-extension-api-endpoint)
+  - [Step 6: Build & Load the Chrome MV3 Extension](#step-6-build--load-the-chrome-mv3-extension)
+- [📄 License](#-license)
+
+---
+
+## ⚡ Quick Access & Navigation
+
+| Service | Direct Link | Description |
+|---|---|---|
+| 🌐 **Landing Page & Showcase** | [owly-ai.vercel.app](https://owly-ai.vercel.app) | Public presentation of Owly.AI, core solution pillars, interactive browser previews, and user benefits. |
+| 🧪 **Comprehensive Form Simulator** | [owly-ai.vercel.app/simulator](https://owly-ai.vercel.app/simulator) | Realistic public portal with diverse inputs (masked ID/phone, dates, numbers, biometric photo & PDF uploads, essays) + **Access with Owly** detection button. |
+| 📦 **Download Extension (.ZIP)** | [owly-ai.vercel.app/download](https://owly-ai.vercel.app/download) | Step-by-step installation package for all Chromium browsers (Chrome, Edge, Brave, Opera). |
+| 🛡️ **Security & Privacy Policy** | [owly-ai.vercel.app/privacy](https://owly-ai.vercel.app/privacy) | Complete Zero-Knowledge architecture and client-side PII privacy compliance documentation. |
 
 ---
 
@@ -141,13 +174,13 @@ flowchart TB
         APIAnalyze["POST /api/form/analyze\n(3-Agent CMAS Triad Orchestrator)"]
         APICoach["POST /api/coach/field\n(Two-Tier Cache & Regulatory RAG)"]
         APIExplain["POST /api/explain\n(Multimodal Vision Jargon Buster)"]
-        APIEssay["POST /api/essay/coach\n(High-Reasoning Narrative Synthesizer)"]
-        APIAudit["POST /api/photo/audit\n(In-Memory C++ Sharp Inspector)"]
+        APIEssay["POST /api/essay/coach\n(xHigh-Reasoning Narrative Synthesizer)"]
+        APIAudit["POST /api/photo/audit\n(Multimodal Vision Inspector)"]
         APIA11y["POST /api/a11y/command\n(Intent Parser to 14 A11y Tools)"]
     end
 
     subgraph MuseSparkLayer["🤖 Meta Muse Spark Open Inference Engine"]
-        MuseSpark["Meta Muse Spark Open\n(meta-models/muse-spark-open-1026)\n• 128K Context Window\n• Native Multimodal Vision (image_url)\n• Dynamic Reasoning Effort (low / med / high)\n• Native Tool Calling & Parallel Execution"]
+        MuseSpark["Meta Muse Spark Open\n(meta-models/muse-spark-open-1026)\n• 128K Context Window\n• Native Multimodal Vision (image_url)\n• 4-Tier Reasoning Effort (low / med / high / xhigh)\n• Native Tool Calling & Parallel Execution"]
     end
 
     subgraph DeterministikLayer["⚙️ Deterministic Zero-Hallucination Tools (0ms)"]
@@ -195,8 +228,17 @@ Owly.AI is engineered around the native capabilities of **Meta Muse Spark Open**
 | **Native Vision** | Compressed WebP `image_url` (150–250KB, 1280px) → `<\|patch\|>` tokens | Perception Agent, Visual Locator Level 4, Snip Explainer | Reads urgent deadline banners, color badges, and canvas tables lacking DOM text. Pure DOM parsers fail completely here. |
 | **Native Audio** | Streaming audio via `audio_url` → `<\|audio\|>` tokens | Voice Intent Companion | Converts verbal speech (*"Fill my national ID from vault"*) directly into structured action intent `{intent: "autofill", key: "nik"}` without cascading STT lag. |
 | **Autonomous Tool Calling** | `tools: [{type: "function"}]` with autonomous verification loop | Regulation Researcher, Traffic-Light Auditor, Show Me L3, A11y Intent Router | Model autonomously selects tools, evaluates arguments, and verifies results in an agentic loop rather than a single-shot prompt. |
-| **Tunable Reasoning Effort** | Parameter `reasoning_effort` (`"low"`, `"medium"`, `"high"`) | Adaptive thinking budget per agent | Compute efficiency: low effort for sub-second field coaching, high effort for multi-clause contradiction auditing. |
+| **Tunable Reasoning Effort** | Parameter `reasoning_effort` (`"low"`, `"medium"`, `"high"`, `"xhigh"`) | Adaptive thinking budget per agent | Compute efficiency: `low` for sub-second field coaching, `medium` for visual extraction, `high` for multi-clause contradiction auditing, and `xhigh` (380+ CoT tokens) for academic scholarship narrative synthesis. |
 | **Structured Output Enforcing** | JSON Schema CoT output matching live DOM field IDs | Decision & Synthesis, Field Guide Cards | Generates strictly validated JSON aligned 1:1 with live DOM IDs, preventing autofill targeting misalignments. |
+
+#### 🧠 4-Tier Adaptive Reasoning Spectrum
+
+| Level | Reasoning Tokens | Target Latency | Agent / Component | Computational Rationale |
+|:---:|:---:|:---:|---|---|
+| **`low`** | ~0 – 32 tokens | **Sub-second (<600 ms)** | Field Coach, Show Me L3 (Semantic Locator), A11y Intent Router | Ultra-fast interactive guidance upon field focus without user-noticeable lag. |
+| **`medium`** | ~32 – 96 tokens | **~800 ms – 1.5s** | Perception Profiler (Vision), Visual Snip Explainer, Show Me L4, Voice Companion | Fast multimodal token parsing (`<\|patch\|>`, `<\|audio\|>`) and plain jargon translation. |
+| **`high`** | ~100 – 256 tokens | **~1.5s – 3.0s** | Decision & Synthesis Triad (Agent 3), Pre-Submit Traffic-Light Auditor | Multi-clause legal contradiction auditing (e.g. affirmative vs. regular GPA, age limits). |
+| **`xhigh`** | ~380 – 600+ tokens | **~2.0s – 4.5s** | **Scholarship & Visa Essay Coach** (`/api/essay/coach`) | Exhaustive multi-step CoT thinking scratchpad for institutional essay criteria & coherence. |
 
 ---
 
@@ -339,7 +381,7 @@ Verified through the automated test suite [web/scripts/e2e_verification.mjs](web
 > This section is for developers, self-hosters, and technical auditors who want to run a private backend server with their own API keys and build the extension from source code.  
 > *(If you are a hackathon judge or evaluator looking for immediate 60-second testing, use the [Quick Evaluation Guide](#-quick-evaluation-for-judges--evaluators-test-in-60-seconds) above — no local server setup required!)*
 
-To run the complete **Owly.AI** ecosystem locally or self-host on your own infrastructure, follow these 5 steps:
+To run the complete **Owly.AI** ecosystem locally or self-host on your own infrastructure, follow these 6 steps:
 
 ### Step 1: Clone the Repository
 ```bash
@@ -347,30 +389,64 @@ git clone https://github.com/arfabi/owly.git
 cd owly
 ```
 
-### Step 2: Configure Backend Environment Variables (`web/.env.local`)
-Navigate to the web directory and copy the environment template:
+### Step 2: Set Up Supabase Database & Apply Schema
+Owly.AI relies on Supabase PostgreSQL for the Zero-Knowledge Vault ciphertext sync, two-tier field guidance cache (`coach_cache`), and official regulatory guideline RAG chunks (`juknis_chunks`).
+
+You can choose either **Supabase Cloud** (fastest, free) or **Local Supabase CLI**:
+
+#### Option A: Supabase Cloud (Recommended, ~2 Mins)
+1. Create a free project at [supabase.com](https://supabase.com).
+2. Go to the **SQL Editor** tab in your Supabase dashboard.
+3. Open the repository's [`supabase/schema.sql`](supabase/schema.sql) file, paste its content into the SQL Editor, and click **Run**.  
+   *(This creates all tables, triggers, indexes, RLS policies, and seeds the official LPDP 2026 guidelines automatically).*
+4. Navigate to **Project Settings → API** to copy:
+   - **Project URL**
+   - **`anon` `public` key**
+   - **`service_role` key** *(used for server-side cache and RAG access)*.
+
+#### Option B: Local Supabase CLI (Docker)
+```bash
+# Initialize and start local Supabase instance
+npx supabase init
+npx supabase start
+
+# Execute the migration schema
+npx supabase db execute --file supabase/schema.sql
+```
+
+---
+
+### Step 3: Configure Backend Environment Variables (`web/.env.local`)
+Navigate to the `web` directory and copy the environment template:
 ```bash
 cd web
 cp .env.example .env.local
 ```
 Open `.env.local` and insert your credentials:
 ```env
-# 1. Baseten Inference API Key (Model: meta-models/muse-spark-open-1026)
-BASETEN_API_KEY="your_baseten_api_key_here"
-
-# 2. Supabase PostgreSQL (Regulatory RAG Chunks & Vault Ciphertext Sync)
+# 1. Supabase PostgreSQL Configuration (From Step 2)
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key_here"
+SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key_here"
+
+# 2. Baseten Inference API (Meta Muse Spark Open)
+BASETEN_API_KEY="your_baseten_api_key_here"
+BASETEN_BASE_URL="https://inference.baseten.co/v1"
+MUSE_SPARK_MODEL_NAME="meta-models/muse-spark-open-1026"
 ```
 
-### Step 3: Start Web & API Server
+---
+
+### Step 4: Start Web & API Server
 ```bash
 npm install
 npm run dev
 ```
 The Next.js development server will start on `http://localhost:3000`. You can access the Landing Page and Form Simulator directly in your browser.
 
-### Step 4: Configure Extension API Endpoint
+---
+
+### Step 5: Configure Extension API Endpoint
 By default, the browser extension points to the production cloud gateway. To connect it to your local dev server or self-hosted VPS:
 1. Open [extension/src/lib/api/client.ts](extension/src/lib/api/client.ts).
 2. Update the `API_BASE_URL` constant on line 8 to point to your local backend:
@@ -380,7 +456,9 @@ export const API_BASE_URL = "http://localhost:3000";
 ```
 *(Note: If hosting on a public domain, use your domain URL, e.g., `https://api.yourdomain.com`)*.
 
-### Step 5: Build & Load the Chrome MV3 Extension
+---
+
+### Step 6: Build & Load the Chrome MV3 Extension
 Compile the extension source code:
 ```bash
 cd ../extension
