@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Comprehensive End-to-End Verification Test Suite (P4.1 - P4.5)
+// OWLY.AI — Comprehensive End-to-End Verification Test Suite (P4.1 - P4.5)
 // Meta Global AI Developer Hackathon 2026 (Indie Developer Track)
 // ============================================================================
 
@@ -8,7 +8,10 @@ import path from "path";
 
 // Load .env.local natively without external dependencies
 try {
-  const envPath = path.resolve(process.cwd(), ".env.local");
+  let envPath = path.resolve(process.cwd(), ".env.local");
+  if (!fs.existsSync(envPath)) {
+    envPath = path.resolve(process.cwd(), "web", ".env.local");
+  }
   if (fs.existsSync(envPath)) {
     const lines = fs.readFileSync(envPath, "utf-8").split("\n");
     for (const line of lines) {
@@ -50,7 +53,7 @@ function assert(condition, testName) {
 
 async function runTestSuite() {
   console.log("\n========================================================");
-  console.log("   🧪 SAVVY.AI END-TO-END VERIFICATION & SECURITY AUDIT");
+  console.log("   🧪 OWLY.AI END-TO-END VERIFICATION & SECURITY AUDIT");
   console.log("========================================================\n");
 
   // --------------------------------------------------------------------------
@@ -58,7 +61,7 @@ async function runTestSuite() {
   // --------------------------------------------------------------------------
   console.log("▶ [Test 1] Client & Server PII Censor Guard (P4.2)");
   const NIK_REGEX = /\b[1-9][0-9]{15}\b/g;
-  const sampleMessage = `Halo Savvy, NIK saya ${RAW_NIK} dan NPWP ${RAW_NPWP}. Tolong bantu daftar.`;
+  const sampleMessage = `Halo Owly, NIK saya ${RAW_NIK} dan NPWP ${RAW_NPWP}. Tolong bantu daftar.`;
   const sanitized = sampleMessage
     .replace(NIK_REGEX, "[REDACTED_NIK]")
     .replace(/\b(\d{2}\.?\d{3}\.?\d{3}\.?\d{1}-?\d{3}\.?\d{3})\b/g, "[REDACTED_NPWP]");

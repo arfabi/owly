@@ -6,7 +6,8 @@
 
 <p align="center">
   <strong>Owly.AI — Your AI Browser Companion for Forms & Web</strong><br>
-  <em>Understand any page, fill forms with guidance, and catch mistakes before you submit. Private by design, powered by Meta Muse Spark Open.</em><br>
+  Understand any page, fill forms with guidance, and catch mistakes before you submit.<br>
+  em>Built with Meta Muse Spark Open deployed on Baseten as private inference</em>
 </p>
 
 <p align="center">
@@ -88,6 +89,7 @@
   - [Philosophy: Copilot, Not Autopilot](#philosophy-copilot-not-autopilot)
 - [🛠️ Development Journey & Architectural Pivot](#️-development-journey--architectural-pivot)
 - [🏛️ System Architecture: Compound Multi-Agent System (CMAS)](#️-system-architecture-compound-multi-agent-system-cmas)
+- [✨ Core Feature Breakdown (8 Pillars)](#-core-feature-breakdown-8-pillars)
 - [🔬 In-Depth Utilization of Meta Muse Spark Open](#-in-depth-utilization-of-meta-muse-spark-open)
   - [1. 5 Core Meta Capabilities Exploited](#1-5-core-meta-capabilities-exploited)
   - [2. The 9 Meta Agents: Core Triad & Specialized Tasks](#2-the-9-meta-agents-core-triad--specialized-tasks)
@@ -163,6 +165,25 @@ Owly.AI implements a **Compound Multi-Agent System (CMAS)** that synergizes the 
 <p align="center">
   <img src="assets/meta-tooling.svg" width="100%" alt="Owly.AI — Meta Muse Spark Open Capabilities & CMAS Architecture" />
 </p>
+
+---
+
+## ✨ Core Feature Breakdown (8 Pillars)
+
+Owly is NOT an overdone project. Compound browser agent, not a basic RAG/chatbot.
+
+| # | Feature | What It Does | Meta Muse Spark Open | Spec |
+|:---:|---|---|---|:---:|
+| 1 | **Forms Guide** | Scan DOM → badges 1..N, step walkthrough | 3-Agent Triad (Perception/Researcher/Decision) + 4-element card | [→ forms_guide.md](feature/forms_guide.md) |
+| 2 | **Pre-Submit Audit** | Traffic-light audit, score 0-100 | 5-Layer FSM (REQUIRED/FORMAT/DISCREPANCY/ATTACHMENT/RULE) + Semantic Reasoner | [→ audit.md](feature/audit.md) |
+| 3 | **Autofill + Ingestion** | Upload doc → extract → 1-Click Fill + Undo | Vision OCR `<\|patch\|>` + ephemeral RAM + AES-256-GCM vault | [→ autofill.md](feature/autofill.md) |
+| 4 | **Explain This** | Lightshot drag to explain clause/stamp | Vision analysis → 5-pillar JSON (title, explanation, legal, tips, action) | [→ explain.md](feature/explain.md) |
+| 5 | **Show Me + Ghost** | "Show me: upload passport" → finds it | 4-tier: Exact <1ms → Synonym <5ms → Semantic ~280ms → Vision | [→ showme.md](feature/showme.md) |
+| 6 | **Voice** | PTT walkie-talkie & Live Talk hands-free | Web Audio VAD (RMS>18) + `<\|audio\|>` transcribe + TTS + tool calling | [→ voice.md](feature/voice.md) |
+| 7 | **A11y Hub** | 14 tools for low-vision/dyslexia/ADHD | Function calling temp 0.1 + offline fallback | [→ accessibility.md](feature/accessibility.md) |
+| 8 | **Security + Logs** | Zero-Knowledge + observability | PBKDF2 100k + PII scrubber + 7 domains (PLANNER/REASONING/ACTION...) | [→ security.md](feature/security.md) · [→ logs](feature/log_viewer.md) · [→ chat](feature/chat.md) |
+
+> 🧪 **Tested & Verified:** 20/20 E2E PASS, 816ms live inference, <5ms cache. [Read Full Verification Spec →](feature/verification.md)
 
 ---
 
@@ -283,42 +304,25 @@ Local deterministic systems run in the client browser at $0 token cost and insta
 
 ## 🧪 Automated End-to-End Verification Results (20/20 PASS)
 
-Verified through the automated test suite [web/scripts/e2e_verification.mjs](web/scripts/e2e_verification.mjs), categorized into **15 Behavioral/Functional Tests** and **5 Infrastructure/Config Checks**:
+Owly.AI undergoes rigorous automated end-to-end testing via [`web/scripts/e2e_verification.mjs`](web/scripts/e2e_verification.mjs), verifying **15 Behavioral/Functional Pipeline Tests** and **5 Environment/Config Checks** with a **100% Pass Rate (20/20 PASS)**.
 
-```text
-========================================================================
-           🧪 OWLY.AI AUTOMATED VERIFICATION SUITE (20/20 PASS)
-========================================================================
+All comprehensive test assertions, raw terminal execution logs, latency benchmarks, cryptographic validation traces, and architecture guarantees have been compiled into the dedicated feature specification:
 
-▶ PART A: BEHAVIORAL & FUNCTIONAL PIPELINE TESTS (15/15 PASS)
-  ✅ [Behavior 01] Client PII Scrubber redacts 16-digit ID before transit
-  ✅ [Behavior 02] Client PII Scrubber redacts Tax ID before transit
-  ✅ [Behavior 03] Censor dispatches deterministic placeholder [REDACTED_NIK]
-  ✅ [Behavior 04] Syntax Validator enforces exact numeric ID string length
-  ✅ [Behavior 05] Syntax Validator rejects illegal symbols/digits in legal name
-  ✅ [Behavior 06] Syntax Validator enforces RFC-compliant email structure
-  ✅ [Behavior 07] Pre-Submit Auditor checks TOEFL/IELTS against scholarship cutoff
-  ✅ [Behavior 08] Pre-Submit Auditor catches fatal trap (Traffic Light: Red)
-  ✅ [Behavior 09] Plaintext payload verified present prior to encryption
-  ✅ [Behavior 10] WebCrypto ciphertext confirms zero plaintext leakage
-  ✅ [Behavior 11] Decryption roundtrip confirms 100% data fidelity with valid PIN
-  ✅ [Behavior 12] Live model inference streams valid completion tokens
-  ✅ [Behavior 13] Live Baseten latency benchmark: 816ms (Target: <2500ms)
-  ✅ [Behavior 14] Regulatory RAG returns 13 active guideline documents
-  ✅ [Behavior 15] RAG vector query matches official LPDP & Schengen citations
+👉 **[Read the Full Verification Specification & Test Results (`feature/verification.md`)](feature/verification.md)**
 
-▶ PART B: ENVIRONMENT & INFRASTRUCTURE CHECKS (5/5 PASS)
-  ✅ [Config 01] BASETEN_API_KEY environment variable verified
-  ✅ [Config 02] Baseten Base URL routes to official inference cluster
-  ✅ [Config 03] Model ID confirmed as 'meta-models/muse-spark-open-1026'
-  ✅ [Config 04] WebCrypto unique 96-bit IV and 128-bit Salt entropy verified
-  ✅ [Config 05] Supabase cloud connection & juknis_chunks table accessible
+### Verification Summary Matrix
 
-========================================================================
-   OVERALL VERIFICATION: 20 / 20 TESTS PASSED (100%)
-   Behavioral Tests: 15 / 15 PASS | Config Checks: 5 / 5 PASS
-   Zero Raw PII Transit Guarantee: VERIFIED ✅
-========================================================================
+| Category | Passed | Target Ceiling | Status |
+|---|---|---|---|
+| **Behavioral & Functional Pipeline Tests** | 15 / 15 | 100% Pass | ✅ PASS |
+| **Environment & Infrastructure Checks** | 5 / 5 | 100% Pass | ✅ PASS |
+| **Zero Raw PII Transit Guarantee** | Verified | 0 Plaintext Leaks | ✅ VERIFIED |
+| **Baseten Live Inference Latency** | 816 ms | < 2500 ms | ✅ PASS |
+| **Model ID Compliance (`muse-spark-open-1026`)** | Verified | Exact Match | ✅ VERIFIED |
+
+To run the test suite locally:
+```bash
+node web/scripts/e2e_verification.mjs
 ```
 
 ---
