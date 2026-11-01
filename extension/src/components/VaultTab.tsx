@@ -190,7 +190,18 @@ export function VaultTab({
     if (typeof chrome !== "undefined" && chrome.storage?.local) {
       chrome.storage.local.get(["savvy_verified_profile_items"], (res) => {
         if (Array.isArray(res?.savvy_verified_profile_items)) {
-          setProfileItems(res.savvy_verified_profile_items);
+          // Automatically purge any stale dummy placeholder item
+          const cleaned = res.savvy_verified_profile_items.filter(
+            (item: any) =>
+              item &&
+              item.id !== "extracted_doc" &&
+              item.value !== "Ekstraksi berhasil" &&
+              !item.value?.toLowerCase()?.includes("ekstraksi berhasil")
+          );
+          setProfileItems(cleaned);
+          if (cleaned.length !== res.savvy_verified_profile_items.length) {
+            chrome.storage.local.set({ savvy_verified_profile_items: cleaned });
+          }
         } else {
           setProfileItems([]);
         }
@@ -350,6 +361,17 @@ export function VaultTab({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Visual AI Vision requires image formats
+    if (file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf") {
+      setUploadSuccessToast(
+        isId
+          ? "Ekstraksi visual AI memerlukan format gambar (JPG, JPEG, PNG, WEBP). Harap unggah foto KTP/Paspor Anda."
+          : "Visual AI extraction requires image format (JPG, JPEG, PNG, WEBP). Please upload an image of your ID."
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     setIsUploading(true);
     setFormError(null);
     agentLog.action("📤 Document uploaded for AI zero-knowledge extraction.", { fileName: file.name, size: file.size });
@@ -363,45 +385,51 @@ export function VaultTab({
         reader.readAsDataURL(file);
       });
 
-      // 2. Call /api/document/extract with resilient fallback
+      // 2. Call /api/document/extract
       let fields: ProfileItem[] = [];
       let docType = "KTP Republik Indonesia";
 
-      try {
-        const baseUrl = await getEffectiveApiBaseUrl();
-        const res = await fetch(`${baseUrl}/api/document/extract`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imageBase64: base64Data,
-            language: isId ? "id" : "en",
-          }),
-        });
+      const baseUrl = await getEffectiveApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/document/extract`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageBase64: base64Data,
+          language: isId ? "id" : "en",
+        }),
+      });
 
-        if (res.ok) {
-          const json = await res.json();
-          if (Array.isArray(json.fields) && json.fields.length > 0) {
-            fields = json.fields;
-            docType = json.documentType || docType;
-          }
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json.fields) && json.fields.length > 0) {
+          fields = json.fields.filter(
+            (f: any) =>
+              f &&
+              f.id !== "extracted_doc" &&
+              f.value &&
+              typeof f.value === "string" &&
+              f.value.trim().length > 0 &&
+              f.value.toLowerCase() !== "null" &&
+              !f.value.toLowerCase().includes("ekstraksi berhasil")
+          );
+          docType = json.documentType || docType;
         }
-      } catch (fetchErr) {
-        console.warn("[VaultTab] Cloud extract fetch error:", fetchErr);
+      } else {
+        const errJson = await res.json().catch(() => null);
+        throw new Error(
+          errJson?.error ||
+            (isId
+              ? "Dokumen tidak dapat terbaca. Pastikan foto KTP/Paspor terang dan teks jelas."
+              : "Document unreadable. Please ensure the ID photo is well-lit and clear.")
+        );
       }
 
-      // If cloud route is pending Vercel deployment (404), seamlessly use Client-Side Zero-Knowledge Extractor
       if (fields.length === 0) {
-        agentLog.security(`🛡️ Client-Side Zero-Knowledge Document Extractor activated for '${file.name}'`);
-        fields = [
-          { id: "nik", name: "NIK", value: "3171011508980001", aliases: ["Nomor Induk Kependudukan", "ID Number"], sourceTag: "KTP Republik Indonesia" },
-          { id: "nama_lengkap", name: "Nama Lengkap", value: "RADEN ARYA WIRASENA", aliases: ["Nama", "Full Name"], sourceTag: "KTP Republik Indonesia" },
-          { id: "tempat_lahir", name: "Tempat Lahir", value: "JAKARTA", aliases: ["Place of Birth"], sourceTag: "KTP Republik Indonesia" },
-          { id: "tanggal_lahir", name: "Tanggal Lahir", value: "15-08-1998", aliases: ["Date of Birth"], sourceTag: "KTP Republik Indonesia" },
-          { id: "jenis_kelamin", name: "Jenis Kelamin", value: "LAKI-LAKI", aliases: ["Gender", "Sex"], sourceTag: "KTP Republik Indonesia" },
-          { id: "alamat", name: "Alamat KTP", value: "JL. JEND. SUDIRMAN NO. 45, RT 004 RW 002, KEL. KARET SEMANGGI, KEC. SETIABUDI, JAKARTA SELATAN, DKI JAKARTA 12930", aliases: ["Address", "Domisili"], sourceTag: "KTP Republik Indonesia" },
-          { id: "agama", name: "Agama", value: "ISLAM", aliases: ["Religion"], sourceTag: "KTP Republik Indonesia" },
-          { id: "kewarganegaraan", name: "Kewarganegaraan", value: "WNI", aliases: ["Nationality", "Citizenship"], sourceTag: "KTP Republik Indonesia" },
-        ];
+        throw new Error(
+          isId
+            ? "Tidak ada data identitas yang terbaca dari gambar ini. Pastikan foto e-KTP/Paspor terang, tidak buram, dan teks terlihat jelas."
+            : "No identity fields could be recognized from this image. Please ensure the ID photo is bright and clear."
+        );
       }
 
       // 3. Merge extracted fields into profileItems (update existing or prepend new)
@@ -428,8 +456,8 @@ export function VaultTab({
       agentLog.action(`❌ Extraction error: ${err.message}`);
       setUploadSuccessToast(
         isId
-          ? `Gagal mengekstrak: ${err.message || "Pastikan format gambar jelas."}`
-          : `Extraction failed: ${err.message || "Ensure clear image format."}`
+          ? `Gagal mengekstrak: ${err.message || "Pastikan foto dokumen terlihat jelas."}`
+          : `Extraction failed: ${err.message || "Ensure document photo is clear."}`
       );
     } finally {
       setIsUploading(false);
