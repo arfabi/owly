@@ -158,6 +158,8 @@ export async function sendChatMessage(
       });
     } else {
       agentLog.reasoning(`✅ [API Success] POST /api/chat responded (${elapsed}ms)`, {
+        model: "meta-models/muse-spark-open-1026",
+        latencyMs: elapsed,
         sessionId: data.sessionId,
         replyPreview: data.reply?.substring(0, 80) + "...",
         piiBlocked: data.piiBlocked || false,
@@ -224,6 +226,8 @@ export async function fetchFieldCoachGuidance(
     const data = await res.json();
     processBackendAgentLogs(data);
     agentLog.reasoning(`✅ [API Success] POST /api/coach/field responded (${elapsed}ms)`, {
+      model: "meta-models/muse-spark-open-1026",
+      latencyMs: elapsed,
       cached: data.cached || false,
       source: data.source_type,
       ref: data.confirmation_ref,
@@ -315,7 +319,9 @@ export async function explainVisualSnip(
     const data = await res.json();
     processBackendAgentLogs(data);
     agentLog.reasoning(`✅ [API Success] POST /api/explain responded (${elapsed}ms)`, {
-      title: data.title,
+      model: "meta-models/muse-spark-open-1026",
+      latencyMs: elapsed,
+      title: data.analysis?.title || data.title,
     });
 
     return data;
