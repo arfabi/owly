@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { Navbar } from "@/components/Navbar";
@@ -16,17 +16,50 @@ import {
   ShieldCheck,
   HelpCircle,
   Laptop,
+  Play,
+  Volume2,
+  VolumeX,
+  Clock,
 } from "lucide-react";
 
 export default function DownloadPage() {
   const { t, language } = useLanguage();
   const isId = language === "id";
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
 
   const copyToClipboard = (url: string) => {
     navigator.clipboard.writeText(url);
     setCopiedUrl(url);
     setTimeout(() => setCopiedUrl(null), 2000);
+  };
+
+  const handleSeek = (timeStr: string) => {
+    if (!videoRef.current) return;
+    const parts = timeStr.split(":").map(Number);
+    let seconds = 0;
+    if (parts.length === 2) {
+      seconds = parts[0] * 60 + parts[1];
+    } else if (parts.length === 3) {
+      seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    videoRef.current.currentTime = seconds;
+    videoRef.current.play().catch(() => {});
+  };
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    const nextMuted = !videoRef.current.muted;
+    videoRef.current.muted = nextMuted;
+    setIsMuted(nextMuted);
   };
 
   return (
@@ -93,6 +126,120 @@ export default function DownloadPage() {
               {isId ? "100% Bebas Malware" : "100% Clean & Safe"}
             </span>
           </div>
+        </div>
+      </section>
+
+      {/* Video Tutorial Section */}
+      <section className="py-8 sm:py-12 px-4 max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-3 shadow-2xs">
+            <Play className="w-3.5 h-3.5 fill-blue-600 text-blue-600" />
+            <span>{t.downloadSection.videoBadge}</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 mb-3">
+            {t.downloadSection.videoTitle}
+          </h2>
+
+          <p className="text-slate-600 text-xs sm:text-base max-w-2xl mx-auto leading-relaxed">
+            {t.downloadSection.videoSubtitle}
+          </p>
+        </div>
+
+        {/* Video Player Card */}
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xl bg-slate-950 overflow-hidden relative group">
+          {/* Subtle Ambient Glow */}
+          <div className="absolute top-0 right-1/4 w-72 h-72 bg-blue-500/20 blur-[100px] pointer-events-none" />
+
+          {/* Window / Player Title Bar */}
+          <div className="bg-slate-900/95 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between text-xs text-slate-300">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
+              <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
+              <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
+              <span className="ml-2 font-mono text-[11px] text-slate-300 font-medium hidden sm:inline">
+                owly-install-tutorial.mp4
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                title={isMuted ? (isId ? "Nyalakan Suara" : "Unmute") : (isId ? "Bisukan Suara" : "Mute")}
+              >
+                {isMuted ? (
+                  <>
+                    <VolumeX className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{isId ? "Suara Mati" : "Muted"}</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{isId ? "Suara Hidup" : "Unmuted"}</span>
+                  </>
+                )}
+              </button>
+
+              <a
+                href="https://www.youtube.com/watch?v=vfNBFFgfblg"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-md bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 transition-colors"
+                title={isId ? "Tonton di YouTube" : "Watch on YouTube"}
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-red-400" />
+                <span className="hidden sm:inline">YouTube</span>
+              </a>
+
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30">
+                Autoplay
+              </span>
+            </div>
+          </div>
+
+          {/* The Video Element */}
+          <div className="relative aspect-video bg-black flex items-center justify-center">
+            <video
+              ref={videoRef}
+              src="/owly-install-tutorial.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              preload="metadata"
+              className="w-full h-full object-contain"
+            />
+          </div>
+
+          {/* Video Timestamps Jump Bar */}
+          {t.downloadSection.videoTimestamps && t.downloadSection.videoTimestamps.length > 0 && (
+            <div className="bg-slate-900/90 border-t border-slate-800/80 p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-2.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                <span>{isId ? "Lompat ke Langkah:" : "Jump to Step:"}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {t.downloadSection.videoTimestamps.map((item, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSeek(item.time)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-blue-600/30 border border-slate-700 hover:border-blue-500/50 text-xs text-slate-200 transition-all cursor-pointer group/btn text-left"
+                  >
+                    <span className="font-mono text-[11px] text-blue-400 font-bold group-hover/btn:text-blue-300">
+                      {item.time}
+                    </span>
+                    <span className="text-slate-300 group-hover/btn:text-white">
+                      {item.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

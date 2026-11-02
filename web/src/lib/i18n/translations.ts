@@ -140,6 +140,10 @@ export interface TranslationDictionary {
     subtitle: string;
     chromiumBadge: string;
     btnDownloadZip: string;
+    videoBadge: string;
+    videoTitle: string;
+    videoSubtitle: string;
+    videoTimestamps: { time: string; label: string }[];
     guideTitle: string;
     steps: { number: string; title: string; desc: string; tip?: string }[];
     browsers: { name: string; url: string; note: string }[];
@@ -376,6 +380,16 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       subtitle: "Kompatibel penuh dengan seluruh browser berbasis Chromium. Instalasi mudah dalam 1 menit tanpa setup rumit.",
       chromiumBadge: "Mendukung Semua Browser Berbasis Chromium",
       btnDownloadZip: "Unduh owly-extension.zip (v1.0.0)",
+      videoBadge: "Video Panduan Resmi",
+      videoTitle: "Tutorial Video: Cara Pasang Ekstensi Owly.AI",
+      videoSubtitle: "Tonton langkah praktis mulai dari ekstrak file ZIP, membuka halaman ekstensi browser, mengaktifkan Developer Mode, hingga memuat ekstensi ke browser Anda.",
+      videoTimestamps: [
+        { time: "0:00", label: "Unduh & Ekstrak ZIP" },
+        { time: "0:15", label: "Buka chrome://extensions" },
+        { time: "0:25", label: "Aktifkan Developer Mode" },
+        { time: "0:35", label: "Load Unpacked & Pilih Folder" },
+        { time: "0:50", label: "Pin & Buka AI Side Panel" },
+      ],
       guideTitle: "Panduan Instalasi Langkah-demi-Langkah",
       steps: [
         {
@@ -659,6 +673,16 @@ export const translations: Record<SupportedLanguage, TranslationDictionary> = {
       subtitle: "Compatible with all Chromium-based browsers. Easy 1-minute setup with zero technical prerequisites.",
       chromiumBadge: "Supports All Chromium Browsers",
       btnDownloadZip: "Download owly-extension.zip (v1.0.0)",
+      videoBadge: "Official Video Guide",
+      videoTitle: "Video Tutorial: How to Install Owly.AI Extension",
+      videoSubtitle: "Watch the step-by-step walkthrough: extract the ZIP, open the browser extensions page, toggle Developer Mode, and load unpacked into your browser.",
+      videoTimestamps: [
+        { time: "0:00", label: "Download & Extract ZIP" },
+        { time: "0:15", label: "Open chrome://extensions" },
+        { time: "0:25", label: "Toggle Developer Mode" },
+        { time: "0:35", label: "Load Unpacked Folder" },
+        { time: "0:50", label: "Pin & Open AI Side Panel" },
+      ],
       guideTitle: "Step-by-Step Installation Guide",
       steps: [
         {

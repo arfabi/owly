@@ -14,6 +14,7 @@
   <a href="https://owly-ai.vercel.app"><img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Production-blue?style=for-the-badge&logo=vercel" alt="Live Demo" /></a>
   <a href="https://owly-ai.vercel.app/simulator"><img src="https://img.shields.io/badge/Form%20Simulator-Interactive%20Testing-purple?style=for-the-badge" alt="Simulator" /></a>
   <a href="https://owly-ai.vercel.app/download"><img src="https://img.shields.io/badge/Download-Extension%20(.ZIP)-success?style=for-the-badge" alt="Download" /></a>
+  <a href="https://www.youtube.com/watch?v=vfNBFFgfblg"><img src="https://img.shields.io/badge/YouTube-Video%20Tutorial-red?style=for-the-badge&logo=youtube" alt="YouTube Tutorial" /></a>
   <a href="https://github.com/arfabi/owly"><img src="https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github" alt="GitHub" /></a>
   <img src="https://img.shields.io/badge/Model-Meta%20Muse%20Spark%20Open-blueviolet?style=for-the-badge" alt="Meta Muse Spark Open" />
   <img src="https://img.shields.io/badge/Tests-20%2F20%20Pass%20(100%25)-brightgreen?style=for-the-badge" alt="Tests 100%" />
@@ -27,11 +28,13 @@
 
 | | |
 |---|---|
-| **Name** | Owly.AI |
-| **Type** | Chrome MV3 extension + Web (Landing page, Form simulator, API gateway) |
+| **Name** | **Owly.AI** |
+| **Type** | Chrome MV3 extension + Web (Next.js App Router & API Gateway) |
 | **Track** | Build for Your World · Indie Developers |
-| **Model** | `meta-models/muse-spark-open-1026` via Baseten |
-| **🎬 3-min Demo Video** | [Watch Demo Video (Demo Dummy)](https://youtu.be/placeholder) |
+| **Model** | `meta-models/muse-spark-open-1026` via Baseten (Dedicated Private Inference) |
+| **🎬 Video Walkthrough** | [▶️ Watch Demo & Installation Tutorial on YouTube](https://www.youtube.com/watch?v=vfNBFFgfblg) |
+| **🌐 Live Web Links** | [Landing Page](https://owly-ai.vercel.app) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
+| **📦 Extension Download**| [Download Extension (.ZIP)](https://owly-ai.vercel.app/download) *(or [Direct .ZIP](https://owly-ai.vercel.app/owly-extension.zip))* |
 
 ### 🏆 Rubric Scoring Alignment
 
@@ -40,14 +43,20 @@
 | **Impact** | 30% | Solves real clerical rejections; copilot-not-autopilot philosophy; never auto-submits; 14 built-in accessibility tools ($0 tokens) | [Problem & Impact](#-the-problem--human-impact) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
 | **Use of Meta AI** | 25% | **9 specialized agents + Deep Essay Synthesizer**; native multimodal vision (`<\|patch\|>`), direct audio streaming (`<\|audio\|>`), autonomous tool calling, full 4-tier reasoning effort (`low` / `medium` / `high` / `xhigh`), structured schema outputs | [5 Core Capabilities & 9 Agents](#-in-depth-utilization-of-meta-muse-spark-open) · [Architecture](#️-system-architecture-compound-multi-agent-system-cmas) |
 | **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#️-system-architecture-compound-multi-agent-system-cmas) · [Verification Spec (`feature/verification.md`)](feature/verification.md) |
-| **Demo & UX** | 25% | 3-min video walkthrough · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [Demo Video](https://youtu.be/placeholder) · [Live App](https://owly-ai.vercel.app) · [4-Step Test Guide](#-4-quick-steps-to-test-in-60-seconds) |
+| **Demo & UX** | 25% | Video walkthrough & tutorial · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [YouTube Tutorial](https://www.youtube.com/watch?v=vfNBFFgfblg) · [Live App](https://owly-ai.vercel.app) · [Demo Test Guide](#extension-demo-test-without-self-deployment) |
 
-### ⚡ 4 Quick Steps to Test in 60 Seconds:
+### Extension Demo Test without Self Deployment
 
 > [!TIP]
 > **No API keys or local server installation required!**  
 > We have pre-compiled the extension and connected it directly to our live production gateway powered by **Meta Muse Spark Open**. You can evaluate the full end-to-end user experience in under 1 minute.  
 > *(If you wish to inspect the codebase and run self-hosted locally with your own API credentials, see the [Self-Hosted & Local Development Guide](#-self-hosted--local-development-installation-guide) at the bottom).*
+
+### 📺 Video Walkthrough & Installation Tutorial
+
+[![Owly.AI Extension Walkthrough & Tutorial](https://img.youtube.com/vi/vfNBFFgfblg/maxresdefault.jpg)](https://www.youtube.com/watch?v=vfNBFFgfblg)
+
+> 💡 **Watch on YouTube:** [https://www.youtube.com/watch?v=vfNBFFgfblg](https://www.youtube.com/watch?v=vfNBFFgfblg) — Step-by-step installation, developer mode setup, and live form simulation walkthrough.
 
 1. **Download Pre-Built Extension (.ZIP):**  
    Download the ready-to-use extension package: [**Download owly-extension.zip**](https://owly-ai.vercel.app/owly-extension.zip) *(or visit our [Download Guide](https://owly-ai.vercel.app/download))*.
@@ -57,7 +66,7 @@
    - Toggle on **Developer mode** (top-right corner).
    - Click **Load unpacked** and select the extracted folder.
 3. **Open the Live Form Simulator:**  
-   Navigate to our realistic public scholarship & visa portal:  
+   Navigate to our realistic public scholarship & visa portal (stress-testing complex multi-step rules, biometric attachments, and essay validation):  
    👉 [**https://owly-ai.vercel.app/simulator**](https://owly-ai.vercel.app/simulator)
 4. **Trigger Owly & Test Live Capabilities:**  
    - Click the prominent **"Access with Owly"** button on the right side of the form (Owly will detect the extension and automatically open the Side Panel).
@@ -66,30 +75,15 @@
    - Click **"1-Click AutoFill"** from the Vault and test the instant Undo stack.
    - Click **"Pre-Submit Traffic Light Audit"** to see multi-clause contradiction detection in action!
 
-### 👥 Team
-| Name | Role | Contact |
-|---|---|---|
-| **Ahmad Ridlo Fadlli Robbi** | Solo Creator (Fullstack & AI Engineer) | [fadlirobbi@gmail.com](mailto:fadlirobbi@gmail.com) · [@arfabi](https://github.com/arfabi) |
-
-### 🧰 Tech Stack
-
-| Layer | Stack |
-|---|---|
-| **Browser Extension** | Chrome Manifest V3 · React 18 · TypeScript · Vite · Tailwind CSS · WebCrypto AES-256-GCM · Closed Shadow DOM |
-| **Web & Backend** | Next.js (App Router & API Gateway) · TypeScript · Tailwind CSS · Supabase PostgreSQL (`pgvector` & Cache) · Vercel |
-| **AI & Inference** | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026` via Baseten) · Compound Multi-Agent System (9 Agents) |
-
 ---
 
 ## 📑 Table of Contents
 - [🧭 Quick Judging & Evaluation Guide (Test in 60s)](#-quick-judging--evaluation-guide-test-in-60s)
-- [⚡ Quick Access & Navigation](#-quick-access--navigation)
 - [💔 The Problem & Human Impact](#-the-problem--human-impact)
   - [Industry Facts & Verified Data](#industry-facts--verified-data)
   - [Philosophy: Copilot, Not Autopilot](#philosophy-copilot-not-autopilot)
-- [🛠️ Development Journey & Architectural Pivot](#️-development-journey--architectural-pivot)
 - [🏛️ System Architecture: Compound Multi-Agent System (CMAS)](#️-system-architecture-compound-multi-agent-system-cmas)
-- [✨ Core Feature Breakdown (8 Pillars)](#-core-feature-breakdown-8-pillars)
+- [✨ Core Feature Breakdown (9 Pillars)](#-core-feature-breakdown-9-pillars)
 - [🔬 In-Depth Utilization of Meta Muse Spark Open](#-in-depth-utilization-of-meta-muse-spark-open)
   - [1. 5 Core Meta Capabilities Exploited](#1-5-core-meta-capabilities-exploited)
   - [2. The 9 Meta Cognitive Agents](#2-the-9-meta-cognitive-agents-core-triad--specialized-tasks)
@@ -100,18 +94,9 @@
   - [Step 4: Start Web & API Server](#step-4-start-web--api-server)
   - [Step 5: Configure Extension API Endpoint](#step-5-configure-extension-api-endpoint)
   - [Step 6: Build & Load the Chrome MV3 Extension](#step-6-build--load-the-chrome-mv3-extension)
+- [👥 Team](#-team)
+- [🧰 Tech Stack](#-tech-stack)
 - [📄 License](#-license)
-
----
-
-## ⚡ Quick Access & Navigation
-
-| Service | Direct Link | Description |
-|---|---|---|
-| 🌐 **Landing Page & Showcase** | [owly-ai.vercel.app](https://owly-ai.vercel.app) | Public presentation of Owly.AI, core solution pillars, interactive browser previews, and user benefits. |
-| 🧪 **Comprehensive Form Simulator** | [owly-ai.vercel.app/simulator](https://owly-ai.vercel.app/simulator) | Realistic public portal with diverse inputs (masked ID/phone, dates, numbers, biometric photo & PDF uploads, essays) + **Access with Owly** detection button. |
-| 📦 **Download Extension (.ZIP)** | [owly-ai.vercel.app/download](https://owly-ai.vercel.app/download) | Step-by-step installation package for all Chromium browsers (Chrome, Edge, Brave, Opera). |
-| 🛡️ **Security & Privacy Policy** | [owly-ai.vercel.app/privacy](https://owly-ai.vercel.app/privacy) | Complete Zero-Knowledge architecture and client-side PII privacy compliance documentation. |
 
 ---
 
@@ -134,25 +119,9 @@ High-stakes applications (visas, scholarships, professional licenses) are bindin
 
 ---
 
-## 🛠️ Development Journey & Architectural Pivot
-
-Over an intensive one-week development sprint, guided by learnings from technical workshops and live developer sessions, our team explored multiple serving paradigms for Meta's open model ecosystem. 
-
-While closed proprietary multi-tenant APIs offer convenient prototyping, high-stakes public administrative forms demand **dedicated private inference and zero data retention**: citizens cannot risk routing confidential information into opaque model retraining pools.
-
-> **Why Dedicated Baseten Deployment & Meta Muse Spark Open?**  
-> *"We chose Muse Spark Open deployed on Baseten — combining Meta's frontier open-weight reasoning with private serverless container isolation (SOC 2 Type II compliant) and guaranteed zero data retention for training."*
-
-This architectural decision unlocked the optimal equilibrium:
-1. **Frontier Meta AI Reasoning:** Harnessing `meta-models/muse-spark-open-1026` for native multimodal vision (`<|patch|>`), direct speech intent parsing (`<|audio|>`), and adaptive reasoning effort.
-2. **Dedicated In-Memory Processing:** Model inference runs in isolated, dedicated serverless containers where inputs are processed in volatile RAM with strict zero-retention guarantees, preceded by client-side PII scrubbing.
-3. **Transparent Sprint Tracking:** Every day-by-day milestone, architectural decision, and engineering audit from Day 1 to Day 7 is systematically documented in our master roadmap [plan.md](plan.md).
-
----
-
 ## 🏛️ System Architecture: Compound Multi-Agent System (CMAS)
 
-Owly.AI implements a **Compound Multi-Agent System (CMAS)** that synergizes the probabilistic multimodal reasoning of **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) with deterministic zero-latency client-side guardrails.
+Owly.AI implements a **Compound Multi-Agent System (CMAS)** that synergizes the probabilistic multimodal reasoning of **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026`) with deterministic zero-latency client-side guardrails. To safeguard sensitive citizen data, model inference runs in dedicated, SOC 2 Type II-compliant Baseten serverless containers with guaranteed volatile in-memory execution and zero data retention for training.
 
 > **Core Principle: "Models Propose; Validators Dispose."**  
 > AI models formulate semantic reasoning and action plans (*proposes*), while local deterministic code scrubs PII, validates mathematical syntax, enforces cryptographic zero-knowledge, and renders DOM feedback (*disposes*). The AI model never touches unencrypted vault credentials, never calculates ID checksums, and never auto-submits.
@@ -163,9 +132,9 @@ Owly.AI implements a **Compound Multi-Agent System (CMAS)** that synergizes the 
 
 ---
 
-## ✨ Core Feature Breakdown (8 Pillars)
+## ✨ Core Feature Breakdown (9 Pillars)
 
-Owly is NOT an overdone project. Compound browser agent, not a basic RAG/chatbot.
+Owly.AI is an active compound browser agent combining multimodal cognitive intelligence with deterministic client-side execution, rather than a passive chatbot or simple RAG wrapper.
 
 | # | Feature | What It Does | Meta Muse Spark Open | Spec |
 |:---:|---|---|---|:---:|
@@ -174,9 +143,10 @@ Owly is NOT an overdone project. Compound browser agent, not a basic RAG/chatbot
 | 3 | **Autofill + Ingestion** | Upload doc → extract → 1-Click Fill + Undo | Vision OCR `<\|patch\|>` + ephemeral RAM + AES-256-GCM vault | [→ autofill.md](feature/autofill.md) |
 | 4 | **Explain This** | Lightshot drag to explain clause/stamp | Vision analysis → 5-pillar JSON (title, explanation, legal, tips, action) | [→ explain.md](feature/explain.md) |
 | 5 | **Show Me + Ghost** | "Show me: upload passport" → finds it | 4-tier: Exact <1ms → Synonym <5ms → Semantic ~280ms → Vision | [→ showme.md](feature/showme.md) |
-| 6 | **Voice** | PTT walkie-talkie & Live Talk hands-free | Web Audio VAD (RMS>18) + `<\|audio\|>` transcribe + TTS + tool calling | [→ voice.md](feature/voice.md) |
-| 7 | **A11y Hub** | 14 tools for low-vision/dyslexia/ADHD | Function calling temp 0.1 + offline fallback | [→ accessibility.md](feature/accessibility.md) |
-| 8 | **Security + Logs** | Zero-Knowledge + observability | PBKDF2 100k + PII scrubber + 7 domains (PLANNER/REASONING/ACTION...) | [→ security.md](feature/security.md) · [→ logs](feature/log_viewer.md) · [→ chat](feature/chat.md) |
+| 6 | **Voice Companion** | PTT walkie-talkie & Live Talk hands-free | Web Audio VAD (RMS>18) + `<\|audio\|>` transcribe + TTS + tool calling | [→ voice.md](feature/voice.md) |
+| 7 | **Ask Owly (Chat)** | Side panel contextual chat & grounded Q&A | Autonomous tool calling (`scroll_to`, `highlight`, `explain_clause`) + RAG regulation grounding | [→ chat.md](feature/chat.md) |
+| 8 | **A11y Hub** | 14 tools for low-vision/dyslexia/ADHD | Function calling temp 0.1 + offline fallback | [→ accessibility.md](feature/accessibility.md) |
+| 9 | **Security + Logs** | Zero-Knowledge + observability | PBKDF2 100k + PII scrubber + 7 domains (PLANNER/REASONING/ACTION...) | [→ security.md](feature/security.md) · [→ logs](feature/log_viewer.md) |
 
 > 🧪 **Tested & Verified:** 20/20 E2E PASS, 816ms live inference, <5ms cache. [Read Full Verification Spec →](feature/verification.md)
 
@@ -191,7 +161,7 @@ Owly.AI is engineered around the native capabilities of **Meta Muse Spark Open**
 | Capability | How We Invoke It | Applied In | Why It Is Non-Trivial & High-Value |
 |---|---|---|---|
 | **Native Vision** | Compressed WebP `image_url` (150–250KB, 1280px) → `<\|patch\|>` tokens | Perception Agent, Visual Locator Level 4, Snip Explainer | Reads urgent deadline banners, color badges, and canvas tables lacking DOM text. Pure DOM parsers fail completely here. |
-| **Native Audio** | Streaming audio via `audio_url` → `<\|audio\|>` tokens | Voice Intent Companion | Converts verbal speech (*"Fill my national ID from vault"*) directly into structured action intent `{intent: "autofill", key: "nik"}` without cascading STT lag. |
+| **Native Audio** | Streaming audio via `audio_url` → `<\|audio\|>` tokens | Voice Intent Companion | Converts verbal speech (*"Fill my passport number from vault"*) directly into structured action intent `{intent: "autofill", key: "passport_number"}` without cascading STT lag. |
 | **Autonomous Tool Calling** | `tools: [{type: "function"}]` with autonomous verification loop | Regulation Researcher, Traffic-Light Auditor, Show Me L3, A11y Intent Router | Model autonomously selects tools, evaluates arguments, and verifies results in an agentic loop rather than a single-shot prompt. |
 | **Tunable Reasoning Effort** | Parameter `reasoning_effort` (`"low"`, `"medium"`, `"high"`, `"xhigh"`) | Adaptive thinking budget per agent | Compute efficiency: `low` for sub-second field coaching, `medium` for visual extraction, `high` for multi-clause contradiction auditing, and `xhigh` (380+ CoT tokens) for academic scholarship narrative synthesis. |
 | **Structured Output Enforcing** | JSON Schema CoT output matching live DOM field IDs | Decision & Synthesis, Field Guide Cards | Generates strictly validated JSON aligned 1:1 with live DOM IDs, preventing autofill targeting misalignments. |
@@ -250,7 +220,7 @@ Owly's multi-agent system orchestrates a sequential **Core 3-Agent Triad** for i
 > [!NOTE]
 > **Custom Setup & Open-Source Inspection:**  
 > This section is for developers, self-hosters, and technical auditors who want to run a private backend server with their own API keys and build the extension from source code.  
-> *(If you are a hackathon judge or evaluator looking for immediate 60-second testing, use the [Quick Evaluation Guide](#-quick-evaluation-for-judges--evaluators-test-in-60-seconds) above — no local server setup required!)*
+> *(If you are a hackathon judge or evaluator looking for immediate 60-second testing, use the [Extension Demo Test Guide](#extension-demo-test-without-self-deployment) above — no local server setup required!)*
 
 To run the complete **Owly.AI** ecosystem locally or self-host on your own infrastructure, follow these 6 steps:
 
@@ -261,7 +231,7 @@ cd owly
 ```
 
 ### Step 2: Set Up Supabase Database & Apply Schema
-Owly.AI relies on Supabase PostgreSQL for the Zero-Knowledge Vault ciphertext sync, two-tier field guidance cache (`coach_cache`), and official regulatory guideline RAG chunks (`juknis_chunks`).
+Owly.AI relies on Supabase PostgreSQL for the Zero-Knowledge Vault ciphertext sync, two-tier field guidance cache (`coach_cache`), and official regulatory guideline RAG chunks (`juknis_chunks` / regulation embeddings).
 
 You can choose either **Supabase Cloud** (fastest, free) or **Local Supabase CLI**:
 
@@ -269,7 +239,7 @@ You can choose either **Supabase Cloud** (fastest, free) or **Local Supabase CLI
 1. Create a free project at [supabase.com](https://supabase.com).
 2. Go to the **SQL Editor** tab in your Supabase dashboard.
 3. Open the repository's [`supabase/schema.sql`](supabase/schema.sql) file, paste its content into the SQL Editor, and click **Run**.  
-   *(This creates all tables, triggers, indexes, RLS policies, and seeds the official LPDP 2026 guidelines automatically).*
+   *(This creates all tables, triggers, indexes, RLS policies, and automatically seeds the benchmark scholarship regulatory guidelines into vector chunks).*
 4. Navigate to **Project Settings → API** to copy:
    - **Project URL**
    - **`anon` `public` key**
@@ -344,6 +314,24 @@ This generates the production bundle inside `extension/dist/`.
 3. Click the **Load unpacked** button.
 4. Select the `extension/dist/` directory from your repository.
 5. Click the **Owly.AI** icon in your browser toolbar to open the AI Side Panel.
+
+---
+
+## 👥 Team
+
+| Name | Role | Contact |
+|---|---|---|
+| **Ahmad Ridlo Fadlli Robbi** | Solo Creator (Fullstack & AI Engineer) | [fadlirobbi@gmail.com](mailto:fadlirobbi@gmail.com) · [@arfabi](https://github.com/arfabi) |
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Stack |
+|---|---|
+| **Browser Extension** | Chrome Manifest V3 · React 18 · TypeScript · Vite · Tailwind CSS · WebCrypto AES-256-GCM · Closed Shadow DOM |
+| **Web & Backend** | Next.js (App Router & API Gateway) · TypeScript · Tailwind CSS · Supabase PostgreSQL (`pgvector` & Cache) · Vercel |
+| **AI & Inference** | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026` via Baseten) · Compound Multi-Agent System (9 Agents) |
 
 ---
 

@@ -615,6 +615,46 @@ export default function Home() {
           <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mb-8">
             {t.ctaBanner.description}
           </p>
+
+          {/* Autoplay Tutorial Video Preview */}
+          <div className="max-w-2xl mx-auto mb-10 rounded-2xl overflow-hidden border border-white/15 shadow-2xl bg-black/70 backdrop-blur-xs text-left">
+            <div className="bg-slate-900/90 px-4 py-2.5 border-b border-white/10 flex items-center justify-between text-xs text-slate-300">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                <span className="ml-2 font-mono text-[11px] text-slate-300">owly-install-tutorial.mp4</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://www.youtube.com/watch?v=vfNBFFgfblg"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-[10px] bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-2 py-0.5 rounded-full font-semibold transition-colors"
+                  title="Watch on YouTube"
+                >
+                  <ExternalLink className="w-3 h-3 text-red-400" />
+                  <span>YouTube</span>
+                </a>
+                <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-400/30 px-2.5 py-0.5 rounded-full font-semibold">
+                  {isId ? "Tutorial • Autoplay" : "Tutorial • Autoplay"}
+                </span>
+              </div>
+            </div>
+            <div className="relative aspect-video bg-black flex items-center justify-center">
+              <video
+                src="/owly-install-tutorial.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                preload="metadata"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/download"
