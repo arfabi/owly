@@ -577,9 +577,9 @@ export function VaultTab({
               <button
                 onClick={handleClearAll}
                 className="text-[10px] font-bold text-slate-400 hover:text-red-500 px-2 py-1 rounded transition-colors cursor-pointer"
-                title={isId ? "Hapus seluruh data profil" : "Clear all profile items"}
+                title={t.vault.clearAllTooltip || (isId ? "Hapus seluruh data profil" : "Clear all profile items")}
               >
-                {isId ? "Kosongkan" : "Clear All"}
+                {t.vault.clearAllBtn || (isId ? "Kosongkan" : "Clear All")}
               </button>
             )}
             <button
@@ -601,7 +601,7 @@ export function VaultTab({
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-bold text-slate-700">
-                  {isId ? "Belum Ada Data Profil" : "No Profile Data Yet"}
+                  {t.vault.emptyProfileTitle || (isId ? "Belum Ada Data Profil" : "No Profile Data Yet")}
                 </p>
                 <p className="text-[11px] text-slate-500 leading-relaxed max-w-[270px] mx-auto">
                   {isId
@@ -614,7 +614,7 @@ export function VaultTab({
                 className="px-3.5 py-1.5 text-xs font-bold text-savvy-blue bg-white border border-blue-200 shadow-2xs rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer inline-flex items-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>{isId ? "Muat Profil Demo" : "Load Demo Profile"}</span>
+                <span>{t.vault.loadDemoBtn || (isId ? "Muat Profil Demo" : "Load Demo Profile")}</span>
               </button>
             </div>
           ) : (
@@ -727,7 +727,7 @@ export function VaultTab({
               <span>{t.vault.uploadingDoc}</span>
             </>
           ) : (
-            <span>{isId ? "Pilih Berkas atau Tarik ke Sini" : t.vault.btnUploadDoc}</span>
+            <span>{t.vault.btnUploadOrDrop || (isId ? "Pilih Berkas atau Tarik ke Sini" : t.vault.btnUploadDoc)}</span>
           )}
         </button>
 

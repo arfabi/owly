@@ -243,7 +243,7 @@ export function FormsGuideTab({
           target.label || target.name || "field",
           domain,
           formTitle,
-          isId ? "id" : "en"
+          language
         )
           .then((res) => {
             if (cancelled) return;
@@ -337,7 +337,7 @@ export function FormsGuideTab({
           rawCurrent.label || rawCurrent.name || "field",
           domain,
           formTitle,
-          isId ? "id" : "en"
+          language
         )
           .then((res) => {
             const newEntry = {

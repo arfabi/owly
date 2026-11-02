@@ -98,6 +98,9 @@
       snipCopied: "Copied!",
       snipCancelTitle: "Cancel (ESC)",
       snipCapturing: "✓ Capturing screenshot...",
+      defaultFieldLabel: "Form Field",
+      defaultCheckboxLabel: "Consent / Agreement",
+      badgeTitle: (idx: number, label: string) => `Field #${idx}: ${label} (Click for guidance)`,
     },
     id: {
       scannerTitle: "Halaman ini sedang dipindai oleh Owly.AI",
@@ -109,28 +112,48 @@
       snipCopied: "Tersalin!",
       snipCancelTitle: "Batal (ESC)",
       snipCapturing: "✓ Mengambil tangkapan layar...",
+      defaultFieldLabel: "Kolom Formulir",
+      defaultCheckboxLabel: "Persetujuan",
+      badgeTitle: (idx: number, label: string) => `Kolom #${idx}: ${label} (Klik untuk panduan)`,
     },
   };
 
-  let contentLang: "en" | "id" = "en";
+  const SPEECH_LANG_MAP: Record<string, string> = {
+    en: "en-US",
+    id: "id-ID",
+    es: "es-ES",
+    zh: "zh-CN",
+    ar: "ar-SA",
+    ja: "ja-JP",
+    fr: "fr-FR",
+    de: "de-DE",
+    pt: "pt-BR",
+    hi: "hi-IN",
+    ko: "ko-KR",
+    ms: "ms-MY",
+    vi: "vi-VN",
+    th: "th-TH",
+  };
+
+  let contentLang: string = "en";
   if (typeof chrome !== "undefined" && chrome.storage?.local) {
     chrome.storage.local.get(["owly_preferred_lang", "preferred_language"], (res) => {
       const saved = res.owly_preferred_lang || res.preferred_language;
-      if (saved === "id" || saved === "en") {
+      if (typeof saved === "string") {
         contentLang = saved;
       }
     });
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "local") {
         const newLang = changes.owly_preferred_lang?.newValue || changes.preferred_language?.newValue;
-        if (newLang === "id" || newLang === "en") {
+        if (typeof newLang === "string") {
           contentLang = newLang;
         }
       }
     });
   }
   function getContentT() {
-    return CONTENT_I18N[contentLang] || CONTENT_I18N.en;
+    return (CONTENT_I18N as Record<string, any>)[contentLang] || CONTENT_I18N.en;
   }
 
   agentLog.perception("Content Script activated. Closed Shadow DOM host initialized on page.");
@@ -605,7 +628,7 @@
       return cleanLabelText(rawName.replace(/[_\-]+/g, " "));
     }
 
-    return "Kolom Form";
+    return getContentT().defaultFieldLabel || (contentLang === "id" ? "Kolom Formulir" : "Form Field");
   }
 
   // Canonical Form Field Collector for 100% synchronized Scanning & Badging
@@ -749,7 +772,7 @@
         const parentLabel = el.closest("label") as HTMLElement | null;
         const groupContainer = (el.closest(".p-4, .form-group, fieldset, div") || el.parentElement) as HTMLElement | null;
         visitedEls.add(el);
-        const labelText = parentLabel?.textContent?.trim() || findElementLabel(el) || "Persetujuan";
+        const labelText = parentLabel?.textContent?.trim() || findElementLabel(el) || getContentT().defaultCheckboxLabel || (contentLang === "id" ? "Persetujuan" : "Consent");
         const badgeAnchor = groupContainer || parentLabel || el;
 
         result.push({
@@ -996,7 +1019,7 @@
       const badge = document.createElement("div");
       badge.className = "savvy-field-number-badge";
       badge.textContent = `${fieldIndex}`;
-      badge.title = `Kolom #${fieldIndex}: ${item.label} (Klik untuk panduan)`;
+      badge.title = getContentT().badgeTitle ? getContentT().badgeTitle(fieldIndex, item.label) : (contentLang === "id" ? `Kolom #${fieldIndex}: ${item.label} (Klik untuk panduan)` : `Field #${fieldIndex}: ${item.label} (Click for guidance)`);
       badge.style.top = coords.top;
       badge.style.left = coords.left;
 
@@ -2532,7 +2555,17 @@
           window.speechSynthesis?.cancel();
           const pageSummary = document.title + ". " + (document.body.innerText || "").slice(0, 400);
           const utter = new SpeechSynthesisUtterance(pageSummary);
-          utter.lang = document.documentElement.lang || "id-ID";
+          const speechCode = SPEECH_LANG_MAP[contentLang] || document.documentElement.lang || "en-US";
+          utter.lang = speechCode;
+          const voices = window.speechSynthesis?.getVoices() || [];
+          const targetTag = speechCode.toLowerCase().replace("_", "-");
+          const targetPrefix = speechCode.split("-")[0].toLowerCase();
+          const matchedVoice =
+            voices.find((v) => v.lang.toLowerCase().replace("_", "-") === targetTag) ||
+            voices.find((v) => v.lang.toLowerCase().startsWith(targetPrefix));
+          if (matchedVoice) {
+            utter.voice = matchedVoice;
+          }
           window.speechSynthesis?.speak(utter);
         } else {
           window.speechSynthesis?.cancel();

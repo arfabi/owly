@@ -67,108 +67,108 @@ export function AccessibilityHubTab() {
   const tools: ToolItem[] = [
     {
       id: "spotlight",
-      title: "Reading Spotlight",
+      title: t.a11y.tools?.spotlight?.title || "Reading Spotlight",
       icon: <span className="text-3xl drop-shadow-xs select-none">🔦</span>,
-      options: ["Off", "On"],
+      options: t.a11y.tools?.spotlight?.options || ["Off", "On"],
     },
     {
       id: "tts",
-      title: "Text to Speech (TTS)",
+      title: t.a11y.tools?.tts?.title || "Text to Speech (TTS)",
       icon: <span className="text-3xl drop-shadow-xs select-none">🔊</span>,
-      options: ["Off", "On"],
+      options: t.a11y.tools?.tts?.options || ["Off", "On"],
     },
     {
       id: "contrast",
-      title: "Contrast Mode",
+      title: t.a11y.tools?.contrast?.title || "Contrast Mode",
       icon: <span className="text-3xl drop-shadow-xs select-none">🌗</span>,
-      options: ["Normal", "High", "Invert", "Monochrome"],
+      options: t.a11y.tools?.contrast?.options || ["Normal", "High", "Invert", "Monochrome"],
     },
     {
       id: "links",
-      title: "Highlight Links",
+      title: t.a11y.tools?.links?.title || "Highlight Links",
       icon: <span className="text-3xl drop-shadow-xs select-none">🔗</span>,
-      options: ["Off", "Highlight", "Underline", "High Contrast"],
+      options: t.a11y.tools?.links?.options || ["Off", "Highlight", "Underline", "High Contrast"],
     },
     {
       id: "textSize",
-      title: "Bigger Text Size",
+      title: t.a11y.tools?.textSize?.title || "Bigger Text Size",
       icon: (
         <div className="w-8 h-8 rounded-lg bg-blue-500 text-white font-black text-[10px] flex flex-col items-center justify-center leading-none shadow-xs select-none">
           <span className="tracking-tighter">AB</span>
           <span className="tracking-tighter">CD</span>
         </div>
       ),
-      options: ["Normal", "+25%", "+50%", "+75%", "+100%"],
+      options: t.a11y.tools?.textSize?.options || ["Normal", "+25%", "+50%", "+75%", "+100%"],
     },
     {
       id: "textSpacing",
-      title: "Text Spacing",
+      title: t.a11y.tools?.textSpacing?.title || "Text Spacing",
       icon: (
         <div className="w-8 h-8 rounded-lg bg-blue-500 text-white font-black text-lg flex items-center justify-center shadow-xs select-none">
           ↔
         </div>
       ),
-      options: ["Normal", "Light (+10%)", "Medium (+25%)", "Heavy (+50%)"],
+      options: t.a11y.tools?.textSpacing?.options || ["Normal", "Light (+10%)", "Medium (+25%)", "Heavy (+50%)"],
     },
     {
       id: "pauseAnim",
-      title: "Pause Animations",
+      title: t.a11y.tools?.pauseAnim?.title || "Pause Animations",
       icon: (
         <div className="w-8 h-8 rounded-lg bg-blue-500 text-white font-black text-sm flex items-center justify-center shadow-xs select-none">
           ⏸
         </div>
       ),
-      options: ["Normal", "Paused"],
+      options: t.a11y.tools?.pauseAnim?.options || ["Normal", "Paused"],
     },
     {
       id: "hideImages",
-      title: "Hide All Images",
+      title: t.a11y.tools?.hideImages?.title || "Hide All Images",
       icon: <span className="text-3xl drop-shadow-xs select-none">🖼️</span>,
-      options: ["Normal", "Hidden", "Grayscale"],
+      options: t.a11y.tools?.hideImages?.options || ["Normal", "Hidden", "Grayscale"],
     },
     {
       id: "dyslexiaFont",
-      title: "Dyslexia Friendly Font",
+      title: t.a11y.tools?.dyslexiaFont?.title || "Dyslexia Friendly Font",
       icon: (
         <span className="text-3xl font-extrabold text-slate-900 select-none tracking-tight font-sans">
           Df
         </span>
       ),
-      options: ["Off", "On"],
+      options: t.a11y.tools?.dyslexiaFont?.options || ["Off", "On"],
     },
     {
       id: "bigCursor",
-      title: "Big Cursor",
+      title: t.a11y.tools?.bigCursor?.title || "Big Cursor",
       icon: <span className="text-3xl drop-shadow-xs select-none">🖱️</span>,
-      options: ["Normal", "Large (Black)", "Large (White)", "Highlighter"],
+      options: t.a11y.tools?.bigCursor?.options || ["Normal", "Large (Black)", "Large (White)", "Highlighter"],
     },
     {
       id: "liveTooltips",
-      title: "Live Explanatory Tooltips",
+      title: t.a11y.tools?.liveTooltips?.title || "Live Explanatory Tooltips",
       icon: <span className="text-3xl drop-shadow-xs select-none">💬</span>,
-      options: ["Off", "On"],
+      options: t.a11y.tools?.liveTooltips?.options || ["Off", "On"],
     },
     {
       id: "lineHeight",
-      title: "Line Height Spacing",
+      title: t.a11y.tools?.lineHeight?.title || "Line Height Spacing",
       icon: (
         <div className="w-8 h-8 rounded-lg bg-blue-500 text-white font-black text-lg flex items-center justify-center shadow-xs select-none">
           ↕
         </div>
       ),
-      options: ["Normal", "1.5x", "1.8x", "2.2x"],
+      options: t.a11y.tools?.lineHeight?.options || ["Normal", "1.5x", "1.8x", "2.2x"],
     },
     {
       id: "textAlign",
-      title: "Text Alignment",
+      title: t.a11y.tools?.textAlign?.title || "Text Alignment",
       icon: <span className="text-3xl drop-shadow-xs select-none">📄</span>,
-      options: ["Normal", "Left", "Center", "Justify"],
+      options: t.a11y.tools?.textAlign?.options || ["Normal", "Left", "Center", "Justify"],
     },
     {
       id: "colorSat",
-      title: "Color Saturation",
+      title: t.a11y.tools?.colorSat?.title || "Color Saturation",
       icon: <span className="text-3xl drop-shadow-xs select-none">💧</span>,
-      options: ["Normal", "High (+50%)", "Low (-50%)", "Monochrome"],
+      options: t.a11y.tools?.colorSat?.options || ["Normal", "High (+50%)", "Low (-50%)", "Monochrome"],
     },
   ];
 
@@ -404,7 +404,7 @@ export function AccessibilityHubTab() {
                   ? "bg-blue-50/70 border-blue-500 text-blue-900 shadow-xs"
                   : "bg-white border-slate-200/90 text-slate-800 hover:border-blue-300 hover:bg-slate-50/60"
               }`}
-              title={`Click to cycle options: ${tool.options.join(" → ")}`}
+              title={`${t.a11y.cycleTooltip || "Click to cycle options"}: ${tool.options.join(" → ")}`}
             >
               {/* Large Centered Icon */}
               <div className="flex items-center justify-center h-9">{tool.icon}</div>

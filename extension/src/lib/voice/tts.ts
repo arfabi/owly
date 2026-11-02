@@ -3,6 +3,8 @@
 // Zero latency, zero cloud cost, 100% on-device speech synthesis
 // ============================================================================
 
+import { selectVoiceForLanguage } from "../i18n/types";
+
 export interface TtsOptions {
   lang?: "id-ID" | "en-US" | string;
   rate?: number;  // 0.5 to 2.0 (default 1.0)
@@ -20,6 +22,9 @@ class BrowserTtsEngine {
   constructor() {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       this.synth = window.speechSynthesis;
+      this.synth.onvoiceschanged = () => {
+        this.synth?.getVoices();
+      };
     }
   }
 
@@ -66,17 +71,15 @@ class BrowserTtsEngine {
     if (!cleanText) return;
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = options.lang || "id-ID";
+    utterance.lang = options.lang || "en-US";
     utterance.rate = options.rate ?? 1.05;
     utterance.pitch = options.pitch ?? 1.0;
     utterance.volume = options.volume ?? 1.0;
 
-    // Pick best matching voice
+    // Pick strictly matching voice for target language
     const voices = this.getVoices();
-    const targetLang = utterance.lang.toLowerCase();
-    const matchedVoice =
-      voices.find((v) => v.lang.toLowerCase() === targetLang) ||
-      voices.find((v) => v.lang.toLowerCase().startsWith(targetLang.slice(0, 2)));
+    const langCode = utterance.lang.split("-")[0];
+    const matchedVoice = selectVoiceForLanguage(voices, langCode);
 
     if (matchedVoice) {
       utterance.voice = matchedVoice;

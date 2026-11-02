@@ -17,11 +17,13 @@ const NIK_REGEX = /\b([1-9][0-9]{5}[0-7][0-9][0-1][0-9][0-9]{4})\b/g;
 const NPWP_REGEX = /\b(\d{2}\.?\d{3}\.?\d{3}\.?\d{1}-?\d{3}\.?\d{3}|\d{15,16})\b/g;
 const CREDIT_CARD_REGEX = /\b(?:\d{4}[-\s]?){3}\d{4}\b/g;
 
+import { SupportedLanguage } from "../i18n/types";
+
 /**
  * Checks text for sensitive personal identification numbers.
  * Provides client-side warning before text is sent to LLM prompt.
  */
-export function inspectAndRedactPII(input: string, lang: "en" | "id" = "en"): PiiDetectionResult {
+export function inspectAndRedactPII(input: string, lang: SupportedLanguage | string = "en"): PiiDetectionResult {
   const detectedTypes: string[] = [];
   let redacted = input;
 

@@ -264,9 +264,9 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
                 ? "bg-slate-900 text-emerald-400 border-emerald-500/40"
                 : "bg-slate-900 text-slate-500 border-slate-800"
             }`}
-            title="Auto-scroll to bottom on new log arrival"
+            title={t.logConsole.autoScrollTooltip || "Auto-scroll to bottom on new log arrival"}
           >
-            Auto-scroll: {autoScroll ? "ON" : "OFF"}
+            {t.logConsole.autoScroll || "Auto-scroll"}: {autoScroll ? "ON" : "OFF"}
           </button>
         </div>
       </div>
@@ -276,9 +276,9 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
         {filteredLogs.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 py-12">
             <Cpu className="w-8 h-8 text-slate-700 mb-2 animate-pulse" />
-            <p className="font-bold text-xs text-slate-400">No logs recorded yet</p>
+            <p className="font-bold text-xs text-slate-400">{t.logConsole.noLogsTitle || "No logs recorded yet"}</p>
             <p className="text-[10px] text-slate-600 max-w-[240px] mt-1">
-              Interact with the extension, ask questions, or run Auto Fill to view agent actions in real time.
+              {t.logConsole.noLogsDesc || "Interact with the extension, ask questions, or run Auto Fill to view agent actions in real time."}
             </p>
           </div>
         ) : (
@@ -314,7 +314,7 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
                       onClick={() => toggleExpand(idx)}
                       className="text-slate-400 hover:text-white flex items-center gap-0.5 text-[10px] cursor-pointer"
                     >
-                      <span>{isExpanded ? "Collapse" : "Payload"}</span>
+                      <span>{isExpanded ? (t.logConsole.collapse || "Collapse") : (t.logConsole.payload || "Payload")}</span>
                       {isExpanded ? (
                         <ChevronDown className="w-3 h-3" />
                       ) : (
@@ -347,9 +347,9 @@ export function LogConsoleModal({ isOpen, onClose }: LogConsoleModalProps) {
       {/* 5. Terminal Footer Bar */}
       <div className="p-2 bg-slate-900/80 border-t border-slate-800/90 flex items-center justify-between text-[10px] text-slate-400 shrink-0 font-mono">
         <div className="flex items-center gap-2">
-          <span>Active Threads: <b>1 (Worker)</b></span>
+          <span>{t.logConsole.activeThreads || "Active Threads"}: <b>1 ({t.logConsole.workerLabel || "Worker"})</b></span>
           <span>•</span>
-          <span>Logs: <b>{filteredLogs.length}</b></span>
+          <span>{t.logConsole.logsCount || "Logs"}: <b>{filteredLogs.length}</b></span>
         </div>
         <div className="flex items-center gap-1 text-slate-500">
           <span>Baseten: Muse Spark Open</span>

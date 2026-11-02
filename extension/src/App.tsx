@@ -7,6 +7,7 @@ import { VaultTab } from "./components/VaultTab";
 import { AuditorTab } from "./components/AuditorTab";
 import { AccessibilityHubTab } from "./components/AccessibilityHubTab";
 import { LogConsoleModal } from "./components/LogConsoleModal";
+import { WelcomeModal } from "./components/WelcomeModal";
 import {
   Bot,
   FileText,
@@ -252,6 +253,9 @@ export function App() {
           isOpen={isLogConsoleOpen}
           onClose={() => setIsLogConsoleOpen(false)}
         />
+
+        {/* First-Install Mandatory Language Selection Modal */}
+        <WelcomeModal />
       </div>
 
       {/* Footer: Privacy Notice */}

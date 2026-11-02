@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { agentLog } from "../agentLogger";
+import { getLanguageGuardrail, SupportedLanguage } from "../i18n/types";
 
 export const API_BASE_URL = "https://owly-ai.vercel.app";
 
@@ -100,9 +101,14 @@ export async function sendChatMessage(
   imageBase64?: string | null,
   meta?: PageMetadata | null,
   toolExecution?: ToolExecutionPayload | null,
-  lang?: "en" | "id"
+  lang: SupportedLanguage | string = "en"
 ): Promise<ChatResponse> {
   const startTime = Date.now();
+  const guardrail = getLanguageGuardrail(lang);
+  const guardedMessage = message.includes("[OUTPUT LANGUAGE REQUIREMENT:")
+    ? message
+    : `${guardrail}\n\n${message}`;
+
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/chat`, {
     portalDomain,
     pageUrl,
@@ -122,7 +128,7 @@ export async function sendChatMessage(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        message,
+        message: guardedMessage,
         sessionId,
         portalDomain,
         pageUrl,
@@ -184,7 +190,7 @@ export async function fetchFieldCoachGuidance(
   fieldName: string = "",
   portalDomain: string = "beasiswalpdp.kemenkeu.go.id",
   contextText: string = "",
-  language: string = "en"
+  language: SupportedLanguage | string = "en"
 ): Promise<FieldGuidanceResponse> {
   const startTime = Date.now();
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/coach/field`, {
@@ -274,13 +280,18 @@ export async function transcribeVoiceAudio(
 // 4. EXPLAIN VISUAL SNIP API: Native Multimodal Vision
 export async function explainVisualSnip(
   imageBase64: string,
-  contextLabel: string = "Bagian Formulir / Dokumen",
-  portalUrl: string = "beasiswalpdp.kemenkeu.go.id"
+  contextLabel: string = "Form Section / Document",
+  portalUrl: string = "beasiswalpdp.kemenkeu.go.id",
+  language: SupportedLanguage | string = "en"
 ): Promise<any> {
   const startTime = Date.now();
+  const guardrail = getLanguageGuardrail(language);
+  const guardedContext = `${guardrail}\n\nTarget Section: ${contextLabel}`;
+
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/explain`, {
     contextLabel,
     portalUrl,
+    language,
   });
 
   try {
@@ -289,9 +300,9 @@ export async function explainVisualSnip(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         imageBase64,
-        contextLabel,
+        contextLabel: guardedContext,
         portalUrl,
-        language: "id",
+        language,
       }),
     });
 
@@ -317,12 +328,14 @@ export async function explainVisualSnip(
 // 5. ESSAY COACH API: Zero-Hallucination Prompt Chaining
 export async function generateEssayDraft(
   bulletPoints: string[],
-  promptTopic: string = "Komitmen Kembali ke Indonesia dan Rencana Pasca Studi"
+  promptTopic: string = "Commitment to Return and Post-Study Plans",
+  language: SupportedLanguage | string = "en"
 ): Promise<{ essay: string; word_count: number; key_strengths: string[]; coherence_score: number }> {
   const startTime = Date.now();
   agentLog.reasoning(`🚀 [API Request] POST ${API_BASE_URL}/api/essay/coach`, {
     promptTopic,
     pointsCount: bulletPoints.length,
+    language,
   });
 
   try {
@@ -332,7 +345,7 @@ export async function generateEssayDraft(
       body: JSON.stringify({
         promptTopic,
         bulletPoints,
-        language: "id",
+        language,
       }),
     });
 

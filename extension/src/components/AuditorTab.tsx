@@ -219,7 +219,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
           {report && (
             <div className="text-right">
               <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wider block">
-                Skor Form
+                {t.audit.formScore || (isId ? "Skor Form" : "Form Score")}
               </span>
               <span
                 className={`text-sm font-black ${

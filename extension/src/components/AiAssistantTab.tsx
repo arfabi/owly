@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLanguage } from "../lib/i18n/LanguageContext";
+import { SPEECH_LANG_MAP, selectVoiceForLanguage } from "../lib/i18n/types";
 import {
   MessageSquare,
   Mic,
@@ -317,13 +318,15 @@ export function AiAssistantTab({
       if (!clean) return;
 
       const utterance = new SpeechSynthesisUtterance(clean);
-      utterance.lang = isId ? "id-ID" : "en-US";
+      const speechCode = SPEECH_LANG_MAP[language] || "en-US";
+      utterance.lang = speechCode;
       utterance.rate = 1.05;
 
       const voices = window.speechSynthesis.getVoices();
-      const targetPrefix = isId ? "id" : "en";
-      const matched = voices.find((v) => v.lang.toLowerCase().startsWith(targetPrefix));
-      if (matched) utterance.voice = matched;
+      const matched = selectVoiceForLanguage(voices, language);
+      if (matched) {
+        utterance.voice = matched;
+      }
 
       utterance.onstart = () => {
         setVoiceStatus("speaking");
@@ -727,7 +730,7 @@ export function AiAssistantTab({
           screenshotBase64,
           null,
           null,
-          isId ? "id" : "en"
+          language
         );
 
         setMessages((prev) => [
@@ -829,7 +832,7 @@ export function AiAssistantTab({
         attachedImageBase64,
         attachedMeta,
         null,
-        isId ? "id" : "en"
+        language
       );
       let finalReply = data.reply || "";
       let badgeLabel = "Owly.AI";
@@ -871,7 +874,7 @@ export function AiAssistantTab({
             toolArgs: data.toolCall.arguments,
             toolResult: { success: !!screenDataUrl },
           },
-          isId ? "id" : "en"
+          language
         );
 
         if (turn2Data.sessionId) setChatSessionId(turn2Data.sessionId);
@@ -969,13 +972,9 @@ export function AiAssistantTab({
         const snippet = (msg.text || "").trim();
         let prompt = "";
         if (snippet.length > 0) {
-          prompt = isId
-            ? `Tolong jelaskan isi dari bagian yang saya tandai ini secara ringkas dan mudah dipahami:\n\n"${snippet}"`
-            : `Please explain the content of this selected section clearly and concisely:\n\n"${snippet}"`;
+          prompt = `Please explain the content and instructions of this selected section clearly and concisely:\n\n"${snippet}"`;
         } else {
-          prompt = isId
-            ? `Tolong jelaskan apa isi dan maksud dari gambar/bagian yang saya tandai di layar ini.`
-            : `Please explain the content and meaning of this selected area on the page.`;
+          prompt = `Please explain the content, purpose, and instructions for this selected area on the page.`;
         }
 
         handleSendMessageRef.current(prompt, croppedBase64, msg.meta);
@@ -988,7 +987,7 @@ export function AiAssistantTab({
         chrome.runtime.onMessage.removeListener(messageListener);
       };
     }
-  }, [isId]);
+  }, [language]);
 
   // Action: Analyze This Form - 3-Agent Compound Multi-Agent System (CMAS)
   const handleAnalyzeThisForm = async () => {
@@ -1045,7 +1044,7 @@ export function AiAssistantTab({
           fields: domFields,
         },
         screenshotBase64,
-        options: { language: isId ? "id" : "en", streamTelemetry: true },
+        options: { language, streamTelemetry: true },
       });
 
       // Step 5: Agent 2 - Field Rules & Anti-Disqualification Auditor
@@ -1148,7 +1147,7 @@ export function AiAssistantTab({
 
     try {
       const rec = new SpeechRecognition();
-      rec.lang = isId ? "id-ID" : "en-US";
+      rec.lang = SPEECH_LANG_MAP[language] || "en-US";
       rec.continuous = true;
       rec.interimResults = true;
 
@@ -1220,7 +1219,7 @@ export function AiAssistantTab({
 
       try {
         const rec = new SpeechRecognition();
-        rec.lang = isId ? "id-ID" : "en-US";
+        rec.lang = SPEECH_LANG_MAP[language] || "en-US";
         rec.continuous = true;
         rec.interimResults = true;
 
@@ -1869,7 +1868,7 @@ export function AiAssistantTab({
 
             {micPermissionState === "granted" ? (
               <span className="text-[10px] text-emerald-700 font-extrabold bg-emerald-100/70 border border-emerald-300/50 px-2 py-0.5 rounded-md">
-                ✓ Ready
+                {t.assistant.micReadyBadge || (isId ? "✓ Siap" : "✓ Ready")}
               </span>
             ) : (
               <button
@@ -1979,7 +1978,7 @@ export function AiAssistantTab({
                       ? "bg-purple-100 text-savvy-purple shadow-2xs"
                       : "text-slate-500 hover:text-savvy-purple hover:bg-purple-50/80"
                     }`}
-                  title="Voice Companion (PTT & Live Talk)"
+                  title={t.assistant.voiceCompanionTooltip || (isId ? "Pendamping Suara (PTT & Live Talk)" : "Voice Companion (PTT & Live Talk)")}
                 >
                   <Mic className="w-4 h-4" />
                 </button>

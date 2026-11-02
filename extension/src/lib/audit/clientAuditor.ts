@@ -75,7 +75,7 @@ export interface ComprehensiveAuditReport {
 // 1. DETERMINISTIC VALIDATORS (NIK, No HP, Email, Paspor)
 // ---------------------------------------------------------------------------
 
-export function validateIndonesianNIK(nik: string): {
+export function validateIndonesianNIK(nik: string, lang: "en" | "id" = "en"): {
   isValid: boolean;
   reason?: string;
   parsed?: {
@@ -86,14 +86,25 @@ export function validateIndonesianNIK(nik: string): {
     isFemale: boolean;
   };
 } {
+  const isEn = lang === "en";
   const clean = nik.replace(/\D/g, "");
   if (clean.length !== 16) {
-    return { isValid: false, reason: `Panjang NIK harus tepat 16 digit angka (saat ini ${clean.length} digit).` };
+    return {
+      isValid: false,
+      reason: isEn
+        ? `National ID must be exactly 16 numeric digits (currently ${clean.length} digits).`
+        : `Panjang NIK harus tepat 16 digit angka (saat ini ${clean.length} digit).`,
+    };
   }
 
   const prov = parseInt(clean.substring(0, 2), 10);
   if (prov < 11 || prov > 94) {
-    return { isValid: false, reason: `Kode provinsi '${prov}' tidak terdaftar pada database Kemendagri.` };
+    return {
+      isValid: false,
+      reason: isEn
+        ? `Province code '${prov}' is not registered in the civil registry database.`
+        : `Kode provinsi '${prov}' tidak terdaftar pada database Kemendagri.`,
+    };
   }
 
   const rawDay = parseInt(clean.substring(6, 8), 10);
@@ -104,7 +115,12 @@ export function validateIndonesianNIK(nik: string): {
   const year2D = parseInt(clean.substring(10, 12), 10);
 
   if (day < 1 || day > 31 || month < 1 || month > 12) {
-    return { isValid: false, reason: `Digit tanggal/bulan lahir pada NIK (${rawDay}/${month}) tidak valid secara kalender.` };
+    return {
+      isValid: false,
+      reason: isEn
+        ? `Birth date digits in ID (${rawDay}/${month}) are not calendar-valid.`
+        : `Digit tanggal/bulan lahir pada NIK (${rawDay}/${month}) tidak valid secara kalender.`,
+    };
   }
 
   return {
@@ -119,9 +135,10 @@ export function validateIndonesianNIK(nik: string): {
   };
 }
 
-export function validateIndonesianPhone(phone: string): { isValid: boolean; reason?: string } {
+export function validateIndonesianPhone(phone: string, lang: "en" | "id" = "en"): { isValid: boolean; reason?: string } {
+  const isEn = lang === "en";
   const clean = phone.replace(/[^\d+]/g, "");
-  if (!clean) return { isValid: false, reason: "Nomor handphone kosong." };
+  if (!clean) return { isValid: false, reason: isEn ? "Phone number is empty." : "Nomor handphone kosong." };
 
   let digits = clean;
   if (digits.startsWith("+62")) {
@@ -131,13 +148,20 @@ export function validateIndonesianPhone(phone: string): { isValid: boolean; reas
   }
 
   if (!digits.startsWith("08")) {
-    return { isValid: false, reason: "Nomor handphone standar Indonesia harus diawali 08 atau +62." };
+    return {
+      isValid: false,
+      reason: isEn
+        ? "Standard phone numbers must start with 08 or +62."
+        : "Nomor handphone standar Indonesia harus diawali 08 atau +62.",
+    };
   }
 
   if (digits.length < 10 || digits.length > 13) {
     return {
       isValid: false,
-      reason: `Jumlah digit nomor handphone harus 10–13 digit (ditemukan ${digits.length} digit: '${digits}').`,
+      reason: isEn
+        ? `Phone number length must be 10–13 digits (found ${digits.length} digits: '${digits}').`
+        : `Jumlah digit nomor handphone harus 10–13 digit (ditemukan ${digits.length} digit: '${digits}').`,
     };
   }
 
@@ -148,11 +172,17 @@ export function validateRFC5322Email(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-export function validatePassportICAO(passport: string): { isValid: boolean; reason?: string } {
+export function validatePassportICAO(passport: string, lang: "en" | "id" = "en"): { isValid: boolean; reason?: string } {
+  const isEn = lang === "en";
   const clean = passport.trim().toUpperCase();
   // Standar ICAO 9303: 1 huruf + 7-8 digit angka
   if (!/^[A-Z][0-9]{7,8}$/.test(clean)) {
-    return { isValid: false, reason: "Nomor paspor harus diawali 1 huruf kapital diikuti 7–8 digit angka (Contoh: C1234567)." };
+    return {
+      isValid: false,
+      reason: isEn
+        ? "Passport number must start with 1 capital letter followed by 7–8 digits (e.g. C1234567)."
+        : "Nomor paspor harus diawali 1 huruf kapital diikuti 7–8 digit angka (Contoh: C1234567).",
+    };
   }
   return { isValid: true };
 }
@@ -291,7 +321,7 @@ export function runClientSideComprehensiveAudit(
 
     // 2.1 Audit NIK / National ID
     if (lowerLabel.includes("nik") || lowerLabel.includes("no. ktp") || lowerLabel.includes("nomor induk kependudukan")) {
-      const nikRes = validateIndonesianNIK(val);
+      const nikRes = validateIndonesianNIK(val, language);
       if (!nikRes.isValid) {
         issues.push({
           id: `nik_${f.fieldId}`,
@@ -300,7 +330,7 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: isEn ? (nikRes.reason || "Invalid National ID format.") : (nikRes.reason || "Format NIK tidak valid."),
+          message: nikRes.reason || (isEn ? "Invalid National ID format." : "Format NIK tidak valid."),
           hint: isEn ? "National ID must be 16 numeric digits conforming to official identity standards." : "NIK wajib 16 digit angka numerik sesuai e-KTP Dukcapil.",
           juknisRef: "UU Adminduk No. 24/2013",
           action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
@@ -362,7 +392,7 @@ export function runClientSideComprehensiveAudit(
 
     // 2.2 Audit No Handphone / Phone Number
     else if (lowerLabel.includes("hp") || lowerLabel.includes("handphone") || lowerLabel.includes("telepon") || lowerLabel.includes("phone") || lowerLabel.includes("whatsapp") || type === "tel") {
-      const phoneRes = validateIndonesianPhone(val);
+      const phoneRes = validateIndonesianPhone(val, language);
       if (!phoneRes.isValid) {
         issues.push({
           id: `phone_${f.fieldId}`,
@@ -371,7 +401,7 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: isEn ? (phoneRes.reason || "Invalid phone number format.") : (phoneRes.reason || "Format nomor HP tidak valid."),
+          message: phoneRes.reason || (isEn ? "Invalid phone number format." : "Format nomor HP tidak valid."),
           hint: isEn ? "Standard format example: +1 555-123-4567 or international E.164 format (10–13 digits)." : "Contoh format standar: 08123456789 atau +628123456789 (10–13 digit).",
           action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
@@ -401,7 +431,7 @@ export function runClientSideComprehensiveAudit(
 
     // 2.4 Audit Passport
     else if (lowerLabel.includes("paspor") || lowerLabel.includes("passport")) {
-      const passRes = validatePassportICAO(val);
+      const passRes = validatePassportICAO(val, language);
       if (!passRes.isValid) {
         issues.push({
           id: `passport_${f.fieldId}`,
@@ -410,7 +440,7 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: isEn ? (passRes.reason || "Passport number format does not comply with ICAO standards.") : (passRes.reason || "Format nomor paspor tidak sesuai standar ICAO."),
+          message: passRes.reason || (isEn ? "Passport number format does not comply with ICAO standards." : "Format nomor paspor tidak sesuai standar ICAO."),
           hint: isEn ? "Standard passport: 1 uppercase letter followed by 7–8 digits." : "Standar paspor RI: 1 huruf kapital diikuti 7–8 digit angka.",
           action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
