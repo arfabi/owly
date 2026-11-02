@@ -64,10 +64,23 @@ export function mapRawFieldToItem(raw: any, isId: boolean): FieldItem {
     lower.includes("birth")
   ) {
     vaultKey = "tanggal_lahir";
-  } else if (lower.includes("alamat") || lower.includes("address") || lower.includes("domisili")) {
-    vaultKey = "alamat";
-  } else if (lower.includes("email") || lower.includes("surel") || raw.type === "email") {
+  } else if (
+    lower.includes("email") ||
+    lower.includes("surel") ||
+    lower.includes("e-mail") ||
+    lower.includes("mail") ||
+    raw.type === "email"
+  ) {
+    // CRITICAL: EMAIL CHECK RUNS BEFORE ALAMAT/ADDRESS
     vaultKey = "email";
+  } else if (
+    (lower.includes("alamat") || lower.includes("address") || lower.includes("domisili") || lower.includes("tinggal")) &&
+    !lower.includes("email") &&
+    !lower.includes("surel") &&
+    !lower.includes("mail") &&
+    raw.type !== "email"
+  ) {
+    vaultKey = "alamat";
   } else if (lower.includes("telepon") || lower.includes("phone") || lower.includes("hp") || lower.includes("whatsapp")) {
     vaultKey = "no_hp";
   }
@@ -564,6 +577,13 @@ export function FormsGuideTab({
                     ? "Diisi / dipilih langsung pada formulir"
                     : "Fill / select directly on form"}
                 </div>
+                {hasVaultKey && currentField.vaultKey === "tanggal_lahir" && rawVaultVal && (
+                  <p className="text-[10px] text-blue-600 font-semibold mt-1">
+                    {isId
+                      ? "💡 Format kalender (YYYY-MM-DD / mm/dd/yyyy) disesuaikan otomatis dari data Vault Anda saat diisi."
+                      : "💡 Calendar format (YYYY-MM-DD / mm/dd/yyyy) is automatically converted from your Vault on fill."}
+                  </p>
+                )}
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500">
                 {hasVaultKey

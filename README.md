@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Owly.AI — Your AI Browser Companion for Forms & Web</strong><br>
-  Understand any page, fill forms with guidance, and catch mistakes before you submit.<br>
+ Owly is Browser Extension that can help user to Understand any page, fill forms with guidance, and catch mistakes before you submit.<br>
   <em>Built with Meta Muse Spark Open deployed on Baseten as private inference</em>
 </p>
 
@@ -22,19 +22,19 @@
 
 ---
 
-> **Owly.AI** is a privacy-first browser copilot that explains confusing forms, guides each field, and audits your draft *before* you press Submit, powered by Meta Muse Spark Open.
-
 ## 🧭 Quick Judging & Evaluation Guide (Test in 60s)
 
 | | |
 |---|---|
 | **Name** | **Owly.AI** |
-| **Type** | Chrome MV3 extension + Web (Next.js App Router & API Gateway) |
+| **Type** | Chrome MV3 extension |
 | **Track** | Build for Your World · Indie Developers |
-| **Model** | `meta-models/muse-spark-open-1026` via Baseten (Dedicated Private Inference) |
-| **🎬 Video Walkthrough** | [▶️ Watch Demo & Installation Tutorial on YouTube](https://www.youtube.com/watch?v=vfNBFFgfblg) |
-| **🌐 Live Web Links** | [Landing Page](https://owly-ai.vercel.app) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
-| **📦 Extension Download**| [Download Extension (.ZIP)](https://owly-ai.vercel.app/download) *(or [Direct .ZIP](https://owly-ai.vercel.app/owly-extension.zip))* |
+| **Model** | `meta-models/muse-spark-open-1026` via Baseten |
+| **🎬 3 Minute Demo Video** | https://www.youtube.com/watch?v=vfNBFFgfblg |
+| **🌐 Live Web Links** | https://owly-ai.vercel.app |
+
+
+
 
 ### 🏆 Rubric Scoring Alignment
 
@@ -45,7 +45,7 @@
 | **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#️-system-architecture-compound-multi-agent-system-cmas) · [Verification Spec (`feature/verification.md`)](feature/verification.md) |
 | **Demo & UX** | 25% | Video walkthrough & tutorial · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [YouTube Tutorial](https://www.youtube.com/watch?v=vfNBFFgfblg) · [Live App](https://owly-ai.vercel.app) · [Demo Test Guide](#extension-demo-test-without-self-deployment) |
 
-### Extension Demo Test without Self Deployment
+### How to Test Extension without API Key
 
 > [!TIP]
 > **No API keys or local server installation required!**  
@@ -54,7 +54,7 @@
 
 ### 📺 Video Walkthrough & Installation Tutorial
 
-[![Owly.AI Extension Walkthrough & Tutorial](https://img.youtube.com/vi/vfNBFFgfblg/maxresdefault.jpg)](https://www.youtube.com/watch?v=vfNBFFgfblg)
+[![Owly.AI Extension Tutorial](https://img.youtube.com/vi/vfNBFFgfblg/maxresdefault.jpg)](https://www.youtube.com/watch?v=vfNBFFgfblg)
 
 > 💡 **Watch on YouTube:** [https://www.youtube.com/watch?v=vfNBFFgfblg](https://www.youtube.com/watch?v=vfNBFFgfblg) — Step-by-step installation, developer mode setup, and live form simulation walkthrough.
 
@@ -102,7 +102,7 @@
 
 ## 💔 The Problem & Human Impact
 
-A few months ago, a spouse tried to renew her driver's license online. Three days later: **Rejected**. Her qualifications were valid and her documents were authentic, but she had mistyped a single digit of an identification number in a field with ambiguous instructions. She was forced to pay the processing fee again and restart from scratch.
+A few months ago, my wife tried to renew her driver's license online. Three days later: **Rejected**. Her qualifications were valid and her documents were authentic, but she had mistyped a single digit of an identification number in a field with ambiguous instructions. She was forced to pay the processing fee again and restart from scratch.
 
 This happens to millions of people worldwide every single day: an incorrect photo aspect ratio, an obscure regulation buried in a fine-print footnote, and the government portal only notifies you **AFTER** you press Submit. For scholarship seekers, visa applicants, job seekers, and parents enrolling children: **people fail at the form, not at the requirements.**
 

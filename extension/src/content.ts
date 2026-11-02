@@ -3,6 +3,8 @@
 // Injeksi Closed Shadow DOM, Field Detection, dan Accessibility Controller
 // ============================================================================
 
+import { formatDateForField } from "./lib/utils/dateUtils";
+
 (() => {
   // Cegah injeksi ganda jika script sudah aktif di halaman/frame ini
   if ((window as any).__SAVVY_CONTENT_SCRIPT_INITIALIZED__) {
@@ -851,7 +853,19 @@
 
   // Pre-Submit Form Audit Snapshot Extractor (Scrapes values, DOM constraints, surrounding cues, & file limits)
   function extractFormAuditSnapshot() {
-    const detected = getInteractiveFormElements();
+    // Filter out non-input elements (e.g. action buttons, triggers) for form audit
+    const detected = getInteractiveFormElements().filter((item) => {
+      const el = item.targetEl;
+      if (!el) return false;
+      const tag = el.tagName.toUpperCase();
+      if (tag === "BUTTON") return false;
+      if (tag === "INPUT") {
+        const type = (el as HTMLInputElement).type?.toLowerCase();
+        if (type === "hidden" || type === "submit" || type === "reset" || type === "button") return false;
+      }
+      return true;
+    });
+
     const fields = detected.map((item) => {
       const el = item.targetEl as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement);
       let val = "";
@@ -870,11 +884,15 @@
         }
       }
 
-      // Check asterisk or required cues in label or siblings
-      const parent = el.closest(".form-group, .mb-3, .form-row, tr, div") || el.parentElement;
+      // Check asterisk or required cues in label or immediate parent container
+      const parent = el.closest(".form-group, .mb-3, .form-row, tr, [class*='p-4'], [class*='p-5']") || el.parentElement;
       const parentText = parent?.textContent || "";
       const labelText = item.label || "";
-      const hasAsterisk = labelText.includes("*") || parentText.includes("*") || el.getAttribute("aria-required") === "true";
+      const isParentScoped = parent ? parent.childElementCount <= 6 : false;
+      const hasAsterisk =
+        labelText.includes("*") ||
+        (isParentScoped && parentText.includes("*")) ||
+        el.getAttribute("aria-required") === "true";
 
       // Surrounding context (search for hints like (Contoh: ...) or format cues)
       const contextMatch = parentText.match(/\(([^)]+)\)/);
@@ -1484,12 +1502,27 @@
       if (!target && fieldName) target = document.querySelector(`[name="${fieldName}"]`);
 
       if (target && ("value" in target)) {
-        (target as HTMLInputElement).value = value;
+        const input = target as HTMLInputElement;
+        let finalVal = value;
+        const lowerName = `${input.name || ""} ${input.id || ""} ${findElementLabel(input) || ""}`.toLowerCase();
+        const isDateField =
+          input.type === "date" ||
+          lowerName.includes("tanggal_lahir") ||
+          lowerName.includes("date of birth") ||
+          lowerName.includes("birth date") ||
+          lowerName.includes("dob") ||
+          lowerName.includes("tgl_lahir");
+
+        if (isDateField) {
+          finalVal = formatDateForField(value, input);
+        }
+
+        input.value = finalVal;
         // Trigger framework change events (React, Vue, dll)
         target.dispatchEvent(new Event("input", { bubbles: true }));
         target.dispatchEvent(new Event("change", { bubbles: true }));
         target.dispatchEvent(new Event("blur", { bubbles: true }));
-        agentLog.action(`⚡ Injected value into field '${fieldId || fieldName || fieldIndex}'`, { targetTag: target.tagName });
+        agentLog.action(`⚡ Injected value into field '${fieldId || fieldName || fieldIndex}'`, { targetTag: target.tagName, formattedValue: finalVal });
         sendResponse({ success: true });
         return;
       }
@@ -1704,15 +1737,61 @@
         const nameAttr = rawLabel.toLowerCase().trim();
         let valToInject = "";
 
+        // Specific field type detection
+        const isEmailField =
+          input.type === "email" ||
+          nameAttr.includes("email") ||
+          nameAttr.includes("surel") ||
+          nameAttr.includes("e-mail") ||
+          nameAttr.includes("mail");
+
+        const isAddressField =
+          !isEmailField &&
+          (nameAttr.includes("alamat") ||
+            nameAttr.includes("address") ||
+            nameAttr.includes("domisili") ||
+            nameAttr.includes("tinggal") ||
+            nameAttr.includes("residence"));
+
+        const isMotherField = nameAttr.includes("mother") || nameAttr.includes("ibu");
+
+        const isDateField =
+          input.type === "date" ||
+          nameAttr.includes("tanggal_lahir") ||
+          nameAttr.includes("tgl_lahir") ||
+          nameAttr.includes("dob") ||
+          nameAttr.includes("birth date") ||
+          nameAttr.includes("date of birth") ||
+          nameAttr.includes("birthdate") ||
+          (nameAttr.includes("birth") && (nameAttr.includes("date") || nameAttr.includes("day"))) ||
+          (nameAttr.includes("lahir") && (nameAttr.includes("tgl") || nameAttr.includes("tanggal")));
+
         // 1. Dynamic Matching via Profile Items & Aliases
         if (profileItems.length > 0) {
-          const isMotherField = nameAttr.includes("mother") || nameAttr.includes("ibu");
           for (const item of profileItems) {
             const itemLower = item.name.toLowerCase().trim();
+            const itemId = (item as any).id || "";
+
+            // Guard: Mother field vs normal name
             if (isMotherField && (itemLower.includes("nama lengkap") || itemLower === "nama" || itemLower === "full name")) {
               continue;
             }
             if (!isMotherField && itemLower.includes("ibu")) {
+              continue;
+            }
+
+            // CRITICAL GUARD: Email field MUST NEVER match Address item
+            if (isEmailField && (itemId === "alamat" || itemLower.includes("alamat ktp") || itemLower.includes("alamat tinggal") || itemLower === "alamat" || itemLower === "address" || itemLower.includes("domisili"))) {
+              continue;
+            }
+
+            // Guard: Address field MUST NEVER match Email item
+            if (isAddressField && (itemId === "email" || itemLower.includes("email") || itemLower.includes("surel"))) {
+              continue;
+            }
+
+            // Guard: Date field only matches birth date items
+            if (isDateField && itemId !== "tanggal_lahir" && !itemLower.includes("lahir") && !itemLower.includes("birth")) {
               continue;
             }
 
@@ -1721,8 +1800,17 @@
             if (!matches && Array.isArray(item.aliases)) {
               matches = item.aliases.some((alias) => {
                 const a = alias.toLowerCase().trim();
+                // Never match "Address" alias if this is an email field
+                if (isEmailField && (a === "address" || a.includes("alamat") || a.includes("domisili"))) {
+                  return false;
+                }
                 return a.length > 1 && (nameAttr === a || nameAttr.includes(a) || a.includes(nameAttr));
               });
+            }
+
+            // If it is an email field and item is email, ensure direct match
+            if (!matches && isEmailField && (itemId === "email" || itemLower.includes("email") || itemLower.includes("surel"))) {
+              matches = true;
             }
 
             if (matches && item.value) {
@@ -1736,31 +1824,30 @@
         if (!valToInject) {
           if (nameAttr.includes("nik") || nameAttr.includes("ktp") || nameAttr.includes("national id")) {
             valToInject = payload.nik || payload["NIK"] || "";
-          } else if (nameAttr.includes("mother") || nameAttr.includes("ibu")) {
+          } else if (isMotherField) {
             valToInject = payload["Nama Ibu Kandung"] || payload.nama_ibu || "";
           } else if (nameAttr.includes("nama") || nameAttr.includes("name") || nameAttr.includes("fullname")) {
             valToInject = payload.nama || payload["Nama Lengkap"] || "";
           } else if (nameAttr.includes("place") || nameAttr.includes("tempat") || nameAttr.includes("pob")) {
             valToInject = payload.tempat_lahir || payload["Tempat Lahir"] || "";
-          } else if (
-            input.type === "date" ||
-            nameAttr.includes("tanggal_lahir") ||
-            nameAttr.includes("tgl_lahir") ||
-            nameAttr.includes("dob") ||
-            (nameAttr.includes("birth") && (nameAttr.includes("date") || nameAttr.includes("day"))) ||
-            (nameAttr.includes("lahir") && nameAttr.includes("tgl"))
-          ) {
+          } else if (isDateField) {
             valToInject = payload.tanggal_lahir || payload["Tanggal Lahir"] || "";
-          } else if (nameAttr.includes("alamat") || nameAttr.includes("address") || nameAttr.includes("domisili")) {
-            valToInject = payload.alamat || payload["Alamat KTP"] || "";
-          } else if (input.type === "email" || nameAttr.includes("email") || nameAttr.includes("mail") || nameAttr.includes("surel")) {
-            valToInject = payload.email || payload["Email"] || "";
+          } else if (isEmailField) {
+            // CRITICAL: EMAIL EVALUATED BEFORE ADDRESS TO PREVENT "ALAMAT EMAIL" MISMATCH
+            valToInject = payload.email || payload["Email"] || payload["Alamat Email"] || payload["Surel"] || "";
+          } else if (isAddressField) {
+            valToInject = payload.alamat || payload["Alamat KTP"] || payload["Alamat"] || "";
           } else if (input.type === "tel" || nameAttr.includes("hp") || nameAttr.includes("phone") || nameAttr.includes("telp") || nameAttr.includes("whatsapp")) {
             valToInject = payload.no_hp || payload["No. Handphone"] || "";
           }
         }
 
         if (valToInject) {
+          // Normalize date format according to target element (YYYY-MM-DD for native date, or text hint)
+          if (isDateField) {
+            valToInject = formatDateForField(valToInject, input as HTMLInputElement);
+          }
+
           input.value = valToInject;
           input.dispatchEvent(new Event("input", { bubbles: true }));
           input.dispatchEvent(new Event("change", { bubbles: true }));

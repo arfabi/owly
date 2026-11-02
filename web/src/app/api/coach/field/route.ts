@@ -112,7 +112,7 @@ Task: Generate a 4-element guidance card for this form field in clear American E
 
 CRITICAL FIELD RULES:
 - For "Place of Birth" / "Tempat Lahir": This refers strictly to the CITY or REGENCY of birth (e.g. "Jakarta", "Kudus", "Surabaya", "London") as recorded on official birth certificate / passport. Do NOT instruct the user to include country names (do NOT say "City, Country" or "Paris, France"). Official identity forms require strictly the City/Municipality.
-- For "Date of Birth" / "Tanggal Lahir": Refers strictly to calendar date (YYYY-MM-DD), never place or city.
+- For "Date of Birth" / "Tanggal Lahir": Refers strictly to calendar date (never place or city). Clarify that browser date inputs display according to system locale (e.g. mm/dd/yyyy or dd/mm/yyyy), and Owly automatically converts stored Vault dates (DD-MM-YYYY) into the exact format required during autofill. Users can also click the calendar icon 📅 to pick their date.
 
 ${ragContext ? `${ragContext}\n(IMPORTANT: Prioritize the official guideline citation above!)` : 'Use accurate, official standards.'}
 
@@ -124,7 +124,8 @@ Format output MUST be valid strictly formatted JSON without markdown:
   "pitfalls": "Common traps or pitfalls that cause application disqualification.",
   "confirmation_ref": "${officialCitation || 'Official Portal Guidelines'}",
   "source_type": "${officialCitation ? 'official' : 'ai_guidance'}"
-}`
+}
+`
       : `Kamu adalah Owly Field Coach AI — pakar birokrasi & formulir publik resmi.
 Tugas: Buat kartu panduan 4-elemen untuk kolom formulir berikut:
 - Nama Kolom: "${fieldName || fieldKey}" (fieldKey: "${fieldKey}")
@@ -133,7 +134,7 @@ Tugas: Buat kartu panduan 4-elemen untuk kolom formulir berikut:
 
 ATURAN KHUSUS KOLOM:
 - Untuk "Tempat Lahir" / "Place of Birth": Ini merujuk HANYA pada KOTA atau KABUPATEN tempat kelahiran (cth: "Jakarta", "Kudus", "Surabaya", "Bandung") sesuai Akta Kelahiran / KTP / Paspor resmi. JANGAN meminta nama negara (jangan sebut Paris, Prancis atau USA). Kolom tempat lahir kependudukan selalu meminta nama kota/kabupaten.
-- Untuk "Tanggal Lahir" / "Date of Birth": Merujuk hanya pada tanggal lahir (YYYY-MM-DD), bukan kota atau tempat.
+- Untuk "Tanggal Lahir" / "Date of Birth": Merujuk hanya pada tanggal lahir (bukan kota atau tempat). Jelaskan bahwa format tampilan kolom (seperti mm/dd/yyyy atau dd/mm/yyyy) diatur oleh setelan browser, dan Owly otomatis menyesuaikan konversi tanggal dari data Vault (DD-MM-YYYY) ke format kalender sistem saat autofill. Pengguna juga bisa memilih langsung via ikon kalender 📅.
 
 ${ragContext ? `${ragContext}\n(PENTING: Utamakan kutipan juknis resmi di atas untuk menjawab!)` : 'Gunakan aturan standar birokrasi Indonesia yang resmi dan akurat.'}
 

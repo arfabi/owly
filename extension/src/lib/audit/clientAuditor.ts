@@ -64,9 +64,14 @@ export interface ComprehensiveAuditReport {
   overallStatus: "green" | "yellow" | "red";
   score: number; // 0 - 100
   issues: AuditIssue[];
-  passedCount: number;
-  warningCount: number;
-  dangerCount: number;
+  passedCount: number; // Kolom aman (0 isu)
+  warningCount: number; // Kolom dengan peringatan
+  dangerCount: number; // Kolom dengan kendala fatal
+  passedFieldsCount: number;
+  warningFieldsCount: number;
+  dangerFieldsCount: number;
+  dangerIssuesCount: number;
+  warningIssuesCount: number;
   totalFieldsScanned: number;
   vaultConnected: boolean;
 }
@@ -590,25 +595,60 @@ export function runClientSideComprehensiveAudit(
     });
   }
 
-  // Hitung Skor & Status Akhir
-  const dangerCount = issues.filter((i) => i.level === "red").length;
-  const warningCount = issues.filter((i) => i.level === "yellow").length;
+  // 1. Petakan isu ke setiap field unik
+  const redFieldIds = new Set<string>();
+  const yellowFieldIds = new Set<string>();
+
+  issues.forEach((issue) => {
+    if (issue.level === "red") {
+      redFieldIds.add(issue.fieldId);
+      if (issue.fieldName) redFieldIds.add(issue.fieldName);
+    } else if (issue.level === "yellow") {
+      yellowFieldIds.add(issue.fieldId);
+      if (issue.fieldName) yellowFieldIds.add(issue.fieldName);
+    }
+  });
+
+  // 2. Hitung status per-kolom secara mutlak (Invarian: Passed + Warning + Danger === Total Kolom)
+  let dangerFieldsCount = 0;
+  let warningFieldsCount = 0;
+  let passedFieldsCount = 0;
+
+  fields.forEach((f) => {
+    const hasRed = redFieldIds.has(f.fieldId) || (f.name && redFieldIds.has(f.name));
+    const hasYellow = yellowFieldIds.has(f.fieldId) || (f.name && yellowFieldIds.has(f.name));
+
+    if (hasRed) {
+      dangerFieldsCount++;
+    } else if (hasYellow) {
+      warningFieldsCount++;
+    } else {
+      passedFieldsCount++;
+    }
+  });
+
+  const dangerIssuesCount = issues.filter((i) => i.level === "red").length;
+  const warningIssuesCount = issues.filter((i) => i.level === "yellow").length;
   const totalScanned = Math.max(fields.length, 1);
-  const passedCount = Math.max(0, totalScanned - dangerCount - warningCount);
 
   let overallStatus: "green" | "yellow" | "red" = "green";
-  if (dangerCount > 0) overallStatus = "red";
-  else if (warningCount > 0) overallStatus = "yellow";
+  if (dangerFieldsCount > 0 || dangerIssuesCount > 0) overallStatus = "red";
+  else if (warningFieldsCount > 0 || warningIssuesCount > 0) overallStatus = "yellow";
 
-  const score = Math.max(0, Math.round(((passedCount + warningCount * 0.5) / totalScanned) * 100));
+  const score = Math.max(0, Math.round(((passedFieldsCount + warningFieldsCount * 0.5) / totalScanned) * 100));
 
   return {
     overallStatus,
     score,
     issues,
-    passedCount,
-    warningCount,
-    dangerCount,
+    passedCount: passedFieldsCount,
+    warningCount: warningFieldsCount,
+    dangerCount: dangerFieldsCount,
+    passedFieldsCount,
+    warningFieldsCount,
+    dangerFieldsCount,
+    dangerIssuesCount,
+    warningIssuesCount,
     totalFieldsScanned: fields.length,
     vaultConnected: vaultItems.length > 0,
   };

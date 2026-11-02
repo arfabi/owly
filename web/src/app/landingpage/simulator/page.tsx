@@ -320,8 +320,8 @@ export default function SimulatorPage() {
                     />
                     <p className="text-[11px] text-slate-500 mt-1.5">
                       {isId
-                        ? "Format standar data: YYYY-MM-DD (Tampilan mm/dd/yyyy pada kolom disesuaikan otomatis oleh setelan bahasa browser Anda, atau pilih via kalender 📅)"
-                        : "Standard data format: YYYY-MM-DD (The mm/dd/yyyy inside the box is localized by your browser's language setting, or select via calendar 📅)"}
+                        ? "Data di Owly Vault: DD-MM-YYYY (cth: 15-08-1998). Saat autofill, Owly otomatis mengonversinya ke kalender browser (tampilan mm/dd/yyyy atau dd/mm/yyyy disesuaikan oleh sistem Anda, atau klik ikon 📅)"
+                        : "Stored in Owly Vault: DD-MM-YYYY (e.g. 15-08-1998). Owly auto-converts to browser calendar on autofill (visual mm/dd/yyyy or dd/mm/yyyy is localized by your OS/browser, or pick via 📅)"}
                     </p>
                   </div>
 

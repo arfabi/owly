@@ -114,10 +114,11 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
             message: aiItem.message,
             hint: aiItem.hint,
           });
+          if (aiItem.level === "red") localReport.dangerIssuesCount++;
+          else if (aiItem.level === "yellow") localReport.warningIssuesCount++;
         });
         if (aiFindings.some((f) => f.level === "red")) {
           localReport.overallStatus = "red";
-          localReport.dangerCount += aiFindings.filter((f) => f.level === "red").length;
         }
       }
 
@@ -211,7 +212,13 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
                 {isId ? "Traffic Light Form Auditor" : "Traffic Light Form Auditor"}
               </h3>
               <p className="text-[10.5px] text-slate-500 font-medium">
-                {isId ? "Audit Komprehensif Sebelum Kirim" : "Comprehensive Pre-Submit Check"}
+                {report
+                  ? isId
+                    ? `${report.totalFieldsScanned} Kolom Formulir Terdeteksi`
+                    : `${report.totalFieldsScanned} Form Fields Detected`
+                  : isId
+                  ? "Audit Komprehensif Sebelum Kirim"
+                  : "Comprehensive Pre-Submit Check"}
               </p>
             </div>
           </div>
@@ -260,6 +267,11 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
             <span className="text-[11px] font-extrabold text-red-800 block">
               {report ? `${report.dangerCount} ${t.audit.redCount}` : `0 ${t.audit.redCount}`}
             </span>
+            {report && report.dangerIssuesCount > report.dangerCount && (
+              <span className="text-[9.5px] text-red-600 font-semibold block mt-0.5">
+                ({report.dangerIssuesCount} {isId ? "total isu" : "total issues"})
+              </span>
+            )}
           </div>
         </div>
       </div>
