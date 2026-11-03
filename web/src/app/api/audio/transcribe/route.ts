@@ -1,13 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Environment variables configuration for Meta Muse Voice Transcribe
-const metaApiKey = process.env.MUSE_TRANSCRIBE_API_KEY || process.env.META_API_KEY || process.env.BASETEN_API_KEY || '';
-const metaBaseUrl = process.env.MUSE_TRANSCRIBE_BASE_URL || 'https://api.meta.ai/v1';
-const modelName = process.env.MUSE_TRANSCRIBE_MODEL_NAME || 'muse-voice-transcribe-1.0';
-
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   const agent_logs: Array<{ domain: string; message: string; data?: any }> = [];
+
+  // Read environment variables dynamically per request
+  const metaApiKey =
+    process.env.MUSE_TRANSCRIBE_API_KEY ||
+    process.env.META_API_KEY ||
+    process.env.BASETEN_API_KEY ||
+    '';
+  const rawBaseUrl = process.env.MUSE_TRANSCRIBE_BASE_URL || 'https://api.meta.ai/v1';
+  const modelName = process.env.MUSE_TRANSCRIBE_MODEL_NAME || 'muse-voice-transcribe-1.0';
+
+  // Sanitize target endpoint (prevents duplicate /asr/transcribe if user provides full URL)
+  let targetEndpoint = rawBaseUrl.trim().replace(/\/+$/, '');
+  const isMetaAiEndpoint = targetEndpoint.includes('api.meta.ai');
+
+  if (isMetaAiEndpoint) {
+    if (!targetEndpoint.endsWith('/asr/transcribe')) {
+      if (targetEndpoint.endsWith('/v1')) {
+        targetEndpoint = `${targetEndpoint}/asr/transcribe`;
+      } else {
+        targetEndpoint = `${targetEndpoint}/v1/asr/transcribe`;
+      }
+    }
+  } else {
+    if (
+      !targetEndpoint.endsWith('/audio/transcriptions') &&
+      !targetEndpoint.endsWith('/predict') &&
+      !targetEndpoint.endsWith('/completions')
+    ) {
+      targetEndpoint = `${targetEndpoint}/audio/transcriptions`;
+    }
+  }
 
   try {
     const contentType = req.headers.get('content-type') || '';
@@ -97,19 +123,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Determine target upstream endpoint
-    const isMetaAiEndpoint = metaBaseUrl.includes('api.meta.ai');
     let transcribedText = '';
     let turns: any[] = [];
     let upstreamLatencyMs = 0;
+
+    agent_logs.push({
+      domain: 'VOICE',
+      message: `Forwarding audio to STT upstream: ${targetEndpoint} (Model: ${modelName})`,
+      data: { targetEndpoint, model: modelName, hasApiKey: !!metaApiKey }
+    });
 
     const requestStart = Date.now();
 
     if (isMetaAiEndpoint) {
       // 1. Meta Model API: POST https://api.meta.ai/v1/asr/transcribe
       // Specification: dev.meta.ai/docs/speech-to-text.md
-      const targetEndpoint = `${metaBaseUrl.replace(/\/+$/, '')}/asr/transcribe`;
-
       // Build RFC 7578 compliant multipart/form-data buffer for Meta Voyager
       const boundary = `----VoyagerBoundary${Date.now()}`;
       const requestConfig = {
@@ -161,7 +189,6 @@ export async function POST(req: NextRequest) {
 
     } else {
       // 2. Fallback / OpenAI-compatible STT endpoint (e.g. Baseten /v1/audio/transcriptions)
-      const targetEndpoint = `${metaBaseUrl.replace(/\/+$/, '')}/audio/transcriptions`;
       const forwardFormData = new FormData();
       const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType });
       forwardFormData.append('file', audioBlob, 'speech.wav');
