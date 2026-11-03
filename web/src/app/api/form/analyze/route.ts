@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+export const maxDuration = 60; // Allow up to 60s for multi-agent synthesis on Vercel
+
 // Initialize Supabase Client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -143,16 +145,31 @@ export async function POST(req: NextRequest) {
     });
 
     // =========================================================================
-    // STEP 1: AGENT 1 - PERCEPTION & FORM PROFILER (Multimodal Vision)
+    // STEP 1 & 2: PARALLEL AGENT EXECUTION (Agent 1 Perception + Agent 2 Regulation)
     // =========================================================================
-    const a1Start = Date.now();
+    const isEn = language === 'en';
+    const formNameFallback = sanitizedMeta.title || (isEn ? 'Public Application Form' : 'Formulir Publik');
+    const institutionFallback = domain.replace(/^www\./, '');
+
     agent_logs.push({
-      domain: 'PERCEPTION',
-      message: 'Agent 1 (Perception): Analyzing visual screenshot & DOM structure via Meta Muse Spark Open...'
+      domain: 'PLANNER',
+      message: 'Launching Agent 1 (Perception) and Agent 2 (Researcher) concurrently via Promise.all...',
+      data: { formName: formNameFallback, domain }
     });
 
-    const isEn = language === 'en';
-    const a1SystemPrompt = `Reasoning strength: 32
+    const runAgent1 = async () => {
+      const a1Start = Date.now();
+      let a1Result = {
+        formName: formNameFallback,
+        institution: institutionFallback,
+        targetOutcome: isEn ? 'Official Registration Receipt / Form Submission' : 'Penerbitan Bukti Registrasi / Submit Formulir',
+        category: isEn ? 'Public Service / Scholarship' : 'Layanan Publik / Beasiswa',
+        prerequisites: isEn ? ['Official Government ID / Passport', 'Supporting Documents'] : ['KTP / Identitas Resmi', 'Dokumen Pendukung'],
+        difficultyLevel: sanitizedFields.length > 10 ? (isEn ? 'Medium' : 'Sedang') : (isEn ? 'Easy' : 'Mudah'),
+        estimatedTime: sanitizedFields.length > 10 ? (isEn ? '15 - 20 Mins' : '15 - 20 Menit') : (isEn ? '5 - 10 Mins' : '5 - 10 Menit')
+      };
+
+      const a1SystemPrompt = `Reasoning strength: 32
 You are Agent 1: Perception and Form Profiler for Owly.AI. You are Meta Muse Spark Open with vision.
 RULES:
 1. Identify formName ONLY from visible text in screenshot or meta.title. If not visible, return ${isEn ? '"Public Application Form"' : '"Formulir Publik"'}.
@@ -169,134 +186,108 @@ RULES:
   "estimatedTime": "string"
 }`;
 
-    const a1UserContent: any[] = [];
-    if (screenshotBase64) {
-      let formattedImg = screenshotBase64;
-      if (!formattedImg.startsWith('data:') && !formattedImg.startsWith('http')) {
-        formattedImg = `data:image/jpeg;base64,${formattedImg}`;
+      const a1UserContent: any[] = [];
+      if (screenshotBase64) {
+        let formattedImg = screenshotBase64;
+        if (!formattedImg.startsWith('data:') && !formattedImg.startsWith('http')) {
+          formattedImg = `data:image/jpeg;base64,${formattedImg}`;
+        }
+        a1UserContent.push({
+          type: 'image_url',
+          image_url: { url: formattedImg }
+        });
       }
-      a1UserContent.push({
-        type: 'image_url',
-        image_url: { url: formattedImg }
-      });
-    }
 
-    a1UserContent.push({
-      type: 'text',
-      text: `Analyze this active page and form:
+      a1UserContent.push({
+        type: 'text',
+        text: `Analyze this active page and form:
 Page Metadata: ${JSON.stringify(sanitizedMeta)}
 DOM Fields Sample: ${JSON.stringify(sanitizedFields.slice(0, 15))}
 Language: ${isEn ? 'English' : 'Bahasa Indonesia'}
 Return ONLY the raw JSON output matching the schema in ${isEn ? 'English' : 'Bahasa Indonesia'}.`
-    });
-
-    let agent1Result = {
-      formName: sanitizedMeta.title || (isEn ? 'Public Application Form' : 'Formulir Publik'),
-      institution: domain.replace(/^www\./, ''),
-      targetOutcome: isEn ? 'Official Registration Receipt / Form Submission' : 'Penerbitan Bukti Registrasi / Submit Formulir',
-      category: isEn ? 'Public Service / Scholarship' : 'Layanan Publik / Beasiswa',
-      prerequisites: isEn ? ['Official Government ID / Passport', 'Supporting Documents'] : ['KTP / Identitas Resmi', 'Dokumen Pendukung'],
-      difficultyLevel: sanitizedFields.length > 10 ? (isEn ? 'Medium' : 'Sedang') : (isEn ? 'Easy' : 'Mudah'),
-      estimatedTime: sanitizedFields.length > 10 ? (isEn ? '15 - 20 Mins' : '15 - 20 Menit') : (isEn ? '5 - 10 Mins' : '5 - 10 Menit')
-    };
-
-    try {
-      const a1Response = await fetch(`${basetenBaseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${basetenApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [
-            { role: 'system', content: a1SystemPrompt },
-            { role: 'user', content: a1UserContent }
-          ],
-          reasoning_effort: 'medium',
-          temperature: 0.2,
-          max_tokens: 600
-        })
       });
 
-      if (a1Response.ok) {
-        const a1Data = await a1Response.json();
-        const rawContent = a1Data.choices?.[0]?.message?.content || '';
-        const parsed = extractCleanJson(rawContent);
-        if (parsed && parsed.formName) {
-          agent1Result = { ...agent1Result, ...parsed };
+      try {
+        const a1Response = await fetch(`${basetenBaseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${basetenApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: 'system', content: a1SystemPrompt },
+              { role: 'user', content: a1UserContent }
+            ],
+            reasoning_effort: 'medium',
+            temperature: 0.2,
+            max_tokens: 600
+          }),
+          signal: AbortSignal.timeout(12000)
+        });
+
+        if (a1Response.ok) {
+          const a1Data = await a1Response.json();
+          const rawContent = a1Data.choices?.[0]?.message?.content || '';
+          const parsed = extractCleanJson(rawContent);
+          if (parsed && parsed.formName) {
+            a1Result = { ...a1Result, ...parsed };
+          }
         }
+      } catch (e: any) {
+        console.warn('[Agent 1 Perception] Non-blocking fallback:', e.message);
       }
-    } catch (e: any) {
-      console.warn('[Agent 1 Perception] Non-blocking fallback:', e.message);
-    }
 
-    const a1Duration = Date.now() - a1Start;
-    agentTrace.push({
-      agent: 'Agent 1 (Perception)',
-      status: `Identified: "${agent1Result.formName}" (${agent1Result.institution})`,
-      durationMs: a1Duration
-    });
-    agent_logs.push({
-      domain: 'PERCEPTION',
-      message: `Agent 1 Finished: ${agent1Result.formName} | ${agent1Result.institution}`,
-      data: agent1Result
-    });
-
-    // =========================================================================
-    // STEP 2: AGENT 2 - REGULATION RESEARCHER (Meta Native Tooling / Grounding)
-    // =========================================================================
-    const a2Start = Date.now();
-    agent_logs.push({
-      domain: 'PLANNER',
-      message: `Agent 2 (Researcher): Querying official regulations & juknis for "${agent1Result.formName}"...`
-    });
-
-    const searchQuery = `${agent1Result.formName} ${agent1Result.institution} 2026 juknis panduan pendaftaran`;
-
-    // Cek juknis_chunks di database jika ada
-    let officialCitation = '';
-    try {
-      const { data: chunks } = await supabase
-        .from('juknis_chunks')
-        .select('title, portal_domain, content')
-        .eq('portal_domain', domain)
-        .limit(2);
-
-      if (chunks && chunks.length > 0) {
-        officialCitation = chunks[0].title || `Juknis Resmi ${domain}`;
-      }
-    } catch {
-      // Supabase chunks optional
-    }
-
-    const isOfficialGov = domain.endsWith('.go.id') || domain.endsWith('.ac.id') || domain.includes('lpdp') || !!officialCitation;
-
-    let agent2Result = {
-      officialSource: {
-        url: meta.url || `https://${domain}`,
-        badge: isOfficialGov ? (isEn ? 'Official Portal' : 'Official .go.id') : 'AI Guidance',
-        title: officialCitation || (isEn ? `Official Guide ${agent1Result.institution}` : `Panduan Pendaftaran ${agent1Result.institution}`)
-      },
-      deadlines: isEn ? 'According to official agency schedule' : 'Sesuai jadwal resmi instansi',
-      criticalRules: isEn ? [
-        'Ensure personal data matches official government identification documents.',
-        'Uploaded documents must be legible and unblurred.'
-      ] : [
-        'Pastikan data diri sesuai dengan identitas kependudukan (KTP/Dukcapil).',
-        'Dokumen yang diunggah harus jelas dan tidak buram.'
-      ],
-      disqualificationTraps: isEn ? [
-        'Date of birth or national ID mismatched with official database.',
-        'File size exceeds limit or document format invalid.'
-      ] : [
-        'Data tanggal lahir atau NIK tidak sinkron dengan database pusat.',
-        'Ukuran berkas melebihi kuota sistem atau format file tidak sesuai.'
-      ],
-      isOfficial: isOfficialGov
+      const a1Duration = Date.now() - a1Start;
+      return { result: a1Result, duration: a1Duration };
     };
 
-    const a2SystemPrompt = `Reasoning strength: 32
+    const runAgent2 = async () => {
+      const a2Start = Date.now();
+      let officialCitation = '';
+      try {
+        const { data: chunks } = await supabase
+          .from('juknis_chunks')
+          .select('title, portal_domain, content')
+          .eq('portal_domain', domain)
+          .limit(2);
+
+        if (chunks && chunks.length > 0) {
+          officialCitation = chunks[0].title || `Juknis Resmi ${domain}`;
+        }
+      } catch {
+        // Supabase chunks optional
+      }
+
+      const isOfficialGov = domain.endsWith('.go.id') || domain.endsWith('.ac.id') || domain.includes('lpdp') || !!officialCitation;
+
+      let a2Result = {
+        officialSource: {
+          url: meta.url || `https://${domain}`,
+          badge: isOfficialGov ? (isEn ? 'Official Portal' : 'Official .go.id') : 'AI Guidance',
+          title: officialCitation || (isEn ? `Official Guide ${institutionFallback}` : `Panduan Pendaftaran ${institutionFallback}`)
+        },
+        deadlines: isEn ? 'According to official agency schedule' : 'Sesuai jadwal resmi instansi',
+        criticalRules: isEn ? [
+          'Ensure personal data matches official government identification documents.',
+          'Uploaded documents must be legible and unblurred.'
+        ] : [
+          'Pastikan data diri sesuai dengan identitas kependudukan (KTP/Dukcapil).',
+          'Dokumen yang diunggah harus jelas dan tidak buram.'
+        ],
+        disqualificationTraps: isEn ? [
+          'Date of birth or national ID mismatched with official database.',
+          'File size exceeds limit or document format invalid.'
+        ] : [
+          'Data tanggal lahir atau NIK tidak sinkron dengan database pusat.',
+          'Ukuran berkas melebihi kuota sistem atau format file tidak sesuai.'
+        ],
+        isOfficial: isOfficialGov
+      };
+
+      const searchQuery = `${formNameFallback} ${institutionFallback} 2026 juknis panduan pendaftaran`;
+      const a2SystemPrompt = `Reasoning strength: 32
 You are Agent 2: Regulation Researcher for Owly.AI.
 CRITICAL PRIVACY: NEVER include PII (nik, email, name) in research. Query = ${searchQuery}
 If no .go.id result, return isOfficial false, fallback to AI Guidance.
@@ -307,53 +298,77 @@ Output valid JSON:
   "disqualificationTraps": ["string"]
 }`;
 
-    try {
-      const a2Response = await fetch(`${basetenBaseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${basetenApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [
-            { role: 'system', content: a2SystemPrompt },
-            {
-              role: 'user',
-              content: `Form Name: "${agent1Result.formName}"\nInstitution: "${agent1Result.institution}"\nDomain: "${domain}"\nProvide rules and traps in ${language === 'en' ? 'English' : 'Bahasa Indonesia'}.`
-            }
-          ],
-          reasoning_effort: 'medium',
-          temperature: 0.2,
-          max_tokens: 500
-        })
-      });
+      try {
+        const a2Response = await fetch(`${basetenBaseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${basetenApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: 'system', content: a2SystemPrompt },
+              {
+                role: 'user',
+                content: `Form Name: "${formNameFallback}"\nInstitution: "${institutionFallback}"\nDomain: "${domain}"\nProvide rules and traps in ${language === 'en' ? 'English' : 'Bahasa Indonesia'}.`
+              }
+            ],
+            reasoning_effort: 'medium',
+            temperature: 0.2,
+            max_tokens: 500
+          }),
+          signal: AbortSignal.timeout(12000)
+        });
 
-      if (a2Response.ok) {
-        const a2Data = await a2Response.json();
-        const rawA2 = a2Data.choices?.[0]?.message?.content || '';
-        const parsedA2 = extractCleanJson(rawA2);
-        if (parsedA2) {
-          if (Array.isArray(parsedA2.criticalRules) && parsedA2.criticalRules.length > 0) {
-            agent2Result.criticalRules = parsedA2.criticalRules;
-          }
-          if (Array.isArray(parsedA2.disqualificationTraps) && parsedA2.disqualificationTraps.length > 0) {
-            agent2Result.disqualificationTraps = parsedA2.disqualificationTraps;
-          }
-          if (parsedA2.deadlines) {
-            agent2Result.deadlines = parsedA2.deadlines;
+        if (a2Response.ok) {
+          const a2Data = await a2Response.json();
+          const rawA2 = a2Data.choices?.[0]?.message?.content || '';
+          const parsedA2 = extractCleanJson(rawA2);
+          if (parsedA2) {
+            if (Array.isArray(parsedA2.criticalRules) && parsedA2.criticalRules.length > 0) {
+              a2Result.criticalRules = parsedA2.criticalRules;
+            }
+            if (Array.isArray(parsedA2.disqualificationTraps) && parsedA2.disqualificationTraps.length > 0) {
+              a2Result.disqualificationTraps = parsedA2.disqualificationTraps;
+            }
+            if (parsedA2.deadlines) {
+              a2Result.deadlines = parsedA2.deadlines;
+            }
           }
         }
+      } catch (e: any) {
+        console.warn('[Agent 2 Researcher] Fallback:', e.message);
       }
-    } catch (e: any) {
-      console.warn('[Agent 2 Researcher] Fallback:', e.message);
+
+      const a2Duration = Date.now() - a2Start;
+      return { result: a2Result, duration: a2Duration };
+    };
+
+    // Execute Agent 1 & Agent 2 concurrently
+    const [a1Output, a2Output] = await Promise.all([runAgent1(), runAgent2()]);
+    let agent1Result = a1Output.result;
+    let agent2Result = a2Output.result;
+
+    if (agent1Result.institution && !agent2Result.officialSource.title.includes(agent1Result.institution)) {
+      agent2Result.officialSource.title = isEn ? `Official Guide ${agent1Result.institution}` : `Panduan Pendaftaran ${agent1Result.institution}`;
     }
 
-    const a2Duration = Date.now() - a2Start;
+    agentTrace.push({
+      agent: 'Agent 1 (Perception)',
+      status: `Identified: "${agent1Result.formName}" (${agent1Result.institution})`,
+      durationMs: a1Output.duration
+    });
+    agent_logs.push({
+      domain: 'PERCEPTION',
+      message: `Agent 1 Finished: ${agent1Result.formName} | ${agent1Result.institution}`,
+      data: agent1Result
+    });
+
     agentTrace.push({
       agent: 'Agent 2 (Researcher)',
       status: `Sourced: ${agent2Result.officialSource.badge} (${agent2Result.criticalRules.length} rules, ${agent2Result.disqualificationTraps.length} traps)`,
-      durationMs: a2Duration
+      durationMs: a2Output.duration
     });
     agent_logs.push({
       domain: 'REASONING',
@@ -477,7 +492,8 @@ Output JSON format:
           reasoning_effort: dynamicReasoningLevel,
           temperature: 0.2,
           max_tokens: 1200
-        })
+        }),
+        signal: AbortSignal.timeout(14000)
       });
 
       if (a3Response.ok) {

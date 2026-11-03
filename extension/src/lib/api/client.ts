@@ -91,6 +91,17 @@ export interface ChatResponse {
   agent_logs?: any[];
 }
 
+// 0. PRE-WARM API: Wake up serverless container & model inference cluster
+export async function triggerPreWarm(): Promise<void> {
+  try {
+    const baseUrl = await getEffectiveApiBaseUrl();
+    fetch(`${baseUrl}/api/warmup`, {
+      method: "GET",
+      signal: AbortSignal.timeout(4000),
+    }).catch(() => {});
+  } catch {}
+}
+
 // 1. CHAT API: Multi-turn sliding context + Meta Muse Spark Open via Baseten (with Agentic Tool Calling)
 export async function sendChatMessage(
   message: string,
@@ -423,17 +434,19 @@ export async function analyzeForm(payload: {
   options?: { language?: string; streamTelemetry?: boolean };
 }): Promise<AnalyzeFormResponse> {
   const startTime = Date.now();
-  agentLog.planner(`🚀 [CMAS Multi-Agent Request] POST ${API_BASE_URL}/api/form/analyze`, {
+  const baseUrl = await getEffectiveApiBaseUrl();
+  agentLog.planner(`🚀 [CMAS Multi-Agent Request] POST ${baseUrl}/api/form/analyze`, {
     domain: payload.meta.domain,
     fieldCount: payload.dom.fieldCount,
     hasScreenshot: !!payload.screenshotBase64,
   });
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/form/analyze`, {
+    const res = await fetch(`${baseUrl}/api/form/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30000), // 30s client-side timeout prevents 5-minute hanging
     });
 
     const elapsed = Date.now() - startTime;

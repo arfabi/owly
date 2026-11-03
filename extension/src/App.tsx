@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 import { agentLog, logAgent, AgentDomain } from "./lib/agentLogger";
+import { triggerPreWarm } from "./lib/api/client";
 
 export function App() {
   const { t } = useLanguage();
@@ -34,6 +35,7 @@ export function App() {
   // Connect to background script & log initial session
   useEffect(() => {
     agentLog.planner("Side Panel UI initialized and active.");
+    triggerPreWarm(); // Pre-warm Baseten / Next.js backend asynchronously in background
 
     // Mirror content script logs into side panel console
     const messageListener = (msg: any) => {

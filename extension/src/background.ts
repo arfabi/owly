@@ -154,7 +154,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "CAPTURE_VISIBLE_TAB") {
     const targetWinId = sender.tab?.windowId;
-    const captureOptions = { format: "jpeg" as const, quality: 90 };
+    const captureOptions = { format: "jpeg" as const, quality: 75 };
 
     const tryCapture = (winId?: number) => {
       const callback = (dataUrl?: string) => {

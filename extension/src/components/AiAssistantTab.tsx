@@ -106,6 +106,49 @@ async function cropScreenshot(
   });
 }
 
+// Compress & resize screenshot to max 1024px WebP / JPEG 60% for fast multimodal inference (~150KB)
+async function compressScreenshot(
+  dataUrl: string,
+  maxWidth: number = 1024,
+  quality: number = 0.6
+): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        let compressed = canvas.toDataURL("image/webp", quality);
+        if (!compressed.startsWith("data:image/webp")) {
+          compressed = canvas.toDataURL("image/jpeg", quality);
+        }
+        resolve(compressed);
+      } catch (err) {
+        console.warn("[Savvy.AI] Failed to compress screenshot:", err);
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 interface SectionSummary {
   name: string;
   fieldCount: number;
@@ -470,6 +513,7 @@ export function AiAssistantTab({
     };
 
     setMessages((prev) => [...prev, userMsg]);
+    setInputText("");
     setPiiWarning(null);
 
     let liveUrl = currentUrl || "";
@@ -996,6 +1040,9 @@ export function AiAssistantTab({
     sendTabMessage({ type: "START_SCAN_ANIMATION" });
     agentLog.perception("🔍 'Analyze This Form' clicked. Triggering web laser scan and Multi-Agent Pipeline...");
 
+    let domFields: any[] = [];
+    let pageMeta: any = {};
+
     try {
       // Step 1: Upload Screenshot
       setScanStep(1);
@@ -1008,7 +1055,13 @@ export function AiAssistantTab({
             });
           });
           if (captureRes?.success && captureRes.dataUrl) {
-            screenshotBase64 = captureRes.dataUrl;
+            const rawLength = captureRes.dataUrl.length;
+            screenshotBase64 = await compressScreenshot(captureRes.dataUrl, 1024, 0.6);
+            agentLog.perception("🖼️ Screenshot compressed for fast multimodal inference", {
+              originalKb: Math.round(rawLength / 1024),
+              compressedKb: Math.round(screenshotBase64.length / 1024),
+              reduction: `${Math.round((1 - screenshotBase64.length / rawLength) * 100)}%`,
+            });
           }
         }
       } catch (err) {
@@ -1019,8 +1072,8 @@ export function AiAssistantTab({
       // Step 2: DOM Extractor & Page Structure Mapping
       setScanStep(2);
       const scanRes = await sendTabMessage({ type: "SCAN_PAGE_FIELDS" });
-      const domFields = scanRes?.data?.fields || [];
-      const pageMeta = scanRes?.data?.meta || {};
+      domFields = scanRes?.data?.fields || [];
+      pageMeta = scanRes?.data?.meta || {};
 
       if (typeof chrome !== "undefined" && chrome.storage?.local && domFields.length > 0) {
         chrome.storage.local.set({ savvy_page_fields: domFields });
@@ -1085,12 +1138,19 @@ export function AiAssistantTab({
       });
     } catch (e: any) {
       console.warn("CMAS analyze error:", e);
+      const fallbackTitle = pageMeta?.title || (isId ? "Formulir Aplikasi Publik" : "Public Application Form");
+      const fallbackInstitution = pageMeta?.domain ? pageMeta.domain.replace(/^www\./, "") : (isId ? "Portal Instansi Resmi" : "Official Public Portal");
+      const sections = groupFieldsIntoSections(domFields, isId);
       setScannedSummary({
-        title: isId ? "Pendaftaran Beasiswa LPDP 2026" : "LPDP Scholarship Application 2026",
-        institution: "Kementerian Keuangan RI",
-        targetOutcome: isId ? "Pendaftaran Beasiswa LPDP Tahap 1 2026" : "LPDP Scholarship Stage 1 Registration",
-        officialRef: "Juknis LPDP 2026",
-        fieldCount: 14,
+        title: formatFormTitle(fallbackTitle, isId),
+        description: isId ? "Analisis cepat struktur formulir dan panduan pengisian berbasis elemen halaman aktif." : "Fast-path structure and guidance roadmap based on active page fields.",
+        institution: fallbackInstitution,
+        targetOutcome: isId ? "Pengisian dan Verifikasi Formulir Resmi" : "Official Application Form Submission",
+        officialRef: pageMeta?.domain ? `Panduan ${pageMeta.domain}` : (isId ? "Regulasi Resmi Instansi" : "Official Regulatory Guide"),
+        officialUrl: pageMeta?.url,
+        fieldCount: domFields.length || 14,
+        estimatedTime: isId ? "10 - 15 Menit" : "10 - 15 Mins",
+        sections,
       });
       sendTabMessage({ type: "SHOW_FIELD_NUMBERS" });
       onAnalyzeForm();
@@ -1192,6 +1252,7 @@ export function AiAssistantTab({
 
     const textFromSpeech = pttTranscriptRef.current.trim();
     if (textFromSpeech) {
+      pttTranscriptRef.current = "";
       agentLog.voice(`🗣️ [PTT Transcribed] "${textFromSpeech}" (Output: Text Only)`);
       // PTT output is text only -> shouldSpeakOutput = false
       await handleSendMessage(textFromSpeech, null, null, false);
