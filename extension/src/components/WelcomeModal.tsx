@@ -4,6 +4,7 @@ import { LANGUAGE_METADATA, SupportedLanguage } from "../lib/i18n/types";
 import { translations } from "../lib/i18n/translations";
 import { Sparkles, Check, Globe, Shield, Volume2 } from "lucide-react";
 import { agentLog } from "../lib/agentLogger";
+import { FlagIcon } from "./FlagIcon";
 
 export function WelcomeModal() {
   const { isFirstInstall, completeOnboarding } = useLanguage();
@@ -58,8 +59,9 @@ export function WelcomeModal() {
             <Globe className="w-3.5 h-3.5 text-savvy-blue" />
             <span>{previewT.welcome.selectPrompt}</span>
           </div>
-          <span className="text-[10px] text-blue-600 font-extrabold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-            {currentMeta.flag} {selectedLang.toUpperCase()}
+          <span className="text-[10px] text-blue-600 font-extrabold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100 flex items-center gap-1.5">
+            <FlagIcon code={selectedLang} className="w-3.5 h-2.5" />
+            <span>{selectedLang.toUpperCase()}</span>
           </span>
         </div>
 
@@ -78,7 +80,7 @@ export function WelcomeModal() {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="text-xl leading-none shrink-0">{meta.flag}</span>
+                  <FlagIcon code={meta.code} className="w-5 h-3.5" />
                   <div className="text-left">
                     <span className="font-bold text-xs text-slate-900 block leading-tight">
                       {meta.nativeName}

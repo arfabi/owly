@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLanguage } from "../lib/i18n/LanguageContext";
 import { LANGUAGE_METADATA } from "../lib/i18n/types";
 import { Accessibility, Globe, X, Check, Terminal } from "lucide-react";
+import { FlagIcon } from "./FlagIcon";
 
 interface HeaderProps {
   onOpenAccessibilityHub?: () => void;
@@ -67,7 +68,7 @@ export function Header({ onOpenAccessibilityHub, onOpenLogConsole }: HeaderProps
             className="flex items-center gap-1.5 py-1 px-2 rounded-lg text-slate-600 hover:text-savvy-blue hover:bg-slate-100 border border-slate-200 transition-all cursor-pointer shadow-2xs"
             title={t.header.changeLanguage}
           >
-            <span className="text-sm leading-none shrink-0">{currentMeta.flag}</span>
+            <FlagIcon code={language} className="w-4 h-3" />
             <span className="text-[11px] font-extrabold uppercase">{language}</span>
           </button>
         </div>
@@ -111,7 +112,7 @@ export function Header({ onOpenAccessibilityHub, onOpenLogConsole }: HeaderProps
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg leading-none shrink-0">{meta.flag}</span>
+                      <FlagIcon code={meta.code} className="w-5 h-3.5" />
                       <div className="text-left">
                         <span className="font-bold text-xs text-slate-900 block leading-tight">
                           {meta.nativeName}
