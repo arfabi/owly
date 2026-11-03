@@ -23,17 +23,27 @@ export async function POST(req: NextRequest) {
 Task: Given a user query seeking an element on a webpage, analyze the candidate HTML elements and pick the single best match.
 
 Candidate elements on the page:
-${JSON.stringify(candidates.slice(0, 20))}
+${JSON.stringify(candidates.slice(0, 60))}
 
 User Query: "${query}"
 Page Context: "${pageTitle}" (${pageUrl})
 
 Evaluation Instructions:
-1. Determine if one of the candidate elements semantically matches the user's intent.
-2. Provide a confidence score between 0.0 and 1.0.
-3. If no element matches or confidence is below 0.8, set "matchedIndex" to null and confidence to a value < 0.8.
-4. Output STRICT JSON ONLY matching this schema:
-{"matchedIndex": number | null, "confidence": number, "reason": "Concise technical explanation in English"}
+1. The user query may be in ANY language (English, Indonesian, German, etc.) and may contain polite fillers or connecting words (e.g., "Show me: the download button please", "tunjukkan tombol unduh dong", "where can I register", "dimana letak submit").
+2. Extract the user's semantic intent regardless of phrasing or language.
+3. Understand multilingual equivalents and examine element attributes:
+   - "download" matches "Unduh", "Download", "Unduh Ekstensi", or elements with href="/download"
+   - "register" / "sign up" matches "Daftar", "Registrasi", "Buat Akun"
+   - "login" / "sign in" matches "Masuk", "Log In", "Login"
+   - "submit" matches "Kirim", "Ajukan", "Selesai", "Submit"
+   - "next" / "continue" / "proceed" matches "Lanjut", "Lanjutkan", "Selanjutnya", "Berikutnya", "Next", "Continue", "Proceed"
+   - "back" / "previous" matches "Kembali", "Sebelumnya", "Back", "Prev"
+   - "requirements" matches "Syarat", "Persyaratan", "Ketentuan"
+4. Check candidate "text", "aria", "placeholder", "href", and "id".
+5. If a matching candidate is found, set "matchedIndex" to its integer "domIndex" and confidence between 0.7 and 1.0.
+6. If no element matches or confidence is below 0.7, set "matchedIndex" to null and confidence < 0.7.
+7. Output STRICT JSON ONLY matching this schema:
+{"matchedIndex": number | null, "confidence": number, "targetName": string, "reason": "Concise technical explanation in English"}
 Do NOT output codeblocks, markdown fences, or other commentary.`;
 
     const response = await fetch(`${basetenBaseUrl}/chat/completions`, {
@@ -49,8 +59,9 @@ Do NOT output codeblocks, markdown fences, or other commentary.`;
           { role: 'user', content: `Locate matching interactive element for: "${query}"` },
         ],
         temperature: 0.1,
-        max_tokens: 150,
+        max_tokens: 180,
       }),
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!response.ok) {

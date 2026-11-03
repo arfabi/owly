@@ -480,28 +480,32 @@ export async function analyzeForm(payload: {
 // 7. SHOW ME: Semantic Element Matching via Meta Muse Spark (Level 3)
 export async function matchElementSemantically(
   query: string,
-  candidates: Array<{ domIndex: number; tag: string; text: string; aria?: string; placeholder?: string }>,
+  candidates: Array<{ domIndex: number; tag: string; text: string; aria?: string; placeholder?: string; href?: string; id?: string }>,
   pageTitle?: string,
-  pageUrl?: string
-): Promise<{ matchedIndex: number | null; confidence: number; reason: string }> {
+  pageUrl?: string,
+  language?: string
+): Promise<{ matchedIndex: number | null; confidence: number; targetName?: string; reason: string }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/element/match`, {
+    const baseUrl = await getEffectiveApiBaseUrl();
+    const res = await fetch(`${baseUrl}/api/element/match`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, candidates, pageTitle, pageUrl }),
+      body: JSON.stringify({ query, candidates, pageTitle, pageUrl, language }),
+      signal: AbortSignal.timeout(8000),
     });
     if (res.ok) {
       const data = await res.json();
       return {
         matchedIndex: typeof data.matchedIndex === "number" ? data.matchedIndex : null,
         confidence: typeof data.confidence === "number" ? data.confidence : 0,
+        targetName: data.targetName || "",
         reason: data.reason || "",
       };
     }
   } catch (err: any) {
     console.warn("[Element Match API] Error:", err);
   }
-  return { matchedIndex: null, confidence: 0, reason: "Model inference unavailable" };
+  return { matchedIndex: null, confidence: 0, targetName: "", reason: "Model inference unavailable" };
 }
 
 

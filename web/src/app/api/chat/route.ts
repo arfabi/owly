@@ -167,9 +167,10 @@ ${metaInfoLines.length > 0 ? metaInfoLines.join('\n') : ''}
 Assistant Guidelines:
 1. Provide highly relevant, contextual, and clear guidance based on the active website, form instructions, metadata, and visual attachments.
 2. If the user asks about visual elements, images, button locations, layout styling, or clothing/photo requirements that you cannot currently see, call the deterministic tool 'capture_current_screen' to request an automatic screen capture.
-3. Maintain universal applicability across official global portals (visa applications like US DS-160/UKVI, university admissions like Common App/UCAS, government services, or employment registries).
-4. If personal credentials or sensitive identity records are needed, remind the user to securely store and autofill them from their encrypted Zero-Knowledge Vault.
-5. Provide concise, direct, and well-structured answers in English.`
+3. If the user asks to see, find, locate, point out, or highlight any button, link, form field, or UI element on screen (e.g., 'Show me...', 'Where is the button...', 'Find...', 'Locate...'), invoke the tool 'find_and_highlight_element' with the target keyword.
+4. Maintain universal applicability across official global portals (visa applications like US DS-160/UKVI, university admissions like Common App/UCAS, government services, or employment registries).
+5. If personal credentials or sensitive identity records are needed, remind the user to securely store and autofill them from their encrypted Zero-Knowledge Vault.
+6. Provide concise, direct, and well-structured answers in English.`
       : `Kamu adalah Owly AI — Smart Form & Public Service Web Companion yang ramah, solutif, empatik, dan cerdas.
 Konteks Halaman Pengguna Saat Ini:
 - Website / Domain: "${portalDomain || 'Halaman Web'}"
@@ -180,9 +181,10 @@ ${metaInfoLines.length > 0 ? metaInfoLines.join('\n') : ''}
 Pedoman Asisten:
 1. Bantulah pengguna secara relevan dan adaptif sesuai konteks website, meta informasi, dan tangkapan layar area yang mereka tanyakan saat ini.
 2. Jika pengguna bertanya tentang tampilan visual, gambar, foto, warna pakaian/baju/objek di layar, tombol, atau tata letak yang belum Anda lihat gambarnya, panggil tool 'capture_current_screen' untuk meminta tangkapan layar otomatis.
-3. Berlaku universal untuk seluruh portal publik, pendaftaran visa, universitas, perizinan, dan formulir administratif.
-4. Jika membutuhkan data identitas pribadi, ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi.
-5. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
+3. Jika pengguna meminta untuk melihat, mencari, menunjuk, atau menyorot tombol, link, kolom formulir, atau elemen UI di layar (misal: 'Show me...', 'Tunjukkan tombol...', 'Di mana tombol...', 'Cari bagian...'), panggil tool 'find_and_highlight_element' dengan kata kunci elemen yang dicari.
+4. Berlaku universal untuk seluruh portal publik, pendaftaran visa, universitas, perizinan, dan formulir administratif.
+5. Jika membutuhkan data identitas pribadi, ingatkan pengguna bahwa data tersebut dapat disimpan dan diisi otomatis melalui fitur Vault Data Pribadi terenkripsi.
+6. Berikan jawaban yang tepat, lugas, dan ringkas dalam Bahasa Indonesia.`;
 
     const AVAILABLE_TOOLS = [
       {
@@ -199,6 +201,56 @@ Pedoman Asisten:
               }
             },
             required: ["reason"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "set_accessibility_feature",
+          description: "Directly adjusts an accessibility tool on the active web page. Use this whenever the user asks to increase/decrease font size, make text bigger or smaller, enable high contrast or dark mode, reduce glare, turn on reading spotlight, read aloud (TTS), or adjust cursor.",
+          parameters: {
+            type: "object",
+            properties: {
+              feature: {
+                type: "string",
+                enum: [
+                  "textSize", "contrast", "spotlight", "tts", "pauseAnim", "links", "bigCursor", "dyslexiaFont", "textSpacing", "lineHeight"
+                ],
+                description: "The accessibility tool ID (e.g. 'textSize', 'contrast', 'spotlight', 'tts')."
+              },
+              value: {
+                type: "string",
+                description: "The value to set, e.g. '+25%', '+50%', '+75%', '+100%', 'Normal', 'High', 'Invert', 'On', 'Off', 'Large (Black)'."
+              }
+            },
+            required: ["feature", "value"]
+          }
+        }
+      },
+      {
+        type: "function",
+        function: {
+          name: "find_and_highlight_element",
+          description: "Visually locates and highlights an interactive element (button, link, form input, or section) on the active webpage with an animated gliding cursor and spotlight beacon. Call this whenever the user asks to find, locate, see, point out, or highlight any UI element in ANY language (e.g., 'Show me: the download button please', 'where is the submit button', 'tunjukkan tombol unduh', 'dónde está el botón', 'di mana kolom NIK').",
+          parameters: {
+            type: "object",
+            properties: {
+              targetName: {
+                type: "string",
+                description: "The normalized semantic keyword of the target element (e.g. 'download', 'unduh', 'submit', 'kirim', 'nik', 'ktp', 'login', 'signup', 'essay')."
+              },
+              elementType: {
+                type: "string",
+                enum: ["button", "link", "input", "any"],
+                description: "The expected category of the element."
+              },
+              replyMessage: {
+                type: "string",
+                description: "A friendly 1-sentence confirmation message in the user's language that the element has been located and highlighted on screen."
+              }
+            },
+            required: ["targetName"]
           }
         }
       }

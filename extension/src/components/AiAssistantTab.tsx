@@ -35,7 +35,7 @@ import { sendChatMessage, transcribeVoiceAudio, PageMetadata, analyzeForm, match
 import { sendTabMessage } from "../lib/tabMessenger";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { FormsGuideTab } from "./FormsGuideTab";
-import { matchA11yFastPath, A11Y_TOOLS } from "../lib/a11y/registry";
+import { matchA11yFastPath, mapComplaintFallback, A11Y_TOOLS } from "../lib/a11y/registry";
 
 interface Message {
   id: string;
@@ -701,7 +701,7 @@ export function AiAssistantTab({
         return;
       }
 
-      // LEVEL 3: Meta Muse Spark Open Semantic Reasoning (Threshold: confidence >= 0.8)
+      // LEVEL 3: Meta Muse Spark Open Semantic Reasoning (Threshold: confidence >= 0.7)
       const candidates = domRes?.data?.candidates || [];
       if (candidates.length > 0) {
         agentLog.reasoning(`🧠 [Show Me Level 3] Querying Meta Muse Spark for ${candidates.length} DOM candidates...`);
@@ -711,17 +711,18 @@ export function AiAssistantTab({
             targetQuery,
             candidates,
             liveTitle,
-            liveUrl
+            liveUrl,
+            language
           );
 
-          if (matchResult && matchResult.confidence >= 0.8 && matchResult.matchedIndex !== null) {
+          if (matchResult && matchResult.confidence >= 0.7 && matchResult.matchedIndex !== null) {
             await sendTabMessage({
               type: "HIGHLIGHT_DOM_ELEMENT_BY_INDEX",
               domIndex: matchResult.matchedIndex,
             });
 
             const matchedCandidate = candidates[matchResult.matchedIndex];
-            const candidateName = matchedCandidate?.text || matchedCandidate?.aria || "Target Element";
+            const candidateName = matchedCandidate?.text || matchedCandidate?.aria || matchResult.targetName || "Target Element";
             const confidencePct = Math.round(matchResult.confidence * 100);
 
             setMessages((prev) => [
@@ -730,8 +731,8 @@ export function AiAssistantTab({
                 id: (Date.now() + 1).toString(),
                 sender: "savvy",
                 text: isId
-                  ? `🎯 Ditemukan via AI Reasoning (Keyakinan: ${confidencePct}%)! Elemen **"${candidateName}"** telah disorot di layar.\n\n*${matchResult.reason || ""}*`
-                  : `🎯 Found via AI Reasoning (${confidencePct}% confidence)! Element **"${candidateName}"** highlighted on screen.\n\n*${matchResult.reason || ""}*`,
+                  ? `🎯 Ditemukan via AI Reasoning (${confidencePct}%)! Elemen **"${candidateName}"** telah disorot dengan Beacon Spotlight di layar.\n\n*${matchResult.reason || ""}*`
+                  : `🎯 Found via AI Reasoning (${confidencePct}% confidence)! Element **"${candidateName}"** highlighted with Beacon Spotlight on screen.\n\n*${matchResult.reason || ""}*`,
                 badge: "Owly.AI",
                 timestamp: Date.now(),
               },
@@ -814,7 +815,18 @@ export function AiAssistantTab({
           chrome.storage.local.get(["savvy_a11y_levels"], (res) => resolve(res || {}));
         });
         const currentLevels: Record<string, number> = a11yData?.savvy_a11y_levels || {};
-        const a11yResult = matchA11yFastPath(text, currentLevels);
+        let a11yResult = matchA11yFastPath(text, currentLevels, isId);
+        if (!a11yResult) {
+          const lower = text.toLowerCase();
+          const isComplaint =
+            lower.includes("tired") || lower.includes("strain") || lower.includes("hurts") ||
+            lower.includes("capek") || lower.includes("lelah") || lower.includes("perih") ||
+            lower.includes("hard to read") || lower.includes("can't read") || lower.includes("cant read") ||
+            lower.includes("susah baca") || lower.includes("tidak terbaca");
+          if (isComplaint) {
+            a11yResult = mapComplaintFallback(text, currentLevels, isId);
+          }
+        }
         if (a11yResult) {
           // Apply changes to web page
           A11Y_TOOLS.forEach((tool) => {
@@ -924,6 +936,37 @@ export function AiAssistantTab({
         if (turn2Data.sessionId) setChatSessionId(turn2Data.sessionId);
         finalReply = turn2Data.reply || (isId ? "Maaf, saya tidak dapat mengamati tampilan layar saat ini." : "Could not observe current screen view.");
         badgeLabel = isId ? "Owly.AI • Vision Agent 📸" : "Owly.AI • Vision Agent 📸";
+      } else if (data.requiresAction && data.toolCall?.name === "set_accessibility_feature") {
+        agentLog.planner(`🤖 [Agentic Tool Call] Executing '${data.toolCall.name}'...`, data.toolCall.arguments);
+        const feature = data.toolCall.arguments?.feature || "textSize";
+        const val = data.toolCall.arguments?.value || "+25%";
+        sendTabMessage({
+          type: "SET_A11Y_FEATURE",
+          feature,
+          value: val,
+          enabled: val !== "Normal" && val !== "Off",
+        });
+        finalReply = isId
+          ? `👓 Fitur aksesibilitas **${feature}** telah diubah ke **${val}** pada halaman.`
+          : `👓 Accessibility tool **${feature}** has been set to **${val}** on the page.`;
+        badgeLabel = "Owly.AI • Accessibility 👓";
+      } else if (data.requiresAction && data.toolCall?.name === "find_and_highlight_element") {
+        const args = data.toolCall.arguments || {};
+        const targetName = args.targetName || "button";
+        const elementType = args.elementType;
+        agentLog.planner(`🤖 [Agentic Tool Call] Executing 'find_and_highlight_element' for '${targetName}'...`, args);
+
+        const highlightRes = await sendTabMessage({
+          type: "FIND_AND_HIGHLIGHT_ELEMENT",
+          query: targetName,
+          elementType,
+        });
+
+        const matchedText = highlightRes?.data?.matchedText || targetName;
+        finalReply = args.replyMessage || (isId
+          ? `🎯 Ditemukan! Elemen **"${matchedText}"** telah diarahkan dengan kursor virtual dan disorot dengan Beacon Spotlight pada layar Anda.`
+          : `🎯 Found! Element **"${matchedText}"** has been located and highlighted with Beacon Spotlight on your screen.`);
+        badgeLabel = "Owly.AI • Show Me 🎯";
       }
 
       setMessages((prev) => [

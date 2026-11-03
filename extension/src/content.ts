@@ -1326,13 +1326,17 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     "login": ["log in", "sign in", "signin", "enter", "masuk"],
     "upload": ["attach", "browse", "choose file", "select file", "add file", "unggah", "pilih berkas"],
     "attach": ["upload", "browse", "choose file", "select file", "add document", "unggah"],
-    "download": ["save as", "export", "get file", "unduh", "ambil file"],
+    "download": ["download", "save as", "export", "get file", "unduh", "ambil file", "download now", "unduh ekstensi"],
     "requirements": ["eligibility", "criteria", "terms", "qualifications", "prerequisites", "syarat", "persyaratan"],
     "eligibility": ["requirements", "criteria", "terms", "qualifications", "syarat"],
     "help": ["support", "faq", "guide", "contact", "documentation", "bantuan"],
     "payment": ["fee", "cost", "checkout", "pay", "billing", "biaya", "tarif"],
-    "submit": ["send", "apply", "finish", "complete", "proceed", "kirim", "ajukan"],
-    "next": ["continue", "proceed", "forward", "lanjut", "berikutnya"],
+    "submit": ["send", "apply", "finish", "complete", "kirim", "ajukan"],
+    "next": ["continue", "proceed", "forward", "lanjut", "lanjutkan", "selanjutnya", "berikutnya", "step"],
+    "continue": ["next", "proceed", "forward", "lanjut", "lanjutkan", "selanjutnya", "berikutnya"],
+    "proceed": ["next", "continue", "lanjut", "lanjutkan", "selanjutnya"],
+    "back": ["previous", "prev", "kembali", "sebelumnya"],
+    "previous": ["back", "prev", "kembali", "sebelumnya"],
     "cancel": ["abort", "close", "dismiss", "reset", "batal"],
     // Regional Cross-Mapping
     "bikin akun": ["sign up", "signup", "register", "daftar", "registrasi", "buat akun", "create account", "join"],
@@ -1341,13 +1345,21 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     "masuk": ["login", "log in", "sign in", "signin", "masuk"],
     "keluar": ["logout", "log out", "sign out", "keluar"],
     "unggah": ["upload", "unggah", "pilih berkas", "pilih file", "choose file", "browse"],
-    "unduh": ["download", "unduh", "unduh berkas", "ambil file"],
+    "unduh": ["download", "unduh", "unduh berkas", "ambil file", "download now"],
     "syarat": ["persyaratan", "kriteria", "ketentuan", "eligibility", "terms", "requirement"],
     "persyaratan": ["syarat", "kriteria", "ketentuan", "eligibility", "terms", "requirement"],
     "bantuan": ["help", "bantuan", "faq", "panduan", "hubungi kami", "contact", "support"],
     "biaya": ["tarif", "harga", "biaya", "fee", "cost", "pembayaran", "payment"],
-    "kirim": ["submit", "kirim", "send", "ajukan", "lanjut", "next"],
-    "simpan": ["save", "simpan", "submit"],
+    "kirim": ["submit", "kirim", "send", "ajukan", "selesai"],
+    "lanjut": ["next", "continue", "proceed", "lanjutkan", "selanjutnya", "berikutnya", "step", "forward"],
+    "lanjutkan": ["next", "continue", "proceed", "lanjut", "selanjutnya", "berikutnya"],
+    "selanjutnya": ["next", "continue", "proceed", "lanjut", "lanjutkan", "berikutnya"],
+    "berikutnya": ["next", "continue", "proceed", "lanjut", "selanjutnya"],
+    "kembali": ["back", "previous", "prev", "sebelumnya"],
+    "sebelumnya": ["back", "previous", "prev", "kembali"],
+    "simpan": ["save", "simpan", "submit", "draf", "draft"],
+    "foto": ["photo", "pasfoto", "picture", "image", "avatar"],
+    "photo": ["foto", "pasfoto", "picture", "image", "avatar"],
     "batal": ["cancel", "batal", "reset"],
   };
 
@@ -1361,9 +1373,11 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     const q = rawQuery.toLowerCase().trim();
     if (!q) return { success: false };
 
-    // Strip generic filler words: "tombol", "button", "bagian", "seksi", "kolom", "field", "link"
+    // Strip conversational filler & helper words
     const cleanQ = q
-      .replace(/\b(tombol|button|bagian|seksi|kolom|field|link|halaman|menu)\b/gi, "")
+      .replace(/\b(the|a|an|please|pls|can you|could you|where is|where|which|find|show me|show|look for|tombol|button|bagian|seksi|kolom|field|link|halaman|menu|tolong|dong|mana|di mana|dimana|tunjukkan|tunjuk|lihat|cari)\b/gi, "")
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, " ")
       .trim();
     const effectiveQ = cleanQ.length >= 2 ? cleanQ : q;
 
@@ -1387,7 +1401,10 @@ import { formatDateForField } from "./lib/utils/dateUtils";
       const text = el.textContent?.trim() || "";
       const title = el.getAttribute("title") || "";
       const val = (el as HTMLInputElement).value || "";
-      return `${text} ${aria} ${placeholder} ${title} ${val}`.toLowerCase().replace(/\s+/g, " ").trim();
+      const href = (el as HTMLAnchorElement).getAttribute("href") || "";
+      const id = el.id || "";
+      const name = el.getAttribute("name") || "";
+      return `${text} ${aria} ${placeholder} ${title} ${val} ${href} ${id} ${name}`.toLowerCase().replace(/\s+/g, " ").trim();
     };
 
     // LEVEL 1: Exact & Substring Match
@@ -1401,10 +1418,22 @@ import { formatDateForField } from "./lib/utils/dateUtils";
       const isInteractive = /^(button|a|input|select|textarea)$/i.test(el.tagName) || el.getAttribute("role") === "button" || el.getAttribute("role") === "link";
       let score = 0;
 
+      // Exact full match
       if (elText === effectiveQ || elText === q) {
         score = isInteractive ? 100 : 85;
-      } else if (elText.includes(effectiveQ)) {
-        score = isInteractive ? 80 : 65;
+      }
+      // Substring match in either direction
+      else if (elText.includes(effectiveQ) || (effectiveQ.length >= 3 && effectiveQ.includes(elText))) {
+        score = isInteractive ? 85 : 70;
+      }
+      // Word token overlap match (e.g. "download" matches button "Download Extension")
+      else {
+        const queryWords = effectiveQ.split(/\s+/).filter(w => w.length >= 3);
+        const elWords = elText.split(/\s+/).filter(w => w.length >= 3);
+        const matchCount = queryWords.filter(qw => elWords.some(ew => ew === qw || ew.includes(qw) || qw.includes(ew))).length;
+        if (matchCount > 0 && queryWords.length > 0) {
+          score = isInteractive ? 75 + (matchCount / queryWords.length) * 15 : 55;
+        }
       }
 
       if (score > bestScore) {
@@ -1425,20 +1454,24 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     }
 
     // LEVEL 2: Synonym Heuristics
-    for (const [key, synonyms] of Object.entries(SYNONYM_DICTIONARY)) {
-      if (effectiveQ.includes(key) || key.includes(effectiveQ)) {
-        for (const syn of synonyms) {
-          for (const el of visibleElements) {
-            const elText = getElText(el);
-            if (elText.includes(syn)) {
-              animateGhostCursorToElement(el);
-              agentLog.action(`⚡ [Show Me Level 2] Found synonym match ("${key}" -> "${syn}") for "${rawQuery}" -> <${el.tagName.toLowerCase()}>`);
-              return {
-                success: true,
-                level: 2,
-                matchedText: el.textContent?.trim().slice(0, 50) || syn,
-                tag: el.tagName.toLowerCase(),
-              };
+    const searchTokens = [effectiveQ, ...effectiveQ.split(/\s+/)].filter(t => t.length >= 3);
+    for (const token of searchTokens) {
+      for (const [key, synonyms] of Object.entries(SYNONYM_DICTIONARY)) {
+        if (token === key || token.includes(key) || key.includes(token)) {
+          const allSyns = [key, ...synonyms];
+          for (const syn of allSyns) {
+            for (const el of visibleElements) {
+              const elText = getElText(el);
+              if (elText === syn || elText.includes(syn) || (syn.length >= 3 && syn.includes(elText))) {
+                animateGhostCursorToElement(el);
+                agentLog.action(`⚡ [Show Me Level 2] Found synonym match ("${key}" -> "${syn}") for "${rawQuery}" -> <${el.tagName.toLowerCase()}>`);
+                return {
+                  success: true,
+                  level: 2,
+                  matchedText: el.textContent?.trim().slice(0, 50) || syn,
+                  tag: el.tagName.toLowerCase(),
+                };
+              }
             }
           }
         }
@@ -1448,21 +1481,32 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     // LEVEL 3 Prep: No match in Level 1 & 2 -> Harvest top candidates for Meta Muse Spark
     const interactiveOnly = visibleElements.filter((el) => {
       const tag = el.tagName.toLowerCase();
-      return tag === "button" || tag === "a" || tag === "input" || el.getAttribute("role") === "button" || el.getAttribute("role") === "link";
+      return tag === "button" || tag === "a" || tag === "input" || tag === "select" || tag === "textarea" || el.getAttribute("role") === "button" || el.getAttribute("role") === "link";
     });
 
     const candidatesPool = interactiveOnly.length >= 5 ? interactiveOnly : visibleElements;
-    const topCandidates = candidatesPool.slice(0, 20);
 
-    (window as any).__SAVVY_SHOW_ME_CANDIDATES__ = topCandidates;
+    // Filter valid elements FIRST before slicing to guarantee 100% 1-to-1 index alignment
+    const validCandidateElements = candidatesPool.filter((el) => {
+      const text = el.textContent?.trim() || "";
+      const aria = el.getAttribute("aria-label") || el.getAttribute("title") || "";
+      const placeholder = (el as HTMLInputElement).placeholder || "";
+      const href = (el as HTMLAnchorElement).getAttribute("href") || "";
+      const id = el.id || "";
+      return text.length > 0 || aria.length > 0 || placeholder.length > 0 || href.length > 0 || id.length > 0;
+    }).slice(0, 60);
 
-    const candidatePayload = topCandidates.map((el, idx) => ({
+    (window as any).__SAVVY_SHOW_ME_CANDIDATES__ = validCandidateElements;
+
+    const candidatePayload = validCandidateElements.map((el, idx) => ({
       domIndex: idx,
       tag: el.tagName.toLowerCase(),
       text: (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60),
-      aria: el.getAttribute("aria-label") || "",
+      aria: el.getAttribute("aria-label") || el.getAttribute("title") || "",
       placeholder: (el as HTMLInputElement).placeholder || "",
-    })).filter((c) => c.text.length > 0 || c.aria.length > 0 || c.placeholder.length > 0);
+      href: (el as HTMLAnchorElement).getAttribute("href")?.slice(0, 50) || undefined,
+      id: el.id ? el.id.slice(0, 30) : undefined,
+    }));
 
     return {
       success: false,
