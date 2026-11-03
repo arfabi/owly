@@ -39,7 +39,7 @@ export interface PageMetadata {
 }
 
 // Helper to bridge and display backend logs in client Chrome DevTools
-function processBackendAgentLogs(data: any) {
+export function processBackendAgentLogs(data: any) {
   if (data && Array.isArray(data.agent_logs)) {
     data.agent_logs.forEach((log: any) => {
       const domain = (log.domain || "GATEWAY").toUpperCase();

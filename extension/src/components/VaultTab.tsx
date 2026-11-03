@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { agentLog } from "../lib/agentLogger";
 import { sendTabMessage } from "../lib/tabMessenger";
-import { getEffectiveApiBaseUrl } from "../lib/api/client";
+import { getEffectiveApiBaseUrl, processBackendAgentLogs } from "../lib/api/client";
 
 export interface ProfileItem {
   id: string;
@@ -390,6 +390,8 @@ export function VaultTab({
       let docType = "Official Document";
 
       const baseUrl = await getEffectiveApiBaseUrl();
+      agentLog.planner("📡 [Visual OCR Request] POST /api/document/extract to Cloud Gateway (Baseten Muse Spark Open)...");
+
       const res = await fetch(`${baseUrl}/api/document/extract`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -401,6 +403,8 @@ export function VaultTab({
 
       if (res.ok) {
         const json = await res.json();
+        processBackendAgentLogs(json);
+
         if (Array.isArray(json.fields) && json.fields.length > 0) {
           fields = json.fields.filter(
             (f: any) =>
@@ -416,6 +420,7 @@ export function VaultTab({
         }
       } else {
         const errJson = await res.json().catch(() => null);
+        if (errJson) processBackendAgentLogs(errJson);
         throw new Error(
           errJson?.error ||
             (isId
@@ -445,6 +450,8 @@ export function VaultTab({
         documentType: docType,
         extractedCount: fields.length,
       });
+
+      agentLog.action(`🔒 Stored ${fields.length} credential items in AES-256 local encrypted Multi-Vault.`);
 
       setUploadSuccessToast(
         isId
