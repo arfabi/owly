@@ -108,9 +108,16 @@ The engine is engineered around a strict latency-tiered cascade. Fast, zero-cost
 ### 3.1 Level 1: Exact & Substring DOM Match
 
 * **Query Normalization:** Strips common filler noise words (`button`, `tombol`, `field`, `kolom`, `link`, `menu`, `section`) to extract the core search token.
-* **Element Harvest:** Traverses all visible elements matching:
+* **Element Harvest & Geometry Validation:** Traverses all candidate elements matching interactive and semantic selectors:
   ```css
   button, a, input, select, textarea, [role='button'], [role='link'], [role='tab'], h1, h2, h3, h4, h5, h6, section, [id], label, dt, th
+  ```
+  Each candidate must pass a strict geometric visibility filter via `getBoundingClientRect()` to discard hidden, zero-sized, or offscreen phantom elements:
+  ```typescript
+  const rect = el.getBoundingClientRect();
+  if (rect.width <= 4 || rect.height <= 4) continue;
+  const style = window.getComputedStyle(el);
+  if (style.visibility === "hidden" || style.display === "none" || style.opacity === "0") continue;
   ```
 * **Text Resolution:** Extracts rendered text, `aria-label`, `placeholder`, `title`, and `value`.
 * **Weighted Scoring:**
@@ -230,14 +237,22 @@ When a target element is located, Savvy does not merely scroll the page; it depl
    target.scrollIntoView({ behavior: "smooth", block: "center" });
    ```
 2. **Launch Point:** The Virtual Cursor starts at the user's actual mouse cursor coordinates (`lastUserMousePos`).
-3. **Smooth Glide Curve:** Uses a custom cubic-bezier trajectory (`cubic-bezier(0.22, 1, 0.36, 1)`) over **850 milliseconds**, mimicking a human-like fluid movement:
+3. **Deterministic Physical Coordinate Resolution via `getBoundingClientRect()`:**  
+   Unlike fragile pixel-guessing models, Owly calculates the precise centroid of the target element directly from browser layout geometry:
+   ```typescript
+   const rect = target.getBoundingClientRect();
+   const targetX = rect.left + rect.width / 2;
+   const targetY = rect.top + rect.height / 2;
+   ```
+   This guarantees 100% spatial accuracy across high-DPI displays (125%/150% Windows scaling), dynamic responsive viewports, and custom browser zoom levels.
+4. **Smooth Glide Curve:** Uses a custom cubic-bezier trajectory (`cubic-bezier(0.22, 1, 0.36, 1)`) over **850 milliseconds**, mimicking a human-like fluid movement:
    ```typescript
    ghostCursorEl.style.transition = "transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease";
    ghostCursorEl.style.transform = `translate(${targetX}px, ${targetY}px)`;
    ```
-4. **Virtual Click Pulse:** Upon reaching the destination, the ghost cursor triggers a simulated click pulse (`.savvy-ghost-pulse` with scale expand animation).
-5. **Beacon Spotlight:** The destination element illuminates with a glowing ambient boundary ring (`showFieldSpotlight`) for 4 seconds, ensuring the applicant knows exactly where to interact.
-6. **Graceful Fadeout:** The ghost cursor fades out and unmounts cleanly, leaving the user in full control of their browser.
+5. **Virtual Click Pulse:** Upon reaching the destination, the ghost cursor triggers a simulated click pulse (`.savvy-ghost-pulse` with scale expand animation).
+6. **Beacon Spotlight:** The destination element illuminates with a glowing ambient boundary ring (`showFieldSpotlight`) for 4 seconds, ensuring the applicant knows exactly where to interact.
+7. **Graceful Fadeout:** The ghost cursor fades out and unmounts cleanly, leaving the user in full control of their browser.
 
 ---
 

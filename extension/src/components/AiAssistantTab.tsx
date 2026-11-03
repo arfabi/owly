@@ -32,6 +32,7 @@ import { auditFormData } from "../lib/audit/rules";
 import { SimpleVadDetector } from "../lib/voice/vad";
 import { agentLog } from "../lib/agentLogger";
 import { sendChatMessage, transcribeVoiceAudio, PageMetadata, analyzeForm, matchElementSemantically } from "../lib/api/client";
+import { AudioRecorder } from "../lib/audioRecorder";
 import { sendTabMessage } from "../lib/tabMessenger";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { FormsGuideTab } from "./FormsGuideTab";
@@ -340,11 +341,20 @@ export function AiAssistantTab({
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
   const [micPermissionNeeded, setMicPermissionNeeded] = useState(false);
   const [isLiveTalkActive, setIsLiveTalkActive] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState<string>("");
   const isLiveTalkActiveRef = useRef(false);
   const recognitionRef = useRef<any>(null);
   const pttTranscriptRef = useRef<string>("");
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const vadDetectorRef = useRef<SimpleVadDetector | null>(null);
+
+  // Secondary Voice Gateway: Meta Muse Voice Transcribe
+  const [isMusePttPressed, setIsMusePttPressed] = useState(false);
+  const [isMuseTranscribing, setIsMuseTranscribing] = useState(false);
+  const [isMuseLiveActive, setIsMuseLiveActive] = useState(false);
+  const [museLiveCaption, setMuseLiveCaption] = useState<string>("");
+  const museRecorderRef = useRef<AudioRecorder | null>(null);
+  const isMuseLiveActiveRef = useRef(false);
 
   const speakText = (textToSpeak: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -451,6 +461,9 @@ export function AiAssistantTab({
     return () => {
       window.removeEventListener("focus", checkMicPermission);
       isLiveTalkActiveRef.current = false;
+      isMuseLiveActiveRef.current = false;
+      museRecorderRef.current?.cancel();
+      museRecorderRef.current = null;
       try {
         if (recognitionRef.current) {
           recognitionRef.current.stop();
@@ -862,6 +875,10 @@ export function AiAssistantTab({
               timestamp: Date.now(),
             },
           ]);
+
+          if (shouldSpeakOutput && a11yResult.message) {
+            speakText(a11yResult.message);
+          }
           return;
         }
       } catch (a11yErr) {
@@ -962,11 +979,19 @@ export function AiAssistantTab({
           elementType,
         });
 
-        const matchedText = highlightRes?.data?.matchedText || targetName;
-        finalReply = args.replyMessage || (isId
-          ? `🎯 Ditemukan! Elemen **"${matchedText}"** telah diarahkan dengan kursor virtual dan disorot dengan Beacon Spotlight pada layar Anda.`
-          : `🎯 Found! Element **"${matchedText}"** has been located and highlighted with Beacon Spotlight on your screen.`);
-        badgeLabel = "Owly.AI • Show Me 🎯";
+        const isFound = highlightRes?.data?.success ?? highlightRes?.success ?? false;
+        if (!isFound) {
+          finalReply = isId
+            ? `Elemen atau tombol **"${targetName}"** tidak ditemukan pada halaman ini. Pastikan Anda berada di halaman yang tepat atau coba scroll ke bagian lain.`
+            : `Element **"${targetName}"** was not found on this page. Please ensure you are on the correct page or try scrolling.`;
+          badgeLabel = "Owly.AI • Not Found ⚠️";
+        } else {
+          const matchedText = highlightRes?.data?.matchedText || targetName;
+          finalReply = args.replyMessage || (isId
+            ? `🎯 Ditemukan! Elemen **"${matchedText}"** telah diarahkan dengan kursor virtual dan disorot dengan Beacon Spotlight pada layar Anda.`
+            : `🎯 Found! Element **"${matchedText}"** has been located and highlighted with Beacon Spotlight on your screen.`);
+          badgeLabel = "Owly.AI • Show Me 🎯";
+        }
       }
 
       setMessages((prev) => [
@@ -1266,6 +1291,9 @@ export function AiAssistantTab({
       };
 
       rec.onerror = (err: any) => {
+        if (err.error === "aborted" || err.error === "no-speech") {
+          return; // Harmless Web Speech API lifecycle events
+        }
         console.warn("[PTT Recognition Error]", err);
         if (err.error === "not-allowed") {
           setMicPermissionNeeded(true);
@@ -1309,6 +1337,7 @@ export function AiAssistantTab({
     if (!isLiveTalkActive) {
       agentLog.voice("🎙️ Live Talk activated -> Two-way hands-free conversation with Web Speech TTS.");
       setIsLiveTalkActive(true);
+      setLiveTranscript("");
       isLiveTalkActiveRef.current = true;
       setVoiceStatus("listening");
 
@@ -1343,11 +1372,13 @@ export function AiAssistantTab({
 
           if (interim) {
             setInputText(interim);
+            setLiveTranscript(interim);
           }
 
           if (final.trim()) {
             liveSpeechBuffer = final.trim();
             setInputText(liveSpeechBuffer);
+            setLiveTranscript(liveSpeechBuffer);
             agentLog.voice(`🗣️ [Live Talk Transcribed] "${liveSpeechBuffer}" -> Querying AI with TTS audio output`);
             rec.stop(); // Stop listening while AI answers & speaks
             setVoiceStatus("thinking");
@@ -1369,6 +1400,9 @@ export function AiAssistantTab({
         };
 
         rec.onerror = (err: any) => {
+          if (err.error === "aborted" || err.error === "no-speech") {
+            return; // Harmless Web Speech API lifecycle events (e.g. mic paused while AI speaks)
+          }
           console.warn("[Live Talk Error]", err);
           if (err.error === "not-allowed") {
             setMicPermissionNeeded(true);
@@ -1399,6 +1433,7 @@ export function AiAssistantTab({
       agentLog.voice("🎙️ Live Talk stopped.");
       isLiveTalkActiveRef.current = false;
       setIsLiveTalkActive(false);
+      setLiveTranscript("");
       try {
         if (recognitionRef.current) {
           recognitionRef.current.stop();
@@ -1410,6 +1445,178 @@ export function AiAssistantTab({
       }
       setVoiceStatus("idle");
       setLiveVolume(0);
+    }
+  };
+
+  // ==========================================================================
+  // SECONDARY VOICE: Meta Muse Voice Transcribe Gateway Handlers
+  // ==========================================================================
+  const handleMusePttMouseDown = async () => {
+    if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      alert(isId ? "Browser belum mendukung rekaman audio mikrofon." : "Microphone recording is not supported in this browser.");
+      return;
+    }
+
+    try {
+      setIsMusePttPressed(true);
+      setVoiceStatus("listening");
+      agentLog.voice("🎙️ [Muse Transcribe PTT] Recording audio via MediaRecorder for Meta Muse Voice...");
+
+      const recorder = new AudioRecorder();
+      museRecorderRef.current = recorder;
+      await recorder.start();
+    } catch (err: any) {
+      console.warn("[Muse PTT Error]", err);
+      setIsMusePttPressed(false);
+      setVoiceStatus("idle");
+      if (err.name === "NotAllowedError" || err.message?.includes("Permission denied")) {
+        setMicPermissionNeeded(true);
+        openPermissionTab();
+      }
+    }
+  };
+
+  const handleMusePttMouseUp = async () => {
+    if (!isMusePttPressed || !museRecorderRef.current) return;
+    setIsMusePttPressed(false);
+    setIsMuseTranscribing(true);
+    setVoiceStatus("thinking");
+    agentLog.voice("🎙️ [Muse Transcribe PTT] Finalizing audio and forwarding to Meta Muse Voice Gateway...");
+
+    try {
+      const result = await museRecorderRef.current.stop();
+      museRecorderRef.current = null;
+
+      if (result.blob.size < 500) {
+        agentLog.voice("⚠️ [Muse Transcribe PTT] Audio snippet too short.");
+        setIsMuseTranscribing(false);
+        setVoiceStatus("idle");
+        return;
+      }
+
+      agentLog.voice(`🚀 [Muse Transcribe PTT] Transcribing ${Math.round(result.blob.size / 1024)} KB audio via /api/audio/transcribe...`);
+      const res = await transcribeVoiceAudio(result.blob, {
+        mode: "PUSH_TO_TALK",
+        lang: language,
+      });
+
+      setIsMuseTranscribing(false);
+      const transcribed = res.text?.trim();
+
+      if (transcribed) {
+        agentLog.voice(`🗣️ [Muse Transcribed PTT] "${transcribed}" (Output: Text Only)`);
+        await handleSendMessage(transcribed, null, null, false);
+      } else {
+        agentLog.voice("⚠️ [Muse Transcribe PTT] No text returned from transcription.");
+        setVoiceStatus("idle");
+      }
+    } catch (err: any) {
+      console.error("[Muse PTT Error]", err);
+      setIsMuseTranscribing(false);
+      setVoiceStatus("idle");
+      agentLog.voice(`❌ [Muse Transcribe PTT Failed] ${err.message}`);
+    }
+  };
+
+  const handleMuseLiveToggle = async () => {
+    if (!isMuseLiveActive) {
+      if (isLiveTalkActive) {
+        // Stop native web speech if running
+        handleVadToggle();
+      }
+
+      agentLog.voice("🎙️ [Muse Live Talk] Activated -> Hands-free two-way conversation with Meta Muse Voice Transcribe.");
+      setIsMuseLiveActive(true);
+      isMuseLiveActiveRef.current = true;
+      setVoiceStatus("listening");
+      setMuseLiveCaption(isId ? "Merekam suara Anda (Meta Muse Voice)..." : "Recording your voice (Meta Muse Voice)...");
+
+      startMuseLiveTurn();
+    } else {
+      agentLog.voice("⏹️ [Muse Live Talk] Stopped.");
+      setIsMuseLiveActive(false);
+      isMuseLiveActiveRef.current = false;
+      setMuseLiveCaption("");
+      setVoiceStatus("idle");
+      if (museRecorderRef.current) {
+        museRecorderRef.current.cancel();
+        museRecorderRef.current = null;
+      }
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+  };
+
+  const startMuseLiveTurn = async () => {
+    if (!isMuseLiveActiveRef.current) return;
+    try {
+      setVoiceStatus("listening");
+      setMuseLiveCaption(isId ? "Mendengarkan ucapan Anda (Meta Muse Voice)..." : "Listening to your voice (Meta Muse Voice)...");
+
+      const recorder = new AudioRecorder();
+      museRecorderRef.current = recorder;
+      await recorder.start();
+
+      // Automatically capture speech turn slice after 4 seconds
+      setTimeout(async () => {
+        if (!isMuseLiveActiveRef.current || !museRecorderRef.current?.active()) return;
+        await finishMuseLiveTurn();
+      }, 4000);
+    } catch (err: any) {
+      console.warn("[Muse Live Start Error]", err);
+      setIsMuseLiveActive(false);
+      isMuseLiveActiveRef.current = false;
+      setVoiceStatus("idle");
+    }
+  };
+
+  const finishMuseLiveTurn = async () => {
+    if (!isMuseLiveActiveRef.current || !museRecorderRef.current) return;
+    try {
+      setVoiceStatus("thinking");
+      setMuseLiveCaption(isId ? "Menalar transkripsi dengan Meta Muse..." : "Processing with Meta Muse Transcribe...");
+
+      const result = await museRecorderRef.current.stop();
+      museRecorderRef.current = null;
+
+      if (result.blob.size < 1000) {
+        // Audio chunk too small, loop to next turn
+        if (isMuseLiveActiveRef.current) {
+          startMuseLiveTurn();
+        }
+        return;
+      }
+
+      const res = await transcribeVoiceAudio(result.blob, {
+        mode: "LIVE_TALK",
+        lang: language,
+      });
+
+      const transcribed = res.text?.trim();
+      if (transcribed && transcribed.length > 2) {
+        setMuseLiveCaption(`"${transcribed}"`);
+        agentLog.voice(`🗣️ [Muse Live Transcribed] "${transcribed}"`);
+
+        // Send with TTS voice output enabled
+        await handleSendMessage(transcribed, null, null, true);
+
+        // Resume listening for next question after AI speaks
+        setTimeout(() => {
+          if (isMuseLiveActiveRef.current) {
+            startMuseLiveTurn();
+          }
+        }, 3500);
+      } else {
+        if (isMuseLiveActiveRef.current) {
+          startMuseLiveTurn();
+        }
+      }
+    } catch (err) {
+      console.warn("[Muse Live Turn Error]", err);
+      if (isMuseLiveActiveRef.current) {
+        setTimeout(() => startMuseLiveTurn(), 1000);
+      }
     }
   };
 
@@ -1895,6 +2102,10 @@ export function AiAssistantTab({
                 setIsVoiceModalOpen(false);
                 isLiveTalkActiveRef.current = false;
                 setIsLiveTalkActive(false);
+                isMuseLiveActiveRef.current = false;
+                setIsMuseLiveActive(false);
+                museRecorderRef.current?.cancel();
+                museRecorderRef.current = null;
                 try {
                   if (recognitionRef.current) {
                     recognitionRef.current.stop();
@@ -2010,6 +2221,42 @@ export function AiAssistantTab({
             </div>
           ) : (
             <div className="space-y-2 text-center pt-1">
+              {/* Real-time Local Speech-to-Text Live Caption Pill */}
+              {isLiveTalkActive && (
+                <div className="p-3 rounded-2xl bg-slate-900/95 text-white shadow-xl border border-slate-800 text-left transition-all animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 mb-1.5">
+                    <span className="flex items-center gap-1.5 text-blue-400">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                      </span>
+                      {voiceStatus === "listening"
+                        ? (isId ? "Mendengarkan ucapan Anda..." : "Listening to your voice...")
+                        : voiceStatus === "thinking"
+                        ? (isId ? "Menalar dengan Muse Spark..." : "Reasoning with Muse Spark...")
+                        : (isId ? "Asisten sedang berbicara..." : "Speaking response...")}
+                    </span>
+                    <span className="text-[9px] bg-blue-950 text-blue-300 border border-blue-800/60 px-1.5 py-0.5 rounded-full font-mono">
+                      Local Web Speech
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold leading-relaxed min-h-[38px] flex items-center">
+                    {liveTranscript ? (
+                      <span className="text-white font-medium">
+                        "{liveTranscript}"
+                        <span className="inline-block w-1.5 h-3.5 bg-blue-400 ml-1 animate-pulse align-middle" />
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 italic text-[11px]">
+                        {isId
+                          ? "Bicaralah secara alami (contoh: \"Perbesar tulisan dan tunjukkan tombol kirim\")..."
+                          : "Speak naturally (e.g. \"Make this site bigger and show me the submit button\")..."}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={handleVadToggle}
                 className={`w-full py-2.5 px-3 rounded-xl font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${isLiveTalkActive
@@ -2035,6 +2282,124 @@ export function AiAssistantTab({
               </p>
             </div>
           )}
+
+          {/* ==================================================================== */}
+          {/* SECONDARY VOICE CONTROLS: Meta Muse Voice Transcribe (Neural AI Cloud) */}
+          {/* ==================================================================== */}
+          <div className="pt-3 border-t border-slate-200/90 mt-2 space-y-2 text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-savvy-purple" />
+                <span className="text-[11px] font-black tracking-wide text-slate-800">
+                  {isId ? "Muse Transcribe (Secondary AI Cloud)" : "Muse Transcribe (Secondary Cloud AI)"}
+                </span>
+              </div>
+              <span className="text-[9px] bg-purple-100 text-purple-700 font-extrabold px-1.5 py-0.5 rounded-md border border-purple-200">
+                Meta Model API
+              </span>
+            </div>
+
+            <p className="text-[10px] text-slate-500 leading-tight">
+              {isId
+                ? "Jembatan Speech-to-Text neural berakurasi tinggi untuk dialek & terminologi dokumen."
+                : "High-accuracy neural Speech-to-Text bridge for dialects & document terminology."}
+            </p>
+
+            {/* Secondary Muse PTT & Live Talk Buttons */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              {/* 1. Secondary PTT (Muse Transcribe) */}
+              <button
+                onMouseDown={handleMusePttMouseDown}
+                onMouseUp={handleMusePttMouseUp}
+                onTouchStart={handleMusePttMouseDown}
+                onTouchEnd={handleMusePttMouseUp}
+                disabled={isMuseTranscribing || isLiveTalkActive || isMuseLiveActive}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all select-none cursor-pointer ${
+                  isMusePttPressed
+                    ? "bg-rose-500 text-white border-rose-600 shadow-md scale-[0.98]"
+                    : isMuseTranscribing
+                    ? "bg-purple-50 border-purple-300 text-purple-800 animate-pulse"
+                    : "bg-white hover:bg-purple-50/60 border-slate-200 hover:border-purple-300 text-slate-800 shadow-2xs"
+                } ${isLiveTalkActive || isMuseLiveActive ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <Mic className={`w-3.5 h-3.5 ${isMusePttPressed ? "text-white animate-pulse" : "text-savvy-purple"}`} />
+                  <span className={`text-[8.5px] font-extrabold uppercase px-1 py-0.5 rounded ${
+                    isMusePttPressed ? "bg-rose-700 text-white" : "bg-purple-100 text-purple-700"
+                  }`}>
+                    PTT
+                  </span>
+                </div>
+                <div className="text-[11px] font-extrabold truncate">
+                  {isMusePttPressed
+                    ? (isId ? "Lepas untuk Kirim" : "Release to Send")
+                    : isMuseTranscribing
+                    ? (isId ? "Mentranskripsi..." : "Transcribing...")
+                    : (isId ? "PTT Muse Transcribe" : "Muse Transcribe PTT")}
+                </div>
+                <div className={`text-[9px] mt-0.5 truncate ${isMusePttPressed ? "text-rose-100" : "text-slate-500"}`}>
+                  {isMusePttPressed
+                    ? (isId ? "Merekam audio..." : "Recording audio...")
+                    : (isId ? "Tahan untuk bicara" : "Hold to speak")}
+                </div>
+              </button>
+
+              {/* 2. Secondary Live Talk (Muse Transcribe) */}
+              <button
+                onClick={handleMuseLiveToggle}
+                disabled={isMuseTranscribing || isLiveTalkActive}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                  isMuseLiveActive
+                    ? "bg-emerald-600 text-white border-emerald-700 shadow-md"
+                    : "bg-white hover:bg-emerald-50/60 border-slate-200 hover:border-emerald-300 text-slate-800 shadow-2xs"
+                } ${isLiveTalkActive ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <Radio className={`w-3.5 h-3.5 ${isMuseLiveActive ? "text-white animate-pulse" : "text-emerald-500"}`} />
+                  <span className={`text-[8.5px] font-extrabold uppercase px-1 py-0.5 rounded ${
+                    isMuseLiveActive ? "bg-emerald-800 text-white" : "bg-emerald-100 text-emerald-700"
+                  }`}>
+                    Live Talk
+                  </span>
+                </div>
+                <div className="text-[11px] font-extrabold truncate">
+                  {isMuseLiveActive
+                    ? (isId ? "Stop Live Muse" : "Stop Muse Live")
+                    : (isId ? "Live Talk Muse" : "Muse Live Talk")}
+                </div>
+                <div className={`text-[9px] mt-0.5 truncate ${isMuseLiveActive ? "text-emerald-100" : "text-slate-500"}`}>
+                  {isMuseLiveActive
+                    ? (isId ? "Sedang mendengarkan..." : "Active listening...")
+                    : (isId ? "Bebas genggam AI" : "Hands-free AI")}
+                </div>
+              </button>
+            </div>
+
+            {/* Active Muse Live Caption Bubble */}
+            {isMuseLiveActive && (
+              <div className="p-2.5 rounded-xl bg-slate-900 text-white shadow-xl border border-slate-800 text-left transition-all animate-in fade-in duration-200">
+                <div className="flex items-center justify-between text-[9px] font-bold text-purple-300 mb-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                    </span>
+                    {voiceStatus === "listening"
+                      ? (isId ? "Mendengarkan ucapan..." : "Listening to speech...")
+                      : voiceStatus === "thinking"
+                      ? (isId ? "Mentranskripsi via Meta Muse..." : "Transcribing via Meta Muse...")
+                      : (isId ? "Asisten berbicara..." : "Speaking response...")}
+                  </span>
+                  <span className="bg-purple-950 text-purple-300 border border-purple-800/60 px-1.5 py-0.2 rounded font-mono">
+                    Meta Muse STT
+                  </span>
+                </div>
+                <div className="text-[11px] font-medium min-h-[24px] flex items-center text-slate-200">
+                  {museLiveCaption || (isId ? "Bicaralah ke mikrofon..." : "Speak into microphone...")}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

@@ -251,43 +251,70 @@ export async function fetchFieldCoachGuidance(
   }
 }
 
-// 3. VOICE TRANSCRIBE API: Meta Muse Voice / Whisper Transcription
+// 3. VOICE TRANSCRIBE API: Meta Muse Voice Transcribe Gateway
 export async function transcribeVoiceAudio(
-  audioBase64: string,
-  prompt: string = "Transkripsikan ucapan pendaftar formulir beasiswa ini secara akurat."
-): Promise<{ text: string }> {
+  audio: Blob | string,
+  options?: {
+    mode?: 'PUSH_TO_TALK' | 'LIVE_TALK' | 'ENDPOINTING';
+    lang?: string;
+    prompt?: string;
+  }
+): Promise<{ text: string; success: boolean; model?: string; agent_logs?: any[] }> {
   const startTime = Date.now();
-  agentLog.voice(`🚀 [API Request] POST ${API_BASE_URL}/api/voice/transcribe`, {
-    payloadSize: `${Math.round(audioBase64.length / 1024)} KB`,
-  });
+  const baseUrl = await getEffectiveApiBaseUrl();
+  const mode = options?.mode || 'PUSH_TO_TALK';
+  const lang = options?.lang || 'id';
+  const prompt = options?.prompt || 'Transcribe applicant speech verbatim and accurately.';
+
+  agentLog.voice(`🚀 [API Request] POST ${baseUrl}/api/audio/transcribe (Mode: ${mode}, Lang: ${lang})`);
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/voice/transcribe`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        audioBase64,
-        prompt,
-      }),
-    });
+    let res: Response;
+
+    if (audio instanceof Blob) {
+      const formData = new FormData();
+      formData.append('audio', audio, 'recording.wav');
+      formData.append('mode', mode);
+      formData.append('lang', lang);
+      if (prompt) formData.append('prompt', prompt);
+
+      res = await fetch(`${baseUrl}/api/audio/transcribe`, {
+        method: 'POST',
+        body: formData,
+        signal: AbortSignal.timeout(18000),
+      });
+    } else {
+      res = await fetch(`${baseUrl}/api/audio/transcribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audioBase64: audio,
+          mode,
+          lang,
+          prompt,
+        }),
+        signal: AbortSignal.timeout(18000),
+      });
+    }
 
     const elapsed = Date.now() - startTime;
 
     if (!res.ok) {
       const errText = await res.text();
-      agentLog.voice(`⚠️ [API Error] POST /api/voice/transcribe returned HTTP ${res.status} (${elapsed}ms)`);
+      agentLog.voice(`⚠️ [API Error] POST /api/audio/transcribe returned HTTP ${res.status} (${elapsed}ms)`);
       throw new Error(`HTTP ${res.status}: ${errText}`);
     }
 
     const data = await res.json();
     processBackendAgentLogs(data);
-    agentLog.voice(`✅ [API Success] POST /api/voice/transcribe responded (${elapsed}ms)`, {
+    agentLog.voice(`✅ [API Success] POST /api/audio/transcribe responded (${elapsed}ms)`, {
       transcription: data.text,
+      model: data.model || 'muse-voice-transcribe-1.0',
     });
 
     return data;
   } catch (error: any) {
-    agentLog.voice(`❌ [API Failed] POST /api/voice/transcribe failed.`, { error: error.message });
+    agentLog.voice(`❌ [API Failed] POST /api/audio/transcribe failed.`, { error: error.message });
     throw error;
   }
 }
