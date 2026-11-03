@@ -20,6 +20,17 @@
   <img src="https://img.shields.io/badge/Tests-20%2F20%20Pass%20(100%25)-brightgreen?style=for-the-badge" alt="Tests 100%" />
 </p>
 
+<p align="center">
+  <strong>📑 Table of Contents:</strong>&nbsp;&nbsp;
+  <a href="#-quick-judging--evaluation-guide-test-in-60s">Quick Judging</a> •
+  <a href="#-the-problem--human-impact">Problem & Impact</a> •
+  <a href="#️-system-architecture-compound-multi-agent-system-cmas">Architecture (CMAS)</a> •
+  <a href="#-core-feature-breakdown-9-pillars">Core Features</a> •
+  <a href="#-in-depth-utilization-of-meta-muse-spark-open">Meta AI Agents</a> •
+  <a href="#-self-hosted--local-development-installation-guide">Local Setup</a> •
+  <a href="#-tech-stack">Tech Stack</a>
+</p>
+
 ---
 
 ## 🧭 Quick Judging & Evaluation Guide (Test in 60s)
@@ -74,29 +85,6 @@
    - Click any input field to see instant 4-element guidance cards (*Meaning, How to Fill, Example, Traps*).
    - Click **"1-Click AutoFill"** from the Vault and test the instant Undo stack.
    - Click **"Pre-Submit Traffic Light Audit"** to see multi-clause contradiction detection in action!
-
----
-
-## 📑 Table of Contents
-- [🧭 Quick Judging & Evaluation Guide (Test in 60s)](#-quick-judging--evaluation-guide-test-in-60s)
-- [💔 The Problem & Human Impact](#-the-problem--human-impact)
-  - [Industry Facts & Verified Data](#industry-facts--verified-data)
-  - [Philosophy: Copilot, Not Autopilot](#philosophy-copilot-not-autopilot)
-- [🏛️ System Architecture: Compound Multi-Agent System (CMAS)](#️-system-architecture-compound-multi-agent-system-cmas)
-- [✨ Core Feature Breakdown (9 Pillars)](#-core-feature-breakdown-9-pillars)
-- [🔬 In-Depth Utilization of Meta Muse Spark Open](#-in-depth-utilization-of-meta-muse-spark-open)
-  - [1. 5 Core Meta Capabilities Exploited](#1-5-core-meta-capabilities-exploited)
-  - [2. The 9 Meta Cognitive Agents](#2-the-9-meta-cognitive-agents-core-triad--specialized-tasks)
-- [🚀 Self-Hosted & Local Development Installation Guide](#-self-hosted--local-development-installation-guide)
-  - [Step 1: Clone the Repository](#step-1-clone-the-repository)
-  - [Step 2: Set Up Supabase Database & Apply Schema](#step-2-set-up-supabase-database--apply-schema)
-  - [Step 3: Configure Backend Environment Variables](#step-3-configure-backend-environment-variables-webenvlocal)
-  - [Step 4: Start Web & API Server](#step-4-start-web--api-server)
-  - [Step 5: Configure Extension API Endpoint](#step-5-configure-extension-api-endpoint)
-  - [Step 6: Build & Load the Chrome MV3 Extension](#step-6-build--load-the-chrome-mv3-extension)
-- [👥 Team](#-team)
-- [🧰 Tech Stack](#-tech-stack)
-- [📄 License](#-license)
 
 ---
 
