@@ -14,7 +14,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
   try {
     document.documentElement.dataset.owlyExtension = "installed";
     (window as any).__OWLY_EXTENSION_INSTALLED__ = true;
-  } catch (_) {}
+  } catch (_) { }
 
   // Synchronous native DOM click listener to preserve user gesture token for side panel open
   document.addEventListener(
@@ -25,9 +25,9 @@ import { formatDateForField } from "./lib/utils/dateUtils";
       if (btn) {
         try {
           if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
-            chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL_REQUEST" }).catch(() => {});
+            chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL_REQUEST" }).catch(() => { });
           }
-        } catch (_) {}
+        } catch (_) { }
       }
     },
     true
@@ -41,9 +41,9 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     if (event.data?.type === "OWLY_OPEN_SIDEPANEL") {
       try {
         if (typeof chrome !== "undefined" && chrome.runtime?.sendMessage) {
-          chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL_REQUEST" }).catch(() => {});
+          chrome.runtime.sendMessage({ type: "OPEN_SIDEPANEL_REQUEST" }).catch(() => { });
         }
-      } catch (_) {}
+      } catch (_) { }
     }
   });
 
@@ -51,7 +51,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
   if ((window as any).__SAVVY_OBSERVER__) {
     try {
       (window as any).__SAVVY_OBSERVER__.disconnect();
-    } catch (_) {}
+    } catch (_) { }
   }
 
   // Inlined Logger: Menjamin content script 100% classic IIFE tanpa external ES module import
@@ -78,9 +78,9 @@ import { formatDateForField } from "./lib/utils/dateUtils";
         chrome.runtime.sendMessage({
           type: "AGENT_LOG_EVENT",
           event: { timestamp, domain, message, data: data ? JSON.parse(JSON.stringify(data)) : null },
-        }).catch(() => {});
+        }).catch(() => { });
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   const agentLog = {
@@ -169,7 +169,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     if (existingHost) {
       try {
         existingHost.remove();
-      } catch (_) {}
+      } catch (_) { }
     }
 
     hostContainer = document.createElement("div");
@@ -599,7 +599,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
           return cleanLabelText(bestCandidate.textContent);
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // 7. Button text for upload triggers
     if (el.tagName === "BUTTON" || el.getAttribute("role") === "button") {
@@ -676,7 +676,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
         }
         prev = prev.previousElementSibling;
       }
-    } catch (_) {}
+    } catch (_) { }
     return "";
   }
 
@@ -696,7 +696,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
       if (el.type === "file") {
         const rect = el.getBoundingClientRect();
         const isDirectlyVisible = rect.width > 0 && rect.height > 0 && window.getComputedStyle(el).visibility !== "hidden";
-        
+
         let badgeTarget: HTMLElement = el;
         if (!isDirectlyVisible) {
           const labelFor = el.id ? document.querySelector<HTMLElement>(`label[for="${el.id}"]`) : null;
@@ -984,7 +984,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
 
   function getBadgeCoords(anchor: HTMLElement, scrollTop: number, scrollLeft: number): { top: string; left: string } {
     const rect = anchor.getBoundingClientRect();
-    const isInputRadioOrCheckbox = anchor.tagName === "INPUT" && 
+    const isInputRadioOrCheckbox = anchor.tagName === "INPUT" &&
       ((anchor as HTMLInputElement).type === "radio" || (anchor as HTMLInputElement).type === "checkbox");
 
     if (isInputRadioOrCheckbox) {
@@ -1060,8 +1060,8 @@ import { formatDateForField } from "./lib/utils/dateUtils";
             fieldId: item.id || "",
             fieldName: item.name || "",
             label: item.label,
-          }).catch(() => {});
-        } catch (_) {}
+          }).catch(() => { });
+        } catch (_) { }
       });
 
       shadowRoot.appendChild(badge);
@@ -1226,7 +1226,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
             tagName: target.tagName,
             inputType: (target as HTMLInputElement).type || "text",
             value: (target as HTMLInputElement).value || "",
-          }).catch(() => {});
+          }).catch(() => { });
 
           // Jika badge nomor aktif, sinkronkan juga active badge dan notifikasi field terpilih ke sidepanel
           if (activeNumberedBadges.length > 0) {
@@ -1244,11 +1244,11 @@ import { formatDateForField } from "./lib/utils/dateUtils";
                 fieldId: target.id || "",
                 fieldName: target.getAttribute("name") || "",
                 label,
-              }).catch(() => {});
+              }).catch(() => { });
             }
           }
         }
-      } catch (_) {}
+      } catch (_) { }
     }
   });
 
@@ -1287,7 +1287,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
           type: "FORM_DOM_MUTATED",
           signature: currentSignature,
           fieldCount: count,
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }, 400); // 400ms debounce
   }
@@ -1763,11 +1763,11 @@ import { formatDateForField } from "./lib/utils/dateUtils";
       const profileItems: Array<{ name: string; value: string; aliases?: string[] }> = Array.isArray(message.items)
         ? message.items
         : Array.isArray(payload.items)
-        ? payload.items
-        : [];
+          ? payload.items
+          : [];
 
       const inputs = Array.from(document.querySelectorAll("input, textarea, select")) as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)[];
-      
+
       // Store backup for 100% safe undo
       (window as any).__SAVVY_UNDO_BACKUP__ = inputs.map((el) => ({
         el,
@@ -2263,7 +2263,7 @@ import { formatDateForField } from "./lib/utils/dateUtils";
               break;
             }
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       // 2. Input/Textarea/Select values
@@ -2537,19 +2537,283 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     document.getElementById("savvy-hide-img")?.remove();
     document.getElementById("savvy-highlight-links")?.remove();
     document.getElementById("savvy-big-cursor")?.remove();
+    deactivateInteractiveTts();
 
     try {
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
-    } catch (_) {}
+    } catch (_) { }
 
     try {
       const snip = shadowRoot.querySelector(".savvy-lightshot-container");
       if (snip) snip.remove();
-    } catch (_) {}
+    } catch (_) { }
 
     agentLog.action("🧹 All accessibility features and spotlights cleared.");
+  }
+
+  // ============================================================================
+  // INTERACTIVE SECTION-BY-SECTION TEXT-TO-SPEECH (ACCESSIBILITY HUB)
+  // ============================================================================
+
+  const TTS_ON_PROMPTS: Record<string, string> = {
+    en: "Please click or point to the section you want read aloud.",
+    id: "Silakan klik atau arahkan pada bagian yang ingin dibacakan.",
+    ms: "Sila klik atau halakan pada bahagian yang ingin dibacakan.",
+    es: "Por favor, haga clic o señale la sección que desea escuchar.",
+    fr: "Veuillez cliquer ou pointer sur la section que vous souhaitez entendre.",
+    de: "Bitte klicken oder zeigen Sie auf den Bereich, der vorgelesen werden soll.",
+    zh: "请点击或指向您想要朗读的内容。",
+    ja: "読み上げたい部分をクリックするか指定してください。",
+    ko: "소리내어 읽을 부분을 클릭하거나 가리켜 주세요.",
+    ar: "يرجى النقر أو الإشارة إلى الجزء الذي ترغب في قراءته بصوت عالٍ.",
+    pt: "Por favor, clique ou aponte para a seção que deseja ouvir.",
+    ru: "Пожалуйста, нажмите или наведите курсор на раздел, который хотите озвучить.",
+    hi: "कृपया उस भाग पर क्लिक करें या इंगित करें जिसे आप सुनना चाहते हैं।",
+    vi: "Vui lòng nhấp hoặc trỏ vào phần bạn muốn đọc to.",
+    th: "โปรดคลิกหรือชี้ไปที่ส่วนที่คุณต้องการให้อ่านออกเสียง",
+  };
+
+  const TTS_BANNER_TEXTS: Record<string, string> = {
+    en: "Click any section or text to read aloud",
+    id: "Klik teks atau bagian mana saja untuk dibacakan",
+    ms: "Klik mana-mana bahagian atau teks untuk dibacakan",
+    es: "Haga clic en cualquier sección para escucharla",
+    fr: "Cliquez sur une section pour la lire à haute voix",
+    de: "Klicken Sie auf einen Bereich, um ihn vorzulesen",
+    zh: "点击任意内容以朗读",
+    ja: "読み上げたい部分をクリックしてください",
+    ko: "소리내어 읽을 부분을 클릭하세요",
+    ar: "انقر فوق أي جزء لقراءته بصوت عالٍ",
+    pt: "Clique em qualquer seção para ouvir",
+    ru: "Нажмите на любой раздел для озвучивания",
+    hi: "सुनने के लिए किसी भी भाग पर क्लिक करें",
+    vi: "Nhấp vào bất kỳ phần nào để đọc to",
+    th: "คลิกส่วนใดก็ได้เพื่อให้อ่านออกเสียง",
+  };
+
+  let isTtsActive = false;
+  let ttsHoveredElement: HTMLElement | null = null;
+  let ttsReadingElement: HTMLElement | null = null;
+
+  function speakTtsText(text: string, langKey?: string, onEnd?: () => void) {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+    } catch (_) { }
+
+    const clean = text.trim();
+    if (!clean) {
+      if (onEnd) onEnd();
+      return;
+    }
+
+    const utter = new SpeechSynthesisUtterance(clean);
+    const effectiveLang = langKey || contentLang || "en";
+    const speechCode = SPEECH_LANG_MAP[effectiveLang] || document.documentElement.lang || "en-US";
+    utter.lang = speechCode;
+
+    const findVoice = () => {
+      const voices = window.speechSynthesis.getVoices() || [];
+      const targetTag = speechCode.toLowerCase().replace("_", "-");
+      const targetPrefix = speechCode.split("-")[0].toLowerCase();
+      return (
+        voices.find((v) => v.lang.toLowerCase().replace("_", "-") === targetTag) ||
+        voices.find((v) => v.lang.toLowerCase().startsWith(targetPrefix))
+      );
+    };
+
+    const matchedVoice = findVoice();
+    if (matchedVoice) {
+      utter.voice = matchedVoice;
+    }
+
+    utter.onend = () => {
+      if (onEnd) onEnd();
+    };
+    utter.onerror = () => {
+      if (onEnd) onEnd();
+    };
+
+    try {
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      console.warn("[TTS Speak Error]", err);
+      if (onEnd) onEnd();
+    }
+  }
+
+  function extractSectionText(el: HTMLElement): string {
+    // 1. Form controls
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+      const parentLabel = el.closest("label") || document.querySelector(`label[for="${el.id}"]`);
+      const placeholder = "placeholder" in el ? (el as HTMLInputElement | HTMLTextAreaElement).placeholder : "";
+      const labelText = parentLabel?.textContent?.trim() || el.getAttribute("aria-label") || placeholder || "";
+      let val = "";
+      if (el instanceof HTMLSelectElement) {
+        val = el.options[el.selectedIndex]?.text || el.value;
+      } else {
+        val = (el as HTMLInputElement | HTMLTextAreaElement).value || placeholder || "";
+      }
+      if (labelText && val) return `${labelText}: ${val}`;
+      return labelText || val || (contentLang === "id" ? "Kolom isian formulir" : "Form input field");
+    }
+
+    // 2. Images & media
+    if (el instanceof HTMLImageElement) {
+      return el.alt || el.title || el.getAttribute("aria-label") || (contentLang === "id" ? "Gambar ilustrasi" : "Image illustration");
+    }
+
+    // 3. Text block / inline elements
+    const tag = el.tagName.toUpperCase();
+    const text = el.innerText?.trim() || el.textContent?.trim() || "";
+
+    // If container is very large, try getting direct text or nearest heading/paragraph
+    if (["DIV", "SECTION", "ARTICLE", "MAIN", "ASIDE", "BODY", "FORM", "TABLE"].includes(tag) && text.length > 400) {
+      const child = el.querySelector("h1, h2, h3, h4, h5, h6, p, li, td, th, span");
+      if (child && child.textContent?.trim()) {
+        return (child as HTMLElement).innerText || child.textContent || text.slice(0, 300);
+      }
+      return text.slice(0, 300);
+    }
+
+    return text.slice(0, 600);
+  }
+
+  function handleTtsElementClick(e: MouseEvent) {
+    if (!isTtsActive) return;
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
+    // Ignore clicks inside extension shadow host
+    if (target.id === "savvy-root" || target.closest("#savvy-root") || target.id === "savvy-tts-banner") {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Clear previous reading highlight
+    if (ttsReadingElement) {
+      ttsReadingElement.classList.remove("savvy-tts-reading");
+      ttsReadingElement = null;
+    }
+
+    const textToRead = extractSectionText(target);
+    if (!textToRead) return;
+
+    target.classList.add("savvy-tts-reading");
+    ttsReadingElement = target;
+
+    agentLog.action(`🔊 [TTS Read Section] '${target.tagName}': "${textToRead.slice(0, 60)}..."`);
+
+    speakTtsText(textToRead, contentLang, () => {
+      if (ttsReadingElement === target) {
+        target.classList.remove("savvy-tts-reading");
+        ttsReadingElement = null;
+      }
+    });
+  }
+
+  function handleTtsMouseOver(e: MouseEvent) {
+    if (!isTtsActive) return;
+    const target = e.target as HTMLElement | null;
+    if (!target || target.id === "savvy-root" || target.closest("#savvy-root") || target.id === "savvy-tts-banner") {
+      return;
+    }
+    if (ttsHoveredElement && ttsHoveredElement !== target) {
+      ttsHoveredElement.classList.remove("savvy-tts-hover");
+    }
+    target.classList.add("savvy-tts-hover");
+    ttsHoveredElement = target;
+  }
+
+  function handleTtsMouseOut(e: MouseEvent) {
+    if (!isTtsActive) return;
+    const target = e.target as HTMLElement | null;
+    if (target && target.classList.contains("savvy-tts-hover")) {
+      target.classList.remove("savvy-tts-hover");
+    }
+    if (ttsHoveredElement === target) {
+      ttsHoveredElement = null;
+    }
+  }
+
+  function activateInteractiveTts() {
+    if (isTtsActive) return;
+    isTtsActive = true;
+
+    // 1. Inject styles
+    if (!document.getElementById("savvy-tts-styles")) {
+      const style = document.createElement("style");
+      style.id = "savvy-tts-styles";
+      style.textContent = `
+        .savvy-tts-hover {
+          outline: 2px dashed #3B82F6 !important;
+          outline-offset: 3px !important;
+          cursor: pointer !important;
+          transition: outline 0.15s ease-in-out !important;
+        }
+        .savvy-tts-reading {
+          outline: 3px solid #2563EB !important;
+          outline-offset: 3px !important;
+          background-color: rgba(59, 130, 246, 0.14) !important;
+          border-radius: 6px !important;
+          transition: background-color 0.2s ease !important;
+        }
+        @keyframes savvyTtsPulse {
+          0%, 100% { transform: translateX(-50%) scale(1); }
+          50% { transform: translateX(-50%) scale(1.02); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // 2. Attach global event listeners
+    document.addEventListener("click", handleTtsElementClick, true);
+    document.addEventListener("mouseover", handleTtsMouseOver, true);
+    document.addEventListener("mouseout", handleTtsMouseOut, true);
+
+    // 3. Show floating guidance pill
+    if (!document.getElementById("savvy-tts-banner")) {
+      const banner = document.createElement("div");
+      banner.id = "savvy-tts-banner";
+      banner.style.cssText =
+        "position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 2147483640; background: #0F172A; color: #FFFFFF; padding: 9px 18px; border-radius: 9999px; font-family: system-ui, -apple-system, sans-serif; font-size: 12px; font-weight: 600; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.15); display: flex; align-items: center; gap: 8px; pointer-events: none; animation: savvyTtsPulse 2s ease-in-out infinite;";
+      banner.innerHTML = `<span>🔊</span><span>${TTS_BANNER_TEXTS[contentLang] || TTS_BANNER_TEXTS.en}</span>`;
+      document.body.appendChild(banner);
+    }
+
+    // 4. Speak activation prompt in localized language
+    const promptText = TTS_ON_PROMPTS[contentLang] || TTS_ON_PROMPTS.en;
+    agentLog.action(`🔊 [TTS Active] Speaking prompt: "${promptText}"`);
+    speakTtsText(promptText, contentLang);
+  }
+
+  function deactivateInteractiveTts() {
+    isTtsActive = false;
+    document.removeEventListener("click", handleTtsElementClick, true);
+    document.removeEventListener("mouseover", handleTtsMouseOver, true);
+    document.removeEventListener("mouseout", handleTtsMouseOut, true);
+
+    if (ttsHoveredElement) {
+      ttsHoveredElement.classList.remove("savvy-tts-hover");
+      ttsHoveredElement = null;
+    }
+    if (ttsReadingElement) {
+      ttsReadingElement.classList.remove("savvy-tts-reading");
+      ttsReadingElement = null;
+    }
+
+    document.getElementById("savvy-tts-styles")?.remove();
+    document.getElementById("savvy-tts-banner")?.remove();
+
+    try {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    } catch (_) { }
   }
 
   // 6. Controller 14 Fitur Accessibility HUB (WCAG 2.2 AAA & Pure JS)
@@ -2683,23 +2947,9 @@ import { formatDateForField } from "./lib/utils/dateUtils";
       case "tts":
       case "text_to_speech":
         if (enabled && value !== "Off") {
-          window.speechSynthesis?.cancel();
-          const pageSummary = document.title + ". " + (document.body.innerText || "").slice(0, 400);
-          const utter = new SpeechSynthesisUtterance(pageSummary);
-          const speechCode = SPEECH_LANG_MAP[contentLang] || document.documentElement.lang || "en-US";
-          utter.lang = speechCode;
-          const voices = window.speechSynthesis?.getVoices() || [];
-          const targetTag = speechCode.toLowerCase().replace("_", "-");
-          const targetPrefix = speechCode.split("-")[0].toLowerCase();
-          const matchedVoice =
-            voices.find((v) => v.lang.toLowerCase().replace("_", "-") === targetTag) ||
-            voices.find((v) => v.lang.toLowerCase().startsWith(targetPrefix));
-          if (matchedVoice) {
-            utter.voice = matchedVoice;
-          }
-          window.speechSynthesis?.speak(utter);
+          activateInteractiveTts();
         } else {
-          window.speechSynthesis?.cancel();
+          deactivateInteractiveTts();
         }
         break;
 
@@ -2795,5 +3045,5 @@ import { formatDateForField } from "./lib/utils/dateUtils";
         }
       });
     }
-  } catch (_) {}
+  } catch (_) { }
 })();

@@ -51,6 +51,7 @@ export function encodeWav16BitMono(samples: Float32Array, sampleRate = 16000): B
 
 export class AudioRecorder {
   private audioContext: AudioContext | null = null;
+  private workletNode: AudioWorkletNode | null = null;
   private scriptProcessor: ScriptProcessorNode | null = null;
   private audioStream: MediaStream | null = null;
   private pcmSamples: Float32Array[] = [];
@@ -74,16 +75,37 @@ export class AudioRecorder {
     this.audioContext = new AudioCtx({ sampleRate: 16000 });
 
     const source = this.audioContext.createMediaStreamSource(this.audioStream);
-    // BufferSize 4096, 1 mono input, 1 output
-    this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
-    this.scriptProcessor.onaudioprocess = (e) => {
-      const inputData = e.inputBuffer.getChannelData(0);
-      this.pcmSamples.push(new Float32Array(inputData));
-    };
+    let useWorklet = false;
+    if (this.audioContext.audioWorklet && typeof chrome !== "undefined" && chrome.runtime?.getURL) {
+      try {
+        const workletUrl = chrome.runtime.getURL("audio-processor.js");
+        await this.audioContext.audioWorklet.addModule(workletUrl);
+        const workletNode = new AudioWorkletNode(this.audioContext, "pcm-capture-processor");
+        workletNode.port.onmessage = (event) => {
+          if (!this.isRecording) return;
+          this.pcmSamples.push(new Float32Array(event.data));
+        };
+        source.connect(workletNode);
+        workletNode.connect(this.audioContext.destination);
+        this.workletNode = workletNode;
+        useWorklet = true;
+      } catch (err) {
+        console.warn("[AudioRecorder] AudioWorklet init failed, falling back to ScriptProcessor:", err);
+      }
+    }
 
-    source.connect(this.scriptProcessor);
-    this.scriptProcessor.connect(this.audioContext.destination);
+    if (!useWorklet) {
+      // Graceful fallback for environments where AudioWorklet is not available
+      this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+      this.scriptProcessor.onaudioprocess = (e) => {
+        if (!this.isRecording) return;
+        const inputData = e.inputBuffer.getChannelData(0);
+        this.pcmSamples.push(new Float32Array(inputData));
+      };
+      source.connect(this.scriptProcessor);
+      this.scriptProcessor.connect(this.audioContext.destination);
+    }
 
     this.startTime = Date.now();
     this.isRecording = true;
@@ -97,6 +119,13 @@ export class AudioRecorder {
     const durationMs = Date.now() - this.startTime;
     this.isRecording = false;
 
+    if (this.workletNode) {
+      try {
+        this.workletNode.port.onmessage = null;
+        this.workletNode.disconnect();
+      } catch (_) {}
+      this.workletNode = null;
+    }
     if (this.scriptProcessor) {
       try {
         this.scriptProcessor.disconnect();
@@ -136,6 +165,13 @@ export class AudioRecorder {
 
   public cancel(): void {
     this.isRecording = false;
+    if (this.workletNode) {
+      try {
+        this.workletNode.port.onmessage = null;
+        this.workletNode.disconnect();
+      } catch (_) {}
+      this.workletNode = null;
+    }
     if (this.scriptProcessor) {
       try {
         this.scriptProcessor.disconnect();

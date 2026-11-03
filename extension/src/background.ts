@@ -1,5 +1,5 @@
 // ============================================================================
-// SAVVY.AI — Background Service Worker (Chrome Manifest V3)
+// OWLY.AI — Background Service Worker (Chrome Manifest V3)
 // Mengelola Side Panel Lifecycle, Tab Context, & Bridge Messaging
 // ============================================================================
 
@@ -10,7 +10,7 @@ chrome.runtime.onInstalled.addListener(() => {
   agentLog.planner("Background Service Worker installed & initialized.", undefined, false);
   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((err) => {
-      console.warn("[Savvy.AI Background] sidePanel.setPanelBehavior error:", err);
+      console.warn("[Owly.AI Background] sidePanel.setPanelBehavior error:", err);
     });
   }
 });
@@ -34,13 +34,13 @@ const OFF_ICONS = {
 let activeSidePanelConnections = 0;
 
 function clearAccessibilityGlobally() {
-  chrome.storage.local.set({ savvy_sidepanel_open: false }).catch(() => {});
-  chrome.storage.local.remove(["savvy_a11y_settings", "savvy_a11y_levels", "savvy_a11y_profile"]).catch(() => {});
+  chrome.storage.local.set({ savvy_sidepanel_open: false }).catch(() => { });
+  chrome.storage.local.remove(["savvy_a11y_settings", "savvy_a11y_levels", "savvy_a11y_profile"]).catch(() => { });
 
   chrome.tabs.query({}, (tabs) => {
     tabs.forEach((tab) => {
       if (tab.id) {
-        chrome.tabs.sendMessage(tab.id, { type: "CLEAR_ALL_A11Y" }).catch(() => {});
+        chrome.tabs.sendMessage(tab.id, { type: "CLEAR_ALL_A11Y" }).catch(() => { });
       }
     });
   });
@@ -49,15 +49,15 @@ function clearAccessibilityGlobally() {
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === "savvy-sidepanel") {
     activeSidePanelConnections++;
-    chrome.storage.local.set({ savvy_sidepanel_open: true }).catch(() => {});
+    chrome.storage.local.set({ savvy_sidepanel_open: true }).catch(() => { });
     agentLog.planner("Side Panel session connected (Active icon ON).", { connections: activeSidePanelConnections }, false);
-    chrome.action.setIcon({ path: ON_ICONS }).catch(() => {});
+    chrome.action.setIcon({ path: ON_ICONS }).catch(() => { });
 
     port.onDisconnect.addListener(() => {
       activeSidePanelConnections = Math.max(0, activeSidePanelConnections - 1);
       agentLog.planner("Side Panel session disconnected.", { remaining: activeSidePanelConnections }, false);
       if (activeSidePanelConnections === 0) {
-        chrome.action.setIcon({ path: OFF_ICONS }).catch(() => {});
+        chrome.action.setIcon({ path: OFF_ICONS }).catch(() => { });
         clearAccessibilityGlobally();
       }
     });
@@ -72,7 +72,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
       chrome.tabs.sendMessage(activeInfo.tabId, {
         type: "APPLY_ALL_A11Y_SETTINGS",
         settings: res.savvy_a11y_settings,
-      }).catch(() => {});
+      }).catch(() => { });
     }
   });
 });
@@ -85,7 +85,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
           chrome.tabs.sendMessage(tabId, {
             type: "APPLY_ALL_A11Y_SETTINGS",
             settings: res.savvy_a11y_settings,
-          }).catch(() => {});
+          }).catch(() => { });
         }
       });
     }
@@ -110,7 +110,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 // 3. Message Broker antar Content Script dan Side Panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Log event untuk debugging ekstensi
-  // console.log("[Savvy.AI Background] Message received:", message.type, "from tab:", sender.tab?.id);
+  // console.log("[Owly.AI Background] Message received:", message.type, "from tab:", sender.tab?.id);
 
   if (message.type === "OPEN_SIDEPANEL_REQUEST") {
     if ((chrome as any).sidePanel?.open) {
@@ -160,7 +160,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const callback = (dataUrl?: string) => {
         const err = chrome.runtime.lastError;
         if (err || !dataUrl) {
-          console.warn("[Savvy.AI Background] captureVisibleTab failed (winId: " + winId + "):", err?.message);
+          console.warn("[Owly.AI Background] captureVisibleTab failed (winId: " + winId + "):", err?.message);
           if (winId !== undefined) {
             // Fallback retry without specifying winId
             tryCapture(undefined);

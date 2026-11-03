@@ -58,7 +58,7 @@ export function App() {
             chrome.tabs.query({}, (tabs) => {
               tabs.forEach((tab) => {
                 if (tab.id) {
-                  chrome.tabs.sendMessage(tab.id, { type: "CLEAR_ALL_A11Y" }).catch(() => {});
+                  chrome.tabs.sendMessage(tab.id, { type: "CLEAR_ALL_A11Y" }).catch(() => { });
                 }
               });
             });
@@ -69,7 +69,7 @@ export function App() {
               "savvy_a11y_levels",
               "savvy_a11y_profile",
               "savvy_sidepanel_open",
-            ]).catch(() => {});
+            ]).catch(() => { });
           }
         };
 
@@ -80,13 +80,13 @@ export function App() {
           window.removeEventListener("beforeunload", handleCleanupA11y);
           try {
             port.disconnect();
-          } catch (e) {}
+          } catch (e) { }
           if (typeof chrome !== "undefined" && chrome.runtime?.onMessage) {
             chrome.runtime.onMessage.removeListener(messageListener);
           }
         };
       } catch (err) {
-        console.warn("[Savvy.AI] Failed to connect sidepanel port:", err);
+        console.warn("[Owly.AI] Failed to connect sidepanel port:", err);
       }
     }
   }, []);
@@ -183,11 +183,10 @@ export function App() {
                   agentLog.planner(`Switched active tab to: ${tab.id.toUpperCase()} (${tab.label})`);
                   setActiveTab(tab.id);
                 }}
-                className={`py-1.5 px-1 rounded-lg flex items-center justify-center gap-1 transition-all ${
-                  isActive
+                className={`py-1.5 px-1 rounded-lg flex items-center justify-center gap-1 transition-all ${isActive
                     ? "bg-white text-savvy-blue shadow-2xs font-extrabold"
                     : "text-slate-500 hover:text-slate-800"
-                }`}
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
                 <span className="text-[11px] truncate">{tab.label}</span>

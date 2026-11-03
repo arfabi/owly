@@ -434,8 +434,16 @@ export function runClientSideComprehensiveAudit(
       }
     }
 
-    // 2.4 Audit Passport
-    else if (lowerLabel.includes("paspor") || lowerLabel.includes("passport")) {
+    // 2.4 Audit Passport Number (strictly for text inputs, not file uploads or photos)
+    else if (
+      type !== "file" &&
+      !lowerLabel.includes("foto") &&
+      !lowerLabel.includes("photo") &&
+      !lowerLabel.includes("scan") &&
+      !lowerLabel.includes("berkas") &&
+      !lowerLabel.includes("doc") &&
+      (lowerLabel.includes("paspor") || lowerLabel.includes("passport"))
+    ) {
       const passRes = validatePassportICAO(val, language);
       if (!passRes.isValid) {
         issues.push({
@@ -446,13 +454,43 @@ export function runClientSideComprehensiveAudit(
           level: "red",
           badge: "FORMAT",
           message: passRes.reason || (isEn ? "Passport number format does not comply with ICAO standards." : "Format nomor paspor tidak sesuai standar ICAO."),
-          hint: isEn ? "Standard passport: 1 uppercase letter followed by 7–8 digits." : "Standar paspor RI: 1 huruf kapital diikuti 7–8 digit angka.",
+          hint: isEn ? "Standard passport: 1 uppercase letter followed by 7–8 digits (e.g. C1234567)." : "Standar paspor RI/internasional: 1 huruf kapital diikuti 7–8 digit angka (contoh: C1234567).",
           action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
 
-    // 2.5 Audit Full Name (Typo numeric / symbols)
+    // 2.5 Audit Essay / Research Proposal Abstract Word Count (min. 50 words)
+    else if (
+      type === "textarea" ||
+      lowerLabel.includes("proposal") ||
+      lowerLabel.includes("abstract") ||
+      lowerLabel.includes("abstrak") ||
+      lowerLabel.includes("esai") ||
+      lowerLabel.includes("essay")
+    ) {
+      const words = val.trim().split(/\s+/).filter(Boolean);
+      const wordCount = words.length;
+      if (wordCount < 50) {
+        issues.push({
+          id: `word_count_${f.fieldId}`,
+          fieldId: f.fieldId,
+          fieldName: f.name,
+          fieldLabel: label,
+          level: "red",
+          badge: "FORMAT",
+          message: isEn
+            ? `Research proposal abstract is too short (${wordCount}/50 words). Minimum 50 words required.`
+            : `Abstrak proposal riset kurang dari batas minimal (${wordCount}/50 kata). Minimal 50 kata dibutuhkan.`,
+          hint: isEn
+            ? "Please expand your research proposal abstract with your methodology and objectives to meet the 50-word minimum threshold."
+            : "Lengkapi ringkasan proposal riset Anda dengan metodologi dan tujuan penelitian agar mencapai minimal 50 kata.",
+          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+        });
+      }
+    }
+
+    // 2.6 Audit Full Name (Typo numeric / symbols)
     else if (lowerLabel.includes("nama") || lowerLabel.includes("name")) {
       if (!lowerLabel.includes("ibu") && !lowerLabel.includes("mother") && !lowerLabel.includes("kampus") && !lowerLabel.includes("university")) {
         if (val.length < 3) {

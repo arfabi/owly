@@ -35,7 +35,7 @@ BEGIN
         NEW.raw_user_meta_data->>'full_name',
         NEW.raw_user_meta_data->>'name',
         NEW.raw_user_meta_data->>'user_name',
-        'Pengguna Savvy'
+        'Pengguna Owly'
     );
     
     -- 2. Tangkap Email

@@ -28,7 +28,7 @@ export async function GET() {
       signal: AbortSignal.timeout(6000),
     }).catch((e: any) => {
       // Non-blocking log
-      console.log('[Savvy Warmup] Pre-warm initiated:', e.message);
+      console.log('[Owly Warmup] Pre-warm initiated:', e.message);
     });
   }
 

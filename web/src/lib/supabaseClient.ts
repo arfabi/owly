@@ -21,7 +21,7 @@ export async function signInWithSocial(provider: AuthProvider) {
     provider: targetProvider as any,
     options: {
       redirectTo: redirectUrl,
-      queryParams: provider === 'google' 
+      queryParams: provider === 'google'
         ? { access_type: 'offline', prompt: 'consent' }
         : undefined,
       scopes: provider === 'google'
@@ -43,8 +43,8 @@ export async function signInWithSocial(provider: AuthProvider) {
  */
 export async function signInAsDemoJudge() {
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: 'judge@savvy.ai',
-    password: 'SavvyJudge2026!'
+    email: 'judge@owly.ai',
+    password: 'OwlyJudge2026!'
   });
   if (error) {
     console.error('Demo judge sign in failed:', error.message);

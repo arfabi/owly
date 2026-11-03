@@ -132,13 +132,12 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
       <button
         onClick={() => setHasAutofilled(!hasAutofilled)}
         disabled={!isVaultUnlocked}
-        className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs ${
-          !isVaultUnlocked
+        className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs ${!isVaultUnlocked
             ? "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
             : hasAutofilled
-            ? "bg-emerald-600 text-white hover:bg-emerald-700"
-            : "bg-blue-600 text-white hover:bg-blue-700"
-        }`}
+              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
       >
         {hasAutofilled ? (
           <>
@@ -172,15 +171,14 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
             {[4, 12, 18, 24, 16, 8, 20, 14, 6].map((h, i) => (
               <div
                 key={i}
-                className={`w-1 rounded-full transition-all duration-300 ${
-                  voiceStatus === "listening"
+                className={`w-1 rounded-full transition-all duration-300 ${voiceStatus === "listening"
                     ? "bg-emerald-500 animate-pulse"
                     : voiceStatus === "thinking"
-                    ? "bg-amber-500 animate-bounce"
-                    : voiceStatus === "speaking"
-                    ? "bg-blue-600 animate-pulse"
-                    : "bg-slate-300"
-                }`}
+                      ? "bg-amber-500 animate-bounce"
+                      : voiceStatus === "speaking"
+                        ? "bg-blue-600 animate-pulse"
+                        : "bg-slate-300"
+                  }`}
                 style={{ height: voiceStatus !== "idle" ? `${h}px` : "5px" }}
               />
             ))}
@@ -200,16 +198,15 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
               type="text"
               value={chatInput}
               onChange={(e) => handleChatChange(e.target.value)}
-              placeholder="Tanya Savvy tentang formulir..."
+              placeholder="Tanya Owly tentang formulir..."
               className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 font-sans"
             />
             <button
               onClick={handleVoiceToggle}
-              className={`p-1.5 rounded-lg border transition-all ${
-                voiceStatus !== "idle"
+              className={`p-1.5 rounded-lg border transition-all ${voiceStatus !== "idle"
                   ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse"
                   : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-              }`}
+                }`}
               title="Aktifkan Mikrofon Voicebot"
             >
               <Mic className="w-4 h-4" />
@@ -238,11 +235,10 @@ export function CoachTab({ isVaultUnlocked }: CoachTabProps) {
         </div>
         <button
           onClick={handleTriggerSnip}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
-            snipActive
+          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${snipActive
               ? "bg-purple-600 text-white"
               : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
-          }`}
+            }`}
         >
           {snipActive ? "Mode Snip Aktif" : "Mulai Snip"}
         </button>

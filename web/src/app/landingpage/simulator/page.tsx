@@ -30,14 +30,13 @@ export default function SimulatorPage() {
 
   // Form Field States across all input types
   // 1. Text & Masked Inputs
-  const [nik, setNik] = useState("");
+  const [passportNumber, setPassportNumber] = useState("");
   const [nama, setNama] = useState("");
   const [tempatLahir, setTempatLahir] = useState("");
   const [tglLahir, setTglLahir] = useState("");
   const [gender, setGender] = useState("L");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [npwp, setNpwp] = useState("");
 
   // 2. Number & Select Inputs
   const [jenjang, setJenjang] = useState("magister_luar");
@@ -47,15 +46,12 @@ export default function SimulatorPage() {
   const [ipk, setIpk] = useState("");
   const [usia, setUsia] = useState("");
 
-  // 3. File & Image Upload Inputs
+  // 3. File & Image Upload Inputs (Official Documents: Foto Paspor & Certificate Diploma)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoName, setPhotoName] = useState<string | null>(null);
-  const [ktpFileName, setKtpFileName] = useState<string | null>(null);
   const [ijazahFileName, setIjazahFileName] = useState<string | null>(null);
-  const [rekomendasiFileName, setRekomendasiFileName] = useState<string | null>(null);
 
-  // 4. Textarea Inputs
-  const [essay, setEssay] = useState("");
+  // 4. Textarea Inputs (Research Proposal Abstract min. 50 words)
   const [researchSummary, setResearchSummary] = useState("");
 
   // 5. Agreement Checkbox
@@ -114,20 +110,15 @@ export default function SimulatorPage() {
     }
   };
 
-  // Masking helpers
-  const handleNikChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
-    setNik(raw);
+  // Input helpers
+  const handlePassportChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 9);
+    setPassportNumber(raw);
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/[^\d+]/g, "").slice(0, 15);
     setPhone(raw);
-  };
-
-  const handleNpwpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 15);
-    setNpwp(raw);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,13 +133,9 @@ export default function SimulatorPage() {
     }
   };
 
-  const formatNikDisplay = (val: string) => {
-    if (!val) return "";
-    const chunks = val.match(/.{1,4}/g);
-    return chunks ? chunks.join("-") : val;
-  };
-
-  const essayWordCount = essay.trim() ? essay.trim().split(/\s+/).length : 0;
+  const proposalWordCount = researchSummary.trim()
+    ? researchSummary.trim().split(/\s+/).filter(Boolean).length
+    : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-500/15 selection:text-blue-700 relative flex flex-col justify-between">
@@ -194,8 +181,8 @@ export default function SimulatorPage() {
           </h1>
           <p className="text-slate-600 text-xs sm:text-sm mt-2 max-w-3xl leading-relaxed">
             {isId
-              ? "Halaman ini menyediakan seluruh variasi input formulir nyata (teks, masked NIK/telepon, tanggal, angka, upload pasfoto biometrik, dokumen PDF, dan esai). Uji kehebatan ekstensi browser Owly untuk membimbing, menjelaskan syarat, autofill dari Vault, dan mengaudit berkas langsung dari browser Anda."
-              : "This page provides all standard real-world input types (text, masked NIK/phone, dates, numbers, biometric photo upload, PDF documents, and essays). Test Owly's live extension capabilities directly on this form."}
+              ? "Halaman ini menyediakan seluruh variasi input formulir nyata (teks, nomor paspor ICAO, telepon, tanggal, angka, upload foto paspor, dokumen PDF, dan abstrak proposal riset). Uji kehebatan ekstensi browser Owly untuk membimbing, menjelaskan syarat, autofill dari Vault, dan mengaudit berkas langsung dari browser Anda."
+              : "This page provides all standard real-world input types (text, ICAO passport number, phone, dates, numbers, passport photo upload, PDF documents, and research proposal abstract). Test Owly's live extension capabilities directly on this form."}
           </p>
         </div>
 
@@ -214,33 +201,34 @@ export default function SimulatorPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {/* Field NIK (Masked 16 Digit) */}
+                  {/* Field Nomor Paspor (Passport Number) */}
                   <div
                     className={`p-4 rounded-2xl transition-all border ${
-                      focusedField === "nik"
+                      focusedField === "passport"
                         ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label htmlFor="nik-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
-                      {isId ? "Nomor Induk Kependudukan (NIK)" : "National Identification Number (NIK)"}{" "}
+                    <label htmlFor="passport-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
+                      {isId ? "Nomor Paspor (Passport Number)" : "Passport Number"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      name="nik"
-                      id="nik-field"
-                      value={formatNikDisplay(nik)}
-                      onChange={handleNikChange}
-                      onFocus={() => setFocusedField("nik")}
+                      name="passportNumber"
+                      id="passport-field"
+                      value={passportNumber}
+                      onChange={handlePassportChange}
+                      onFocus={() => setFocusedField("passport")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="3271-XXXX-XXXX-XXXX"
-                      maxLength={19}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
+                      placeholder={isId ? "Contoh: C1234567" : "e.g. C1234567"}
+                      maxLength={9}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500 transition-colors uppercase"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1.5 flex items-center justify-between">
-                      <span>{isId ? "Wajib tepat 16 digit angka e-KTP." : "Must be exactly 16 valid digits."}</span>
-                      <span className="font-mono font-semibold text-blue-600">{nik.length}/16</span>
+                    <p className="text-[11px] text-slate-500 mt-1.5">
+                      {isId
+                        ? "Format standar ICAO (1 huruf kapital diikuti 7–8 digit angka)."
+                        : "Standard ICAO format (1 uppercase letter followed by 7–8 digits)."}
                     </p>
                   </div>
 
@@ -253,7 +241,7 @@ export default function SimulatorPage() {
                     }`}
                   >
                     <label htmlFor="fullname-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
-                      {isId ? "Nama Lengkap (Sesuai Ijazah & KTP)" : "Full Legal Name"}{" "}
+                      {isId ? "Nama Lengkap (Sesuai Ijazah & Paspor)" : "Full Legal Name"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -318,11 +306,6 @@ export default function SimulatorPage() {
                       onBlur={() => setFocusedField(null)}
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1.5">
-                      {isId
-                        ? "Data di Owly Vault: DD-MM-YYYY (cth: 15-08-1998). Saat autofill, Owly otomatis mengonversinya ke kalender browser (tampilan mm/dd/yyyy atau dd/mm/yyyy disesuaikan oleh sistem Anda, atau klik ikon 📅)"
-                        : "Stored in Owly Vault: DD-MM-YYYY (e.g. 15-08-1998). Owly auto-converts to browser calendar on autofill (visual mm/dd/yyyy or dd/mm/yyyy is localized by your OS/browser, or pick via 📅)"}
-                    </p>
                   </div>
 
                   {/* Field Jenis Kelamin (Radio Input) */}
@@ -404,34 +387,6 @@ export default function SimulatorPage() {
                       placeholder="nama@domain.com"
                       className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
                     />
-                  </div>
-
-                  {/* Field NPWP (Masked NPWP) */}
-                  <div
-                    className={`p-4 rounded-2xl transition-all border ${
-                      focusedField === "npwp"
-                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
-                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
-                    }`}
-                  >
-                    <label htmlFor="npwp-field" className="block text-xs font-bold text-slate-800 mb-1.5 cursor-pointer">
-                      {isId ? "Nomor Pokok Wajib Pajak (NPWP)" : "Tax Identification Number (NPWP)"}
-                    </label>
-                    <input
-                      type="text"
-                      name="npwpNumber"
-                      id="npwp-field"
-                      value={npwp}
-                      onChange={handleNpwpChange}
-                      onFocus={() => setFocusedField("npwp")}
-                      onBlur={() => setFocusedField(null)}
-                      placeholder="00.000.000.0-000.000"
-                      maxLength={15}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:border-blue-500 transition-colors"
-                    />
-                    <p className="text-[11px] text-slate-500 mt-1.5">
-                      {isId ? "Opsional bagi pelamar fresh graduate." : "Optional for fresh graduates."}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -592,27 +547,27 @@ export default function SimulatorPage() {
                 </div>
               </div>
 
-              {/* Section 3: Upload Image & Dokumen Berkas (File Uploads) */}
+              {/* Section 3: Upload Dokumen Resmi (Foto Paspor & Certificate Diploma) */}
               <div>
                 <div className="flex items-center gap-2 pb-3 mb-6 border-b border-slate-100">
                   <Upload className="w-5 h-5 text-blue-600" />
                   <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                    {isId ? "3. Unggah Berkas & Pasfoto Biometrik" : "3. Biometric Photo & Official Documents"}
+                    {isId ? "3. Unggah Dokumen Resmi (Official Documents)" : "3. Official Document Uploads"}
                   </h2>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {/* Upload Image: Pasfoto Biometrik */}
+                  {/* Upload Image: Foto Paspor (JPG/PNG) */}
                   <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
                     <div>
-                      <label htmlFor="photo-upload" className="block text-xs font-bold text-slate-800 mb-1">
-                        {isId ? "Pasfoto Biometrik Resmi (2x2 Inci / 35x45 mm)" : "Official Biometric Passport Photo"}{" "}
+                      <label htmlFor="passport-photo-upload" className="block text-xs font-bold text-slate-800 mb-1">
+                        {isId ? "Foto Paspor Resmi (Passport Photo)" : "Official Passport Photo"}{" "}
                         <span className="text-red-500">*</span>
                       </label>
                       <p className="text-[11px] text-slate-500 mb-3">
                         {isId
-                          ? "Format JPG/PNG, maks. 200 KB. Wajah menghadap lurus tanpa kacamata gelap."
-                          : "JPG/PNG format, max 200 KB. Frontal face view per ICAO 9303 standards."}
+                          ? "Format JPG atau PNG, maks. 500 KB. Wajah menghadap lurus sesuai standar paspor ICAO."
+                          : "JPG or PNG format, max 500 KB. Frontal face view per ICAO 9303 standards."}
                       </p>
 
                       <div className="flex items-center gap-4">
@@ -620,7 +575,7 @@ export default function SimulatorPage() {
                           <div className="w-16 h-20 rounded-xl border border-blue-500 shadow-xs shrink-0 relative overflow-hidden">
                             <img
                               src={photoPreview}
-                              alt="Biometric Preview"
+                              alt="Passport Photo Preview"
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -632,9 +587,9 @@ export default function SimulatorPage() {
                         <div className="flex-1">
                           <input
                             type="file"
-                            accept="image/jpeg,image/png"
-                            id="photo-upload"
-                            name="biometricPhoto"
+                            accept="image/jpeg,image/jpg,image/png"
+                            id="passport-photo-upload"
+                            name="passportPhoto"
                             onChange={handlePhotoUpload}
                             className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
                           />
@@ -648,48 +603,23 @@ export default function SimulatorPage() {
                     </div>
                   </div>
 
-                  {/* Upload File: Scan KTP Fisik */}
+                  {/* Upload File: Certificate Diploma (PDF) */}
                   <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
                     <div>
-                      <label htmlFor="ktp-upload" className="block text-xs font-bold text-slate-800 mb-1">
-                        {isId ? "Scan Kartu Tanda Penduduk (e-KTP Asli)" : "Scanned National ID Card"}{" "}
+                      <label htmlFor="diploma-upload" className="block text-xs font-bold text-slate-800 mb-1">
+                        {isId ? "Certificate Diploma / Ijazah (PDF)" : "Certificate Diploma (PDF)"}{" "}
                         <span className="text-red-500">*</span>
                       </label>
                       <p className="text-[11px] text-slate-500 mb-3">
-                        {isId ? "Format PDF atau JPG berwarna terang, tidak terpotong." : "Color PDF or JPG format, fully legible."}
+                        {isId
+                          ? "Format berkas PDF resmi terlegalisir, maks. 5 MB."
+                          : "Official certified PDF format, max 5 MB."}
                       </p>
 
                       <input
                         type="file"
-                        id="ktp-upload"
-                        name="ktpDocument"
-                        accept="image/*,application/pdf"
-                        onChange={(e) => setKtpFileName(e.target.files?.[0]?.name || null)}
-                        className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
-                      />
-                      {ktpFileName && (
-                        <p className="text-[10px] text-emerald-600 font-semibold mt-1 truncate">
-                          ✓ {ktpFileName}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Upload File: Ijazah & Transkrip Terlegalisir (PDF) */}
-                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
-                    <div>
-                      <label htmlFor="ijazah-upload" className="block text-xs font-bold text-slate-800 mb-1">
-                        {isId ? "Ijazah & Transkrip Terlegalisir (PDF)" : "Certified Diploma & Transcript (PDF)"}{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <p className="text-[11px] text-slate-500 mb-3">
-                        {isId ? "Wajib legalisir basah atau ttd elektronik barcode BSrE." : "Must have official university certification seal."}
-                      </p>
-
-                      <input
-                        type="file"
-                        id="ijazah-upload"
-                        name="diplomaDocument"
+                        id="diploma-upload"
+                        name="diplomaCertificate"
                         accept="application/pdf"
                         onChange={(e) => setIjazahFileName(e.target.files?.[0]?.name || null)}
                         className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
@@ -701,80 +631,19 @@ export default function SimulatorPage() {
                       )}
                     </div>
                   </div>
-
-                  {/* Upload File: Surat Rekomendasi (PDF) */}
-                  <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/40 flex flex-col justify-between">
-                    <div>
-                      <label htmlFor="rekomendasi-upload" className="block text-xs font-bold text-slate-800 mb-1">
-                        {isId ? "Surat Rekomendasi Tokoh / Akademisi (PDF)" : "Academic Recommendation Letter (PDF)"}{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <p className="text-[11px] text-slate-500 mb-3">
-                        {isId ? "Diterbitkan dalam kurun waktu 1 tahun terakhir." : "Issued within the last 12 months."}
-                      </p>
-
-                      <input
-                        type="file"
-                        id="rekomendasi-upload"
-                        name="recommendationLetter"
-                        accept="application/pdf"
-                        onChange={(e) => setRekomendasiFileName(e.target.files?.[0]?.name || null)}
-                        className="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer w-full"
-                      />
-                      {rekomendasiFileName && (
-                        <p className="text-[10px] text-emerald-600 font-semibold mt-1 truncate">
-                          ✓ {rekomendasiFileName}
-                        </p>
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Section 4: Esai Komitmen & Rencana Studi (Textarea) */}
+              {/* Section 4: Ringkasan Rencana Riset / Proposal Abstract */}
               <div>
                 <div className="flex items-center gap-2 pb-3 mb-6 border-b border-slate-100">
                   <BookOpen className="w-5 h-5 text-blue-600" />
                   <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                    {isId ? "4. Esai Komitmen Pasca-Studi & Proposal" : "4. Post-Study Commitment Essay & Abstract"}
+                    {isId ? "4. Ringkasan Rencana Riset / Proposal Abstract" : "4. Research Proposal Abstract"}
                   </h2>
                 </div>
 
-                <div className="space-y-6">
-                  {/* Textarea Esai */}
-                  <div
-                    className={`p-4 rounded-2xl transition-all border ${
-                      focusedField === "essay"
-                        ? "border-blue-500 bg-blue-50/40 shadow-xs ring-2 ring-blue-500/10"
-                        : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <label htmlFor="essay-field" className="text-xs font-bold text-slate-800">
-                        {isId ? "Esai Komitmen Kembali ke Indonesia & Rencana Kontribusi" : "Return Commitment & Contribution Plan Essay"}{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <span className="text-[11px] font-mono text-slate-500">
-                        {essayWordCount} {isId ? "kata (min. 50 kata)" : "words (min. 50 words)"}
-                      </span>
-                    </div>
-                    <textarea
-                      rows={5}
-                      name="essayContribution"
-                      id="essay-field"
-                      value={essay}
-                      onChange={(e) => setEssay(e.target.value)}
-                      onFocus={() => setFocusedField("essay")}
-                      onBlur={() => setFocusedField(null)}
-                      placeholder={
-                        isId
-                          ? "Deskripsikan rencana konkret kontribusi Anda bagi bangsa pasca menyelesaikan studi. Jelaskan peran strategis Anda dalam 5 tahun ke depan..."
-                          : "Describe your concrete post-study contributions and 5-year career roadmap..."
-                      }
-                      className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
-                    />
-                  </div>
-
+                <div>
                   {/* Textarea Proposal Ringkas */}
                   <div
                     className={`p-4 rounded-2xl transition-all border ${
@@ -783,21 +652,31 @@ export default function SimulatorPage() {
                         : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                     }`}
                   >
-                    <label htmlFor="proposal-field" className="block text-xs font-bold text-slate-800 mb-2">
-                      {isId ? "Ringkasan Rencana Riset / Studi (Research Abstract)" : "Research Proposal Abstract"}
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label htmlFor="proposal-field" className="text-xs font-bold text-slate-800">
+                        {isId ? "Abstrak Proposal Riset (Research Proposal Abstract)" : "Research Proposal Abstract"}{" "}
+                        <span className="text-red-500">*</span>
+                      </label>
+                      <span
+                        className={`text-[11px] font-mono font-medium ${
+                          proposalWordCount < 50 ? "text-amber-600 font-semibold" : "text-emerald-600"
+                        }`}
+                      >
+                        {proposalWordCount} {isId ? "kata (min. 50 kata)" : "words (min. 50 words)"}
+                      </span>
+                    </div>
                     <textarea
-                      rows={3}
+                      rows={6}
                       id="proposal-field"
-                      name="researchAbstract"
+                      name="researchProposalAbstract"
                       value={researchSummary}
                       onChange={(e) => setResearchSummary(e.target.value)}
                       onFocus={() => setFocusedField("proposal")}
                       onBlur={() => setFocusedField(null)}
                       placeholder={
                         isId
-                          ? "Jelaskan judul rencana tesis, topik utama, metodologi, dan dampaknya bagi pembangunan nasional..."
-                          : "Outline your proposed thesis topic, methodology, and expected national impact..."
+                          ? "Jelaskan judul rencana riset/tesis, latar belakang permasalahan, metodologi, dan tujuan penelitian secara komprehensif (minimal 50 kata)..."
+                          : "Outline your proposed thesis topic, problem background, methodology, and research objectives comprehensively (minimum 50 words)..."
                       }
                       className="w-full bg-white border border-slate-200 rounded-xl p-3.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-blue-500 leading-relaxed"
                     />
@@ -840,22 +719,18 @@ export default function SimulatorPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setNik("");
+                    setPassportNumber("");
                     setNama("");
                     setTempatLahir("");
                     setTglLahir("");
                     setPhone("");
                     setEmail("");
-                    setNpwp("");
                     setToefl("");
                     setIpk("");
                     setUsia("");
                     setPhotoPreview(null);
                     setPhotoName(null);
-                    setKtpFileName(null);
                     setIjazahFileName(null);
-                    setRekomendasiFileName(null);
-                    setEssay("");
                     setResearchSummary("");
                     setAgreeTerms(false);
                   }}
