@@ -74,7 +74,7 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
         snapshot.fields || [],
         snapshot.pageUploadContext || { pageWideFileInstructions: [], attachedFilesMetadata: [] },
         vaultItems,
-        isId ? "id" : "en"
+        language
       );
 
       // Step 3: Call AI Agentic Endpoint for scattered page instructions (Optional AI augmentation)
@@ -251,25 +251,39 @@ export function AuditorTab({ onNavigateTab }: AuditorTabProps) {
             <span className="text-[11px] font-extrabold text-emerald-800 block">
               {report ? `${report.passedCount} ${t.audit.greenCount}` : `0 ${t.audit.greenCount}`}
             </span>
+            {report && report.passedCount > 0 && (
+              <span className="text-[9px] text-emerald-600 font-semibold block mt-0.5">
+                {isId ? "kolom bersih" : "clean fields"}
+              </span>
+            )}
           </div>
 
           {/* Warning / Yellow */}
           <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/80">
             <AlertTriangle className="w-4 h-4 text-amber-600 mx-auto mb-1" />
             <span className="text-[11px] font-extrabold text-amber-800 block">
-              {report ? `${report.warningCount} ${t.audit.yellowCount}` : `0 ${t.audit.yellowCount}`}
+              {report ? `${report.warningIssuesCount} ${t.audit.yellowCount}` : `0 ${t.audit.yellowCount}`}
             </span>
+            {report && report.warningIssuesCount > 0 && (
+              <span className="text-[9px] text-amber-600 font-semibold block mt-0.5">
+                {isId
+                  ? `di ${Math.max(report.warningCount, 1)} kolom`
+                  : `in ${Math.max(report.warningCount, 1)} field${report.warningCount > 1 ? "s" : ""}`}
+              </span>
+            )}
           </div>
 
           {/* Danger / Red */}
           <div className="p-2.5 rounded-xl bg-red-50 border border-red-200/80">
             <AlertCircle className="w-4 h-4 text-red-600 mx-auto mb-1" />
             <span className="text-[11px] font-extrabold text-red-800 block">
-              {report ? `${report.dangerCount} ${t.audit.redCount}` : `0 ${t.audit.redCount}`}
+              {report ? `${report.dangerIssuesCount} ${t.audit.redCount}` : `0 ${t.audit.redCount}`}
             </span>
-            {report && report.dangerIssuesCount > report.dangerCount && (
-              <span className="text-[9.5px] text-red-600 font-semibold block mt-0.5">
-                ({report.dangerIssuesCount} {isId ? "total isu" : "total issues"})
+            {report && report.dangerIssuesCount > 0 && (
+              <span className="text-[9px] text-red-600 font-semibold block mt-0.5">
+                {isId
+                  ? `di ${Math.max(report.dangerCount, 1)} kolom`
+                  : `in ${Math.max(report.dangerCount, 1)} field${report.dangerCount > 1 ? "s" : ""}`}
               </span>
             )}
           </div>

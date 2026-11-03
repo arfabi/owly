@@ -680,6 +680,84 @@ import { formatDateForField } from "./lib/utils/dateUtils";
     return "";
   }
 
+  // Helper untuk mendeteksi metadata group radio button (Title, Container Anchor, & Required State)
+  function findRadioGroupInfo(el: HTMLInputElement): { title: string; badgeAnchor: HTMLElement; isRequired: boolean } {
+    const radioName = el.name;
+    const allRadios = radioName
+      ? Array.from(document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${CSS.escape ? CSS.escape(radioName) : radioName}"]`))
+      : [el];
+    const isRequired = allRadios.some((r) => r.required || r.getAttribute("aria-required") === "true");
+
+    // 1. Check fieldset legend
+    const fieldset = el.closest("fieldset");
+    if (fieldset) {
+      const legend = fieldset.querySelector("legend");
+      if (legend && isValidLabelText(legend.textContent)) {
+        return {
+          title: cleanLabelText(legend.textContent),
+          badgeAnchor: legend,
+          isRequired,
+        };
+      }
+    }
+
+    // 2. Walk up ancestors (excluding option labels)
+    let curr: HTMLElement | null = el.parentElement;
+    let depth = 0;
+    let groupTitle = "";
+    let badgeAnchor: HTMLElement = el;
+
+    while (curr && depth < 5 && curr.tagName !== "BODY" && curr.tagName !== "FORM") {
+      // Look for a label, legend, or heading inside curr that does NOT wrap any radio/input in this group
+      const candidates = Array.from(
+        curr.querySelectorAll("label, legend, .form-label, .col-form-label, h3, h4, h5, h6, strong, b, [class*='font-bold'], [class*='font-semibold']")
+      ) as HTMLElement[];
+
+      for (const cand of candidates) {
+        if (cand.querySelector("input")) continue;
+        const htmlFor = cand.getAttribute("for");
+        if (htmlFor && allRadios.some((r) => r.id === htmlFor)) continue;
+
+        const txt = cand.textContent?.trim();
+        if (txt && isValidLabelText(txt)) {
+          groupTitle = cleanLabelText(txt);
+          badgeAnchor = cand;
+          break;
+        }
+      }
+
+      if (groupTitle) break;
+
+      let sib = curr.previousElementSibling as HTMLElement | null;
+      while (sib) {
+        const cand = (sib.matches("label, legend, h3, h4, h5, h6, strong, b")
+          ? sib
+          : sib.querySelector("label, legend, h3, h4, h5, h6, strong, b")) as HTMLElement | null;
+        if (cand && !cand.querySelector("input") && isValidLabelText(cand.textContent)) {
+          groupTitle = cleanLabelText(cand.textContent);
+          badgeAnchor = cand;
+          break;
+        }
+        sib = sib.previousElementSibling as HTMLElement | null;
+      }
+
+      if (groupTitle) break;
+
+      curr = curr.parentElement;
+      depth++;
+    }
+
+    if (!groupTitle) {
+      groupTitle = el.name ? cleanLabelText(el.name.replace(/[_\-]+/g, " ")) : "Radio Group";
+    }
+
+    return {
+      title: groupTitle,
+      badgeAnchor,
+      isRequired,
+    };
+  }
+
   function getInteractiveFormElements(): FormFieldItem[] {
     const result: FormFieldItem[] = [];
     const visitedEls = new Set<HTMLElement>();
@@ -747,24 +825,19 @@ import { formatDateForField } from "./lib/utils/dateUtils";
           return;
         }
 
-        const groupContainer = (el.closest(".p-4, .form-group, fieldset, [role='radiogroup'], div") || el.parentElement) as HTMLElement | null;
-        const groupLabel = (groupContainer?.querySelector("label:not([class*='cursor-pointer'])") ||
-          el.closest("fieldset")?.querySelector("legend")) as HTMLElement | null;
-
+        const info = findRadioGroupInfo(el as HTMLInputElement);
         visitedEls.add(el);
-        const groupTitle = groupLabel?.textContent?.trim() || findElementLabel(el) || el.name;
-        const badgeAnchor = groupLabel || groupContainer || el;
 
         result.push({
           targetEl: el,
-          badgeTargetEl: badgeAnchor,
+          badgeTargetEl: info.badgeAnchor,
           id: el.name,
           name: el.name,
-          label: cleanLabelText(groupTitle),
+          label: info.title,
           placeholder: "",
-          required: el.required,
+          required: info.isRequired,
           type: "radio",
-          section: findElementSection(badgeAnchor),
+          section: findElementSection(info.badgeAnchor),
         });
         return;
       }
@@ -876,7 +949,18 @@ import { formatDateForField } from "./lib/utils/dateUtils";
         } else if (el.type === "file") {
           const fileInput = el as HTMLInputElement;
           val = fileInput.files?.[0]?.name || "";
-        } else if (el.type === "checkbox" || el.type === "radio") {
+        } else if (el.type === "radio" || item.type === "radio") {
+          const radioName = el.name || item.name;
+          const radioGroup = radioName
+            ? Array.from(document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${CSS.escape ? CSS.escape(radioName) : radioName}"]`))
+            : [el as HTMLInputElement];
+          const checkedOption = radioGroup.find((r) => r.checked);
+          if (checkedOption) {
+            val = findElementLabel(checkedOption) || checkedOption.value || "checked";
+          } else {
+            val = "";
+          }
+        } else if (el.type === "checkbox") {
           const inputEl = el as HTMLInputElement;
           val = inputEl.checked ? (inputEl.value || "checked") : "";
         } else {
@@ -889,10 +973,19 @@ import { formatDateForField } from "./lib/utils/dateUtils";
       const parentText = parent?.textContent || "";
       const labelText = item.label || "";
       const isParentScoped = parent ? parent.childElementCount <= 6 : false;
-      const hasAsterisk =
+      let hasAsterisk =
         labelText.includes("*") ||
         (isParentScoped && parentText.includes("*")) ||
         el.getAttribute("aria-required") === "true";
+
+      if (el.type === "radio" || item.type === "radio") {
+        const radioName = el.name || item.name;
+        if (radioName) {
+          const radioGroup = Array.from(document.querySelectorAll<HTMLInputElement>(`input[type="radio"][name="${CSS.escape ? CSS.escape(radioName) : radioName}"]`));
+          const anyRequired = radioGroup.some((r) => r.required || r.getAttribute("aria-required") === "true");
+          if (anyRequired) hasAsterisk = true;
+        }
+      }
 
       // Surrounding context (search for hints like (Contoh: ...) or format cues)
       const contextMatch = parentText.match(/\(([^)]+)\)/);
@@ -1642,6 +1735,10 @@ import { formatDateForField } from "./lib/utils/dateUtils";
           target = detected[message.fieldIndex].targetEl;
           badgeTarget = detected[message.fieldIndex].badgeTargetEl;
         }
+      }
+      if (!badgeTarget && target instanceof HTMLInputElement && target.type === "radio") {
+        const info = findRadioGroupInfo(target);
+        if (info.badgeAnchor) badgeTarget = info.badgeAnchor;
       }
       const elToHighlight = badgeTarget || target;
       if (elToHighlight) {

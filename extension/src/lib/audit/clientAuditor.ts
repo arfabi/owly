@@ -3,6 +3,9 @@
 // Ultra-fast (<5ms), zero API cost, mathematical accuracy, 100% private.
 // ============================================================================
 
+import { SupportedLanguage } from "../i18n/types";
+import { getAuditI18n } from "./auditI18n";
+
 export interface ScrapedFormField {
   fieldId: string;
   name: string;
@@ -80,7 +83,7 @@ export interface ComprehensiveAuditReport {
 // 1. DETERMINISTIC VALIDATORS (NIK, No HP, Email, Paspor)
 // ---------------------------------------------------------------------------
 
-export function validateIndonesianNIK(nik: string, lang: "en" | "id" = "en"): {
+export function validateIndonesianNIK(nik: string, lang: SupportedLanguage = "en"): {
   isValid: boolean;
   reason?: string;
   parsed?: {
@@ -91,14 +94,12 @@ export function validateIndonesianNIK(nik: string, lang: "en" | "id" = "en"): {
     isFemale: boolean;
   };
 } {
-  const isEn = lang === "en";
+  const i18n = getAuditI18n(lang);
   const clean = nik.replace(/\D/g, "");
   if (clean.length !== 16) {
     return {
       isValid: false,
-      reason: isEn
-        ? `National ID must be exactly 16 numeric digits (currently ${clean.length} digits).`
-        : `Panjang NIK harus tepat 16 digit angka (saat ini ${clean.length} digit).`,
+      reason: i18n.nikLength(clean.length),
     };
   }
 
@@ -106,9 +107,7 @@ export function validateIndonesianNIK(nik: string, lang: "en" | "id" = "en"): {
   if (prov < 11 || prov > 94) {
     return {
       isValid: false,
-      reason: isEn
-        ? `Province code '${prov}' is not registered in the civil registry database.`
-        : `Kode provinsi '${prov}' tidak terdaftar pada database Kemendagri.`,
+      reason: i18n.nikProv(prov),
     };
   }
 
@@ -122,9 +121,7 @@ export function validateIndonesianNIK(nik: string, lang: "en" | "id" = "en"): {
   if (day < 1 || day > 31 || month < 1 || month > 12) {
     return {
       isValid: false,
-      reason: isEn
-        ? `Birth date digits in ID (${rawDay}/${month}) are not calendar-valid.`
-        : `Digit tanggal/bulan lahir pada NIK (${rawDay}/${month}) tidak valid secara kalender.`,
+      reason: i18n.nikDateInvalid(rawDay, month),
     };
   }
 
@@ -140,53 +137,69 @@ export function validateIndonesianNIK(nik: string, lang: "en" | "id" = "en"): {
   };
 }
 
-export function validateIndonesianPhone(phone: string, lang: "en" | "id" = "en"): { isValid: boolean; reason?: string } {
-  const isEn = lang === "en";
-  const clean = phone.replace(/[^\d+]/g, "");
-  if (!clean) return { isValid: false, reason: isEn ? "Phone number is empty." : "Nomor handphone kosong." };
-
-  let digits = clean;
-  if (digits.startsWith("+62")) {
-    digits = "0" + digits.substring(3);
-  } else if (digits.startsWith("62")) {
-    digits = "0" + digits.substring(2);
-  }
-
-  if (!digits.startsWith("08")) {
+export function validateGenericNationalID(idVal: string, lang: SupportedLanguage = "en"): { isValid: boolean; reason?: string } {
+  const i18n = getAuditI18n(lang);
+  const clean = idVal.trim();
+  // Standard global National ID / Citizen ID (e.g. US SSN 9 digits, UK NI 9 chars, France 13-15 chars, Spain DNI 9 chars, etc.)
+  // Must be between 5 and 25 characters, alphanumeric with optional dashes or spaces
+  if (clean.length < 5 || clean.length > 25) {
     return {
       isValid: false,
-      reason: isEn
-        ? "Standard phone numbers must start with 08 or +62."
-        : "Nomor handphone standar Indonesia harus diawali 08 atau +62.",
+      reason: i18n.globalIdInvalid,
     };
   }
-
-  if (digits.length < 10 || digits.length > 13) {
+  if (!/^[A-Za-z0-9\-\s]+$/.test(clean)) {
     return {
       isValid: false,
-      reason: isEn
-        ? `Phone number length must be 10–13 digits (found ${digits.length} digits: '${digits}').`
-        : `Jumlah digit nomor handphone harus 10–13 digit (ditemukan ${digits.length} digit: '${digits}').`,
+      reason: i18n.globalIdInvalid,
+    };
+  }
+  return { isValid: true };
+}
+
+export function validatePhoneNumber(phone: string, lang: SupportedLanguage = "en"): { isValid: boolean; reason?: string } {
+  const i18n = getAuditI18n(lang);
+  const clean = phone.replace(/[^\d+]/g, "");
+  if (!clean) return { isValid: false, reason: i18n.phoneEmpty };
+
+  // 1. International E.164 format (starts with '+')
+  if (clean.startsWith("+")) {
+    const digitsOnly = clean.substring(1);
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+      return {
+        isValid: false,
+        reason: i18n.phoneLength(digitsOnly.length, clean),
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 2. Domestic / Standard formats (accepts both Indonesian 08xx and global domestic 7-15 digits)
+  let digits = clean;
+  if (digits.length < 7 || digits.length > 15) {
+    return {
+      isValid: false,
+      reason: i18n.phoneLength(digits.length, digits),
     };
   }
 
   return { isValid: true };
 }
 
+export const validateIndonesianPhone = validatePhoneNumber;
+
 export function validateRFC5322Email(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-export function validatePassportICAO(passport: string, lang: "en" | "id" = "en"): { isValid: boolean; reason?: string } {
-  const isEn = lang === "en";
+export function validatePassportICAO(passport: string, lang: SupportedLanguage = "en"): { isValid: boolean; reason?: string } {
+  const i18n = getAuditI18n(lang);
   const clean = passport.trim().toUpperCase();
   // Standar ICAO 9303: 1 huruf + 7-8 digit angka
   if (!/^[A-Z][0-9]{7,8}$/.test(clean)) {
     return {
       isValid: false,
-      reason: isEn
-        ? "Passport number must start with 1 capital letter followed by 7–8 digits (e.g. C1234567)."
-        : "Nomor paspor harus diawali 1 huruf kapital diikuti 7–8 digit angka (Contoh: C1234567).",
+      reason: i18n.passportFormat,
     };
   }
   return { isValid: true };
@@ -226,10 +239,10 @@ export function runClientSideComprehensiveAudit(
   fields: ScrapedFormField[],
   pageUploadContext: PageUploadContext,
   vaultItems: VaultProfileItem[] = [],
-  language: "en" | "id" = "en"
+  language: SupportedLanguage = "en"
 ): ComprehensiveAuditReport {
   const issues: AuditIssue[] = [];
-  const isEn = language === "en";
+  const i18n = getAuditI18n(language);
 
   // Indexing map untuk pencocokan nalar silang antar-kolom di form
   const fieldMap: Record<string, ScrapedFormField> = {};
@@ -247,14 +260,14 @@ export function runClientSideComprehensiveAudit(
     return "";
   };
 
-  const formNik = getFieldValue(/nik|ktp|national.id/);
+  const formNik = getFieldValue(/\b(nik|ktp|e-ktp|kependudukan)\b/);
   const formBirthDate = getFieldValue(/tgl|tanggal.*lahir|birth.*date|dob/);
   const formGender = getFieldValue(/gender|kelamin|jenis.*kelamin/);
 
   // Parse NIK sekali jika tersedia
   let parsedNik: any = null;
   if (formNik) {
-    const res = validateIndonesianNIK(formNik);
+    const res = validateIndonesianNIK(formNik, language);
     if (res.isValid && res.parsed) {
       parsedNik = res.parsed;
     }
@@ -262,7 +275,7 @@ export function runClientSideComprehensiveAudit(
 
   // Evaluasi setiap field satu per satu (Non-Blocking)
   fields.forEach((f) => {
-    const label = f.label || f.name || f.fieldId || (isEn ? "Field" : "Kolom");
+    const label = f.label || f.name || f.fieldId || i18n.fieldWord;
     const val = f.currentValue.trim();
     const lowerLabel = label.toLowerCase();
     const type = f.rules.type.toLowerCase();
@@ -280,14 +293,12 @@ export function runClientSideComprehensiveAudit(
         fieldLabel: label,
         level: "red",
         badge: "REQUIRED",
-        message: isEn
-          ? `Field '${label}' is required (marked with asterisk * / required attribute).`
-          : `Field '${label}' wajib diisi (terdapat tanda asterik * / required).`,
+        message: i18n.requiredMessage(label),
         hint: f.rules.placeholder
-          ? (isEn ? `Example: ${f.rules.placeholder}` : `Contoh pengisian: ${f.rules.placeholder}`)
-          : (isEn ? "Please complete this field before submitting." : "Lengkapi kolom ini sebelum mengirim berkas."),
+          ? i18n.requiredHintPlaceholder(f.rules.placeholder)
+          : i18n.requiredHintGeneral,
         action: {
-          label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web",
+          label: i18n.highlightAction,
           actionType: "HIGHLIGHT",
           fieldId: f.fieldId,
           fieldName: f.name,
@@ -305,12 +316,10 @@ export function runClientSideComprehensiveAudit(
         fieldLabel: label,
         level: "red",
         badge: "FORMAT",
-        message: isEn
-          ? `'${label}' is shorter than the minimum form requirement (${val.length}/${f.rules.minLength} characters).`
-          : `Isian '${label}' kurang dari batas minimal form (${val.length}/${f.rules.minLength} karakter).`,
-        hint: f.rules.placeholder ? (isEn ? `Format guide: ${f.rules.placeholder}` : `Format acuan: ${f.rules.placeholder}`) : undefined,
+        message: i18n.minlenMessage(label, val.length, f.rules.minLength),
+        hint: f.rules.placeholder ? i18n.minlenHint(f.rules.placeholder) : undefined,
         action: {
-          label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web",
+          label: i18n.highlightAction,
           actionType: "HIGHLIGHT",
           fieldId: f.fieldId,
           fieldName: f.name,
@@ -324,8 +333,19 @@ export function runClientSideComprehensiveAudit(
     // LAYER 2: FORMAT BAKU STANDAR & NALAR SILANG
     // =========================================================================
 
-    // 2.1 Audit NIK / National ID
-    if (lowerLabel.includes("nik") || lowerLabel.includes("no. ktp") || lowerLabel.includes("nomor induk kependudukan")) {
+    // 2.1 Audit NIK (Indonesia) vs Generic National ID (Global)
+    const isExplicitNik = /\b(nik|ktp|e-ktp|kependudukan)\b/i.test(lowerLabel);
+    const isGenericNationalId =
+      lowerLabel.includes("national id") ||
+      lowerLabel.includes("citizen id") ||
+      lowerLabel.includes("government id") ||
+      lowerLabel.includes("id card") ||
+      lowerLabel.includes("no. identitas") ||
+      lowerLabel.includes("nomor identitas") ||
+      lowerLabel.includes("identity number");
+
+    if (isExplicitNik) {
+      // Indonesian NIK: 16-digit Dukcapil validation & cross-reasoning
       const nikRes = validateIndonesianNIK(val, language);
       if (!nikRes.isValid) {
         issues.push({
@@ -335,10 +355,10 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: nikRes.reason || (isEn ? "Invalid National ID format." : "Format NIK tidak valid."),
-          hint: isEn ? "National ID must be 16 numeric digits conforming to official identity standards." : "NIK wajib 16 digit angka numerik sesuai e-KTP Dukcapil.",
+          message: nikRes.reason || i18n.nikInvalid,
+          hint: i18n.nikHint,
           juknisRef: "UU Adminduk No. 24/2013",
-          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       } else {
         // NIK Valid format, lakukan Nalar Silang terhadap Tanggal Lahir form jika ada
@@ -363,19 +383,17 @@ export function runClientSideComprehensiveAudit(
               fieldLabel: label,
               level: "red",
               badge: "FORMAT",
-              message: isEn
-                ? `Date of birth encoded in ID (${birthDay}/${birthMonth}) does not match the form's birth date (${formDay}/${formMonth}).`
-                : `Tanggal lahir pada NIK (${birthDay}/${birthMonth}) tidak cocok dengan tanggal lahir di form (${formDay}/${formMonth}).`,
-              hint: isEn ? "Double-check your entered ID or birth date to prevent pre-screening disqualification." : "Periksa kembali ketikan NIK atau tanggal lahir Anda agar tidak gugur verifikasi administrasi.",
-              action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+              message: i18n.nikDobMismatch(birthDay, birthMonth, formDay, formMonth),
+              hint: i18n.nikDobHint,
+              action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
             });
           }
         }
 
         // Nalar Silang terhadap Jenis Kelamin Form jika ada
         if (formGender) {
-          const isFormFemale = /perempuan|wanita|female/i.test(formGender);
-          const isFormMale = /laki|pria|male/i.test(formGender);
+          const isFormFemale = /perempuan|wanita|female|^p$/i.test(formGender);
+          const isFormMale = /laki|pria|male|^l$/i.test(formGender);
           if ((isFemale && isFormMale) || (!isFemale && isFormFemale)) {
             issues.push({
               id: `nik_gender_mismatch_${f.fieldId}`,
@@ -384,20 +402,34 @@ export function runClientSideComprehensiveAudit(
               fieldLabel: label,
               level: "red",
               badge: "FORMAT",
-              message: isEn
-                ? `Gender encoded in ID (${isFemale ? "Female" : "Male"}) does not match the selected form gender (${formGender}).`
-                : `Gender yang terenkode di NIK (${isFemale ? "Perempuan (+40)" : "Laki-laki"}) tidak cocok dengan jenis kelamin yang dipilih (${formGender}).`,
-              hint: isEn ? "Official registry standard encodes gender offset in birth day digits." : "Pada NIK resmi Dukcapil, tanggal lahir perempuan ditambah 40 (rentang 41–71).",
-              action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+              message: i18n.nikGenderMismatch(isFemale ? i18n.female : i18n.male, formGender),
+              hint: i18n.nikGenderHint,
+              action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
             });
           }
         }
       }
+    } else if (isGenericNationalId) {
+      // Global National ID: International standard validation (5–25 alphanumeric characters)
+      const genRes = validateGenericNationalID(val, language);
+      if (!genRes.isValid) {
+        issues.push({
+          id: `national_id_${f.fieldId}`,
+          fieldId: f.fieldId,
+          fieldName: f.name,
+          fieldLabel: label,
+          level: "red",
+          badge: "FORMAT",
+          message: genRes.reason || i18n.globalIdInvalid,
+          hint: i18n.globalIdHint,
+          action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+        });
+      }
     }
 
-    // 2.2 Audit No Handphone / Phone Number
+    // 2.2 Audit No Handphone / Phone Number (E.164 International & Domestic)
     else if (lowerLabel.includes("hp") || lowerLabel.includes("handphone") || lowerLabel.includes("telepon") || lowerLabel.includes("phone") || lowerLabel.includes("whatsapp") || type === "tel") {
-      const phoneRes = validateIndonesianPhone(val, language);
+      const phoneRes = validatePhoneNumber(val, language);
       if (!phoneRes.isValid) {
         issues.push({
           id: `phone_${f.fieldId}`,
@@ -406,9 +438,9 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: phoneRes.reason || (isEn ? "Invalid phone number format." : "Format nomor HP tidak valid."),
-          hint: isEn ? "Standard format example: +1 555-123-4567 or international E.164 format (10–13 digits)." : "Contoh format standar: 08123456789 atau +628123456789 (10–13 digit).",
-          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          message: phoneRes.reason || i18n.phoneInvalid,
+          hint: i18n.phoneHint,
+          action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
@@ -423,13 +455,9 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: isEn
-            ? `Email address format '${val}' is invalid according to RFC 5322.`
-            : `Format alamat email '${val}' tidak valid menurut standar RFC 5322.`,
-          hint: isEn
-            ? "Must contain '@' and a valid provider domain (e.g. name@domain.com)."
-            : "Pastikan memuat tanda '@' dan domain resmi penyedia email (contoh: nama@domain.com).",
-          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          message: i18n.emailInvalid,
+          hint: i18n.emailHint,
+          action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
@@ -453,9 +481,9 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: passRes.reason || (isEn ? "Passport number format does not comply with ICAO standards." : "Format nomor paspor tidak sesuai standar ICAO."),
-          hint: isEn ? "Standard passport: 1 uppercase letter followed by 7–8 digits (e.g. C1234567)." : "Standar paspor RI/internasional: 1 huruf kapital diikuti 7–8 digit angka (contoh: C1234567).",
-          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          message: passRes.reason || i18n.passportInvalid,
+          hint: i18n.passportHint,
+          action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
@@ -479,13 +507,9 @@ export function runClientSideComprehensiveAudit(
           fieldLabel: label,
           level: "red",
           badge: "FORMAT",
-          message: isEn
-            ? `Research proposal abstract is too short (${wordCount}/50 words). Minimum 50 words required.`
-            : `Abstrak proposal riset kurang dari batas minimal (${wordCount}/50 kata). Minimal 50 kata dibutuhkan.`,
-          hint: isEn
-            ? "Please expand your research proposal abstract with your methodology and objectives to meet the 50-word minimum threshold."
-            : "Lengkapi ringkasan proposal riset Anda dengan metodologi dan tujuan penelitian agar mencapai minimal 50 kata.",
-          action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+          message: i18n.proposalShortMessage(label, wordCount),
+          hint: i18n.proposalShortHint,
+          action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
         });
       }
     }
@@ -501,8 +525,8 @@ export function runClientSideComprehensiveAudit(
             fieldLabel: label,
             level: "red",
             badge: "FORMAT",
-            message: isEn ? "Full name is too short (fewer than 3 letters)." : "Nama lengkap terlalu pendek (kurang dari 3 huruf).",
-            action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+            message: i18n.nameShort,
+            action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
           });
         } else if (/\d/.test(val)) {
           issues.push({
@@ -512,11 +536,9 @@ export function runClientSideComprehensiveAudit(
             fieldLabel: label,
             level: "red",
             badge: "FORMAT",
-            message: isEn
-              ? `Full name contains numeric digits ('${val}'). Name must be clean according to official documents.`
-              : `Nama lengkap mengandung angka numerik ('${val}'). Nama harus bersih sesuai dokumen resmi.`,
-            hint: isEn ? "Remove numeric digits or accidental typos." : "Hapus karakter angka atau ketikan tidak sengaja.",
-            action: { label: isEn ? "Highlight Field on Page" : "Sorot Kolom di Web", actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
+            message: i18n.nameDigits(val),
+            hint: i18n.nameDigitsHint,
+            action: { label: i18n.highlightAction, actionType: "HIGHLIGHT", fieldId: f.fieldId, fieldName: f.name },
           });
         }
       }
@@ -550,14 +572,10 @@ export function runClientSideComprehensiveAudit(
               fieldLabel: label,
               level: "yellow",
               badge: "DISCREPANCY",
-              message: isEn
-                ? `Form has '${val}', which differs from verified Vault record '${vaultVal}'.`
-                : `Form tertulis '${val}', berbeda dengan dokumen Vault '${vaultVal}'.`,
-              hint: isEn
-                ? `Potential typo detected (${dist} characters different). Source: ${matchingVaultItem.sourceTag || "Personal Vault"}.`
-                : `Terdeteksi potensi salah ketik (${dist} karakter berbeda). Sumber: ${matchingVaultItem.sourceTag || "Vault Pribadi"}.`,
+              message: i18n.vaultMismatchMessage(label, val, vaultVal),
+              hint: i18n.vaultMismatchHint,
               action: {
-                label: isEn ? `Use Vault Data: "${vaultVal}"` : `Pakai Data Vault: "${vaultVal}"`,
+                label: i18n.useVaultAction(vaultVal),
                 actionType: "REPLACE_VALUE",
                 replaceValue: vaultVal,
                 fieldId: f.fieldId,
@@ -585,30 +603,22 @@ export function runClientSideComprehensiveAudit(
           id: `file_size_${att.fieldName}`,
           fieldId: att.fieldName,
           fieldName: att.fieldName,
-          fieldLabel: isEn ? `Attachment: ${att.fileName}` : `Berkas: ${att.fileName}`,
+          fieldLabel: i18n.attachmentLabel(att.fileName),
           level: "red",
           badge: "ATTACHMENT",
-          message: isEn
-            ? `File size (${att.fileSizeKb} KB) exceeds the 500 KB limit indicated in page instructions.`
-            : `Ukuran berkas (${att.fileSizeKb} KB) melebihi batas 500 KB yang tertera pada petunjuk halaman.`,
-          hint: isEn
-            ? "Compress your photo or PDF document to under 500 KB before uploading."
-            : "Kompres ukuran berkas foto/PDF Anda agar di bawah 500 KB sebelum diunggah.",
+          message: i18n.fileSizeExceeded(att.fileName, Math.round(att.fileSizeKb / 1024 * 10) / 10, 0.5),
+          hint: i18n.fileSizeHint(0.5),
         });
       } else if (att.fileSizeKb > 5120) {
         issues.push({
           id: `file_size_max_${att.fieldName}`,
           fieldId: att.fieldName,
           fieldName: att.fieldName,
-          fieldLabel: isEn ? `Attachment: ${att.fileName}` : `Berkas: ${att.fileName}`,
+          fieldLabel: i18n.attachmentLabel(att.fileName),
           level: "red",
           badge: "ATTACHMENT",
-          message: isEn
-            ? `File size (${Math.round(att.fileSizeKb / 1024)} MB) exceeds the general portal threshold (5 MB).`
-            : `Ukuran berkas (${Math.round(att.fileSizeKb / 1024)} MB) melebihi batas umum portal formulir (5 MB).`,
-          hint: isEn
-            ? "Reduce document file size to prevent upload failure or server timeout."
-            : "Perkecil ukuran dokumen agar proses unggah tidak gagal/timeout.",
+          message: i18n.fileSizeExceeded(att.fileName, Math.round(att.fileSizeKb / 1024), 5),
+          hint: i18n.fileSizeHint(5),
         });
       }
 
@@ -619,15 +629,11 @@ export function runClientSideComprehensiveAudit(
           id: `file_ext_${att.fieldName}`,
           fieldId: att.fieldName,
           fieldName: att.fieldName,
-          fieldLabel: isEn ? `Attachment: ${att.fileName}` : `Berkas: ${att.fileName}`,
+          fieldLabel: i18n.attachmentLabel(att.fileName),
           level: "red",
           badge: "ATTACHMENT",
-          message: isEn
-            ? `File format '.${att.fileExtension.toUpperCase()}' is typically rejected by administrative portals.`
-            : `Format berkas '.${att.fileExtension.toUpperCase()}' biasanya ditolak oleh sistem birokrasi.`,
-          hint: isEn
-            ? "Please upload a standard PDF or JPG/PNG document."
-            : "Harap gunakan format PDF atau JPG/PNG standar.",
+          message: i18n.fileExtInvalid(att.fileName, att.fileExtension.toUpperCase(), "PDF, JPG, PNG"),
+          hint: i18n.fileExtHint("PDF, JPG, PNG"),
         });
       }
     });
