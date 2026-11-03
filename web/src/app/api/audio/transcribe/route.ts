@@ -109,32 +109,41 @@ export async function POST(req: NextRequest) {
       // 1. Meta Model API: POST https://api.meta.ai/v1/asr/transcribe
       // Specification: dev.meta.ai/docs/speech-to-text.md
       const targetEndpoint = `${metaBaseUrl.replace(/\/+$/, '')}/asr/transcribe`;
-      const forwardFormData = new FormData();
 
-      // Form Field 1: 'request' with JSON options (Content-Type: application/json)
+      // Build RFC 7578 compliant multipart/form-data buffer for Meta Voyager
+      const boundary = `----VoyagerBoundary${Date.now()}`;
       const requestConfig = {
         model: modelName,
-        audioEncoding: mimeType.includes('wav') ? 'WAV' : 'OGG_OPUS',
+        audioEncoding: 'WAV',
         mode: mode === 'LIVE_TALK' ? 'ENDPOINTING' : (mode || 'PUSH_TO_TALK'),
         language: lang,
-        steeringPrompt: prompt || undefined
+        steeringPrompt: prompt || undefined,
       };
-      forwardFormData.append(
-        'request',
-        new Blob([JSON.stringify(requestConfig)], { type: 'application/json' })
+
+      const part1 = Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="request"\r\n` +
+        `Content-Type: application/json\r\n\r\n` +
+        `${JSON.stringify(requestConfig)}\r\n`
       );
 
-      // Form Field 2: 'audio' payload
-      const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType });
-      forwardFormData.append('audio', audioBlob, 'speech.wav');
+      const part2Header = Buffer.from(
+        `--${boundary}\r\n` +
+        `Content-Disposition: form-data; name="audio"; filename="speech.wav"\r\n` +
+        `Content-Type: audio/wav\r\n\r\n`
+      );
+
+      const part2Footer = Buffer.from(`\r\n--${boundary}--\r\n`);
+      const forwardBody = Buffer.concat([part1, part2Header, audioBuffer, part2Footer]);
 
       const upstreamRes = await fetch(targetEndpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${metaApiKey}`,
           'Accept': 'application/json',
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
         },
-        body: forwardFormData,
+        body: forwardBody,
         signal: AbortSignal.timeout(15000),
       });
 
