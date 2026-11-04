@@ -40,7 +40,7 @@
 | **Name** | **Owly.AI** |
 | **Type** | Chrome MV3 extension |
 | **Track** | Build for Your World · Indie Developers |
-| **Models** | • Reasoning & Vision Core: `meta-models/muse-spark-open-1026` via Baseten<br>• Voice Transcription (ASR): `muse-voice-transcribe-1.0` |
+| **Meta Models & Hosting** | • Reasoning & Vision: `meta-models/muse-spark-open-1026` (hosted on Baseten GPU Inference)<br>• Voice Transcription: `muse-voice-transcribe-1.0` (Meta official ASR gateway via Vercel proxy) |
 | **🎬 3 Minute Demo Video** | https://www.youtube.com/watch?v=vfNBFFgfblg |
 | **🌐 Live Web Links** | https://owly-ai.vercel.app |
 
@@ -384,6 +384,25 @@ This generates the production bundle inside `extension/dist/`.
 | **Browser Extension** | Chrome Manifest V3 · React 18 · TypeScript · Vite · Tailwind CSS · WebCrypto AES-256-GCM · Closed Shadow DOM |
 | **Web & Backend** | Next.js (App Router & API Gateway) · TypeScript · Tailwind CSS · Supabase PostgreSQL (`pgvector` & Cache) · Vercel |
 | **AI & Inference** | **Meta Muse Spark Open** (`meta-models/muse-spark-open-1026` via Baseten) & **Meta Muse Voice Transcribe** (`muse-voice-transcribe-1.0`) · Compound Multi-Agent System (9 Agents) · 14 ReAct Tool Calls |
+
+---
+
+## 📜 Disclosures, Third-Party Assets & Reused Code
+
+In strict adherence to the Meta AI Hackathon rules and submission requirements:
+
+1. **Zero Pre-Existing Codebase (100% Built from Scratch):**
+   - 100% of the Owly.AI codebase (Chrome MV3 Extension, Compound Multi-Agent System, Next.js API Gateway, Traffic Light Form Auditor, and WebCrypto AES-256-GCM Vault) was authored completely from scratch during the hackathon period starting October 27, 2026. No pre-existing proprietary codebase or templates were reused.
+2. **Permissive Open-Source Libraries:**
+   - Standard dependencies under permissive licenses: React 18 (MIT), Next.js 14 App Router (MIT), Vite (MIT), TypeScript (Apache 2.0), Tailwind CSS (MIT), Lucide React (ISC), and `@supabase/supabase-js` (MIT).
+3. **Third-Party Assets & Typography Rights:**
+   - **Icons:** Lucide React icons ([ISC License](https://github.com/lucide-icons/lucide/blob/main/LICENSE)).
+   - **Accessibility Fonts:** OpenDyslexic ([SIL Open Font License](https://scripts.sil.org/OFL)) and Atkinson Hyperlegible ([Braille Institute / OFL](https://www.brailleinstitute.org/freefont/)) embedded exclusively for accessibility features.
+   - **Original Artwork:** The Owly mascot logo and custom vector diagrams (`assets/meta-tooling.svg`) are original creative works designed by the team during this event.
+4. **Data & Testing Artifacts:**
+   - **Form Simulator (`/landingpage/simulator`):** Uses 100% synthetic, fictitious scholarship application fields created specifically for testing and demonstration. No proprietary forms, copyrighted materials, or real applicant PII were scraped or stored.
+5. **Zero Committed Secrets & API Key Instructions:**
+   - No private API keys or credentials are committed to this repository. All secrets are loaded via environment variables (`.env.local`). A public template with placeholder values is provided in [`.env.example`](.env.example).
 
 ---
 
