@@ -5,13 +5,18 @@
 
 import { agentLog } from "./lib/agentLogger";
 
-// 1. Konfigurasi Side Panel agar terbuka otomatis saat toolbar icon diklik
-chrome.runtime.onInstalled.addListener(() => {
+// 1. Konfigurasi Side Panel agar terbuka otomatis saat toolbar icon diklik & buka onboarding
+chrome.runtime.onInstalled.addListener((details) => {
   agentLog.planner("Background Service Worker installed & initialized.", undefined, false);
   if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
     chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch((err) => {
       console.warn("[Owly.AI Background] sidePanel.setPanelBehavior error:", err);
     });
+  }
+
+  // Open Welcome / Onboarding tab immediately upon extension installation
+  if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+    chrome.tabs.create({ url: chrome.runtime.getURL("welcome.html") });
   }
 });
 
@@ -143,6 +148,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       },
     });
     sendResponse({ status: "acknowledged" });
+  }
+
+  if (message.type === "OPEN_SIDEPANEL") {
+    if (chrome.sidePanel && chrome.sidePanel.open) {
+      const windowId = sender.tab?.windowId;
+      if (windowId !== undefined) {
+        chrome.sidePanel.open({ windowId }).then(() => {
+          sendResponse({ success: true });
+        }).catch((err) => {
+          console.warn("[Owly.AI Background] sidePanel.open failed:", err);
+          sendResponse({ success: false, error: err?.message });
+        });
+        return true;
+      }
+    }
+    sendResponse({ success: false, error: "sidePanel API not supported" });
+    return true;
   }
 
   if (message.type === "GET_ACTIVE_TAB_ID") {

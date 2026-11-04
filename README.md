@@ -28,12 +28,12 @@
 
 <p align="center">
   <strong>📑 Table of Contents:</strong>&nbsp;&nbsp;
-  <a href="#-quick-judging--evaluation-guide-test-in-60s">Quick Judging</a> •
-  <a href="#-the-problem--human-impact">Problem & Impact</a> •
-  <a href="#️-system-architecture-compound-multi-agent-system-cmas">Architecture (CMAS)</a> •
+  <a href="#-quick-judging-evaluation-guide-test-in-60s">Quick Judging</a> •
+  <a href="#-the-problem-human-impact">Problem & Impact</a> •
+  <a href="#-system-architecture-compound-multi-agent-system-cmas">Architecture (CMAS)</a> •
   <a href="#-core-feature-breakdown-9-pillars">Core Features</a> •
   <a href="#-in-depth-utilization-of-meta-muse-spark-open">Meta AI Agents</a> •
-  <a href="#-self-hosted--local-development-installation-guide">Local Setup</a> •
+  <a href="#-self-hosted-local-development-installation-guide">Local Setup</a> •
   <a href="#-tech-stack">Tech Stack</a>
 </p>
 
@@ -57,17 +57,17 @@
 
 | Criterion | Weight | Evidence | Where to Look |
 |---|:---:|---|---|
-| **Impact** | 30% | Solves real clerical rejections; copilot-not-autopilot philosophy; never auto-submits; 14 built-in accessibility tools ($0 tokens) | [Problem & Impact](#-the-problem--human-impact) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
-| **Use of Meta AI** | 25% | **9 specialized agents + Deep Essay Synthesizer**; native multimodal vision (`<\|patch\|>`), direct audio streaming (`<\|audio\|>`), autonomous tool calling, full 4-tier reasoning effort (`low` / `medium` / `high` / `xhigh`), structured schema outputs | [5 Core Capabilities & 9 Agents](#-in-depth-utilization-of-meta-muse-spark-open) · [Architecture](#️-system-architecture-compound-multi-agent-system-cmas) |
-| **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#️-system-architecture-compound-multi-agent-system-cmas) · [Verification Spec (`feature/verification.md`)](feature/verification.md) |
-| **Demo & UX** | 25% | Video walkthrough & tutorial · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [3-Min Demo Video](https://youtu.be/OIoH8C0ULLY) · [Live App](https://owly-ai.vercel.app) · [Demo Test Guide](#extension-demo-test-without-self-deployment) |
+| **Impact** | 30% | Solves real clerical rejections; copilot-not-autopilot philosophy; never auto-submits; 14 built-in accessibility tools ($0 tokens) | [Problem & Impact](#-the-problem-human-impact) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
+| **Use of Meta AI** | 25% | **9 specialized agents + Deep Essay Synthesizer**; native multimodal vision (`<\|patch\|>`), direct audio streaming (`<\|audio\|>`), autonomous tool calling, full 4-tier reasoning effort (`low` / `medium` / `high` / `xhigh`), structured schema outputs | [5 Core Capabilities & 9 Agents](#-in-depth-utilization-of-meta-muse-spark-open) · [Architecture](#-system-architecture-compound-multi-agent-system-cmas) |
+| **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#-system-architecture-compound-multi-agent-system-cmas) · [Feature Specs Directory (`feature/`)](feature/) |
+| **Demo & UX** | 25% | Video walkthrough & tutorial · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [3-Min Demo Video](https://youtu.be/OIoH8C0ULLY) · [Test without API Key (60s)](#how-to-test-extension-without-api-key) · [Self-Deployment Guide](#-self-hosted-local-development-installation-guide) |
 
 ### How to Test Extension without API Key
 
 > [!TIP]
 > **No API keys or local server installation required!**  
 > We have pre-compiled the extension and connected it directly to our live production gateway powered by **Meta Muse Spark Open**. You can evaluate the full end-to-end user experience in under 1 minute.  
-> *(If you wish to inspect the codebase and run self-hosted locally with your own API credentials, see the [Self-Hosted & Local Development Guide](#-self-hosted--local-development-installation-guide) at the bottom).*
+> *(If you wish to inspect the codebase and run self-hosted locally with your own API credentials, see the [Self-Hosted & Local Development Guide](#-self-hosted-local-development-installation-guide) at the bottom).*
 
 ### 📺 3-Minute Demo Video & Walkthrough
 
@@ -276,7 +276,7 @@ Most browser extensions rely on Chrome's built-in `webkitSpeechRecognition` (Web
 > [!NOTE]
 > **Custom Setup & Open-Source Inspection:**  
 > This section is for developers, self-hosters, and technical auditors who want to run a private backend server with their own API keys and build the extension from source code.  
-> *(If you are a hackathon judge or evaluator looking for immediate 60-second testing, use the [Extension Demo Test Guide](#extension-demo-test-without-self-deployment) above — no local server setup required!)*
+> *(If you are a hackathon judge or evaluator looking for immediate 60-second testing, use the [Extension Demo Test Guide](#how-to-test-extension-without-api-key) above — no local server setup required!)*
 
 <details>
 <summary><b>🛠️ Click to expand the 6-Step Local Setup & Self-Hosting Guide</b></summary>

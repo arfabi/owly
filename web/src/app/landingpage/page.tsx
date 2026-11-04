@@ -32,6 +32,7 @@ import {
   Terminal,
   MousePointer,
   Crop,
+  MessageSquare,
   Laptop,
 } from "lucide-react";
 
@@ -127,7 +128,7 @@ export default function Home() {
             <div className="flex-1 max-w-md mx-auto bg-white rounded-md px-3 py-1 text-xs text-slate-500 flex items-center gap-2 border border-slate-200 shadow-2xs">
               <Lock className="w-3 h-3 text-emerald-600" />
               <span className="text-slate-700 font-mono text-[11px]">
-                https://beasiswalpdp.kemenkeu.go.id/pendaftaran/form
+                https://portal.admissions-gov.org/application/form
               </span>
             </div>
           </div>
@@ -150,7 +151,8 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="relative p-4 rounded-xl bg-blue-50/40 border-2 border-blue-500 shadow-xs transition-all">
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-xs font-bold text-slate-900">
+                    <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-extrabold text-[10px] flex items-center justify-center">1</span>
                       {t.browserMockup.nikLabel} <span className="text-red-500">*</span>
                     </label>
                     <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -161,7 +163,7 @@ export default function Home() {
                   <input
                     type="text"
                     disabled
-                    value="3271041908980002"
+                    value="P849201948"
                     className="w-full bg-white border border-blue-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 shadow-2xs outline-none"
                   />
                   <div className="mt-2 flex items-center justify-between text-[11px]">
@@ -173,7 +175,8 @@ export default function Home() {
                 </div>
 
                 <div className="p-4 rounded-xl border border-slate-200 bg-white">
-                  <label className="text-xs font-bold text-slate-800 block mb-1">
+                  <label className="text-xs font-bold text-slate-800 block mb-1 flex items-center gap-1.5">
+                    <span className="w-4 h-4 rounded-full bg-slate-300 text-slate-700 font-extrabold text-[10px] flex items-center justify-center">2</span>
                     {t.browserMockup.statementLabel} <span className="text-red-500">*</span>
                   </label>
                   <div className="border border-dashed border-slate-300 rounded-lg p-4 text-center bg-slate-50/60">
@@ -185,67 +188,160 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right: Owly.AI Floating Side Panel */}
-            <div className="lg:col-span-5 p-5 bg-white flex flex-col justify-between border-l border-slate-100">
-              <div>
-                {/* Agent Header */}
-                <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+            {/* Right: Owly.AI Extension Side Panel (Exact Match) */}
+            <div className="lg:col-span-5 p-4 bg-slate-50 flex flex-col justify-between border-l border-slate-200 text-left select-none">
+              <div className="space-y-3">
+                {/* 1. Extension Header */}
+                <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <img
                       src="/owly.png"
                       alt="Owly.AI"
                       className="w-6 h-6 object-contain drop-shadow-xs"
                     />
-                    <span className="text-xs font-bold text-savvy-navy">{t.browserMockup.fieldCoachHeader}</span>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-extrabold text-slate-900 tracking-tight">Owly.AI</span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">v1.0</span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 -mt-0.5 font-medium">Meta Muse Spark Open</p>
+                    </div>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {t.browserMockup.officialBadge}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="p-1.5 rounded-lg text-slate-400 bg-slate-50 border border-slate-200 cursor-default" title="Accessibility Hub">
+                      <Eye className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="p-1.5 rounded-lg text-slate-400 bg-slate-50 border border-slate-200 cursor-default" title="Agent Telemetry Log">
+                      <Terminal className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
                 </div>
 
-                {/* 4-Element Guidance Card */}
-                <div className="magic-card p-4 space-y-3 text-xs text-left mb-3 bg-slate-50/70 border-slate-200">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                      {t.browserMockup.officialRuleTitle}
+                {/* 2. Top Navigation Tabs (Exact 3-capsule tab bar) */}
+                <div className="grid grid-cols-3 bg-slate-200/70 p-1 rounded-xl text-center text-[11px] font-bold gap-1">
+                  <div className="py-1 px-1 rounded-lg bg-white text-blue-600 shadow-2xs flex items-center justify-center gap-1 font-extrabold cursor-default">
+                    <Sparkles className="w-3 h-3 text-blue-600" />
+                    <span className="truncate">{t.browserMockup.tabGuide || "Forms Guide"}</span>
+                  </div>
+                  <div className="py-1 px-1 rounded-lg text-slate-500 flex items-center justify-center gap-1 cursor-default hover:text-slate-700">
+                    <Zap className="w-3 h-3" />
+                    <span className="truncate">{t.browserMockup.tabVault || "Private Vault"}</span>
+                  </div>
+                  <div className="py-1 px-1 rounded-lg text-slate-500 flex items-center justify-center gap-1 cursor-default hover:text-slate-700">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span className="truncate">{t.browserMockup.tabAudit || "Form Auditor"}</span>
+                  </div>
+                </div>
+
+                {/* 3. Active Field Guidance Card (The 4 Pillars) */}
+                <div className="bg-white rounded-xl border border-slate-200/90 p-3 shadow-2xs space-y-2.5">
+                  {/* Field Header */}
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">1</span>
+                      <span className="text-xs font-bold text-slate-900 truncate max-w-[150px]">
+                        {t.browserMockup.nikLabel}
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      {t.browserMockup.officialBadge}
                     </span>
-                    <p className="text-slate-800 font-medium mt-0.5 leading-snug">
-                      {t.browserMockup.officialRuleDesc}
+                  </div>
+
+                  {/* 4 Guidance Pillars */}
+                  <div className="space-y-2 text-left">
+                    {/* Pillar 1: Meaning */}
+                    <div className="bg-slate-50/80 rounded-lg p-2 border border-slate-200/60">
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider block">
+                        📌 {t.browserMockup.meaningTitle || "Field Meaning"}
+                      </span>
+                      <p className="text-[11px] text-slate-700 font-medium mt-0.5 leading-snug">
+                        {t.browserMockup.meaningDesc}
+                      </p>
+                    </div>
+
+                    {/* Pillar 2: How to Fill */}
+                    <div className="bg-emerald-50/50 rounded-lg p-2 border border-emerald-100/80">
+                      <span className="text-[9px] uppercase font-bold text-emerald-700 tracking-wider block">
+                        ✍️ {t.browserMockup.howToTitle || "How to Fill"}
+                      </span>
+                      <p className="text-[11px] text-emerald-900 font-medium mt-0.5 leading-snug">
+                        {t.browserMockup.howToDesc}
+                      </p>
+                    </div>
+
+                    {/* Pillar 3: Valid Example */}
+                    <div className="bg-slate-100/70 rounded-lg p-2 border border-slate-200/80 flex items-center justify-between">
+                      <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">
+                        ✅ {t.browserMockup.exampleTitle || "Valid Example"}:
+                      </span>
+                      <span className="font-mono text-[11px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200/80">
+                        {t.browserMockup.exampleDesc}
+                      </span>
+                    </div>
+
+                    {/* Pillar 4: Disqualification Trap */}
+                    <div className="bg-amber-50/60 rounded-lg p-2 border border-amber-200/70">
+                      <span className="text-[9px] uppercase font-bold text-amber-800 tracking-wider block">
+                        ⚠️ {t.browserMockup.pitfallTitle}
+                      </span>
+                      <p className="text-[11px] text-amber-900 mt-0.5 leading-snug">
+                        {t.browserMockup.pitfallDesc}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Single-Field Autofill Button */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full py-2 px-3 rounded-lg bg-blue-600/90 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs opacity-95 cursor-default"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{t.browserMockup.btnAutofillSingle}</span>
+                    </button>
+                    <p className="text-center text-[9px] text-slate-600 mt-1">
+                      🛡️ {t.browserMockup.vaultEncryptedBadge || "WebCrypto AES-256-GCM Encrypted"}
                     </p>
                   </div>
-                  <div className="bg-blue-50/60 rounded-lg p-2.5 border border-blue-100">
-                    <span className="text-[10px] font-bold text-blue-800 block">
-                      {t.browserMockup.pitfallTitle}
+                </div>
+
+                {/* 4. Ask Owly Action Bar (Voice, Snip & Chat) */}
+                <div className="bg-white rounded-xl border border-slate-200 p-2.5 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-600 pb-1.5 border-b border-slate-100">
+                    <span className="flex items-center gap-1 text-slate-800">
+                      <Bot className="w-3.5 h-3.5 text-blue-600" />
+                      <span>{t.browserMockup.askOwlyTitle || "Ask Owly Companion"}</span>
                     </span>
-                    <p className="text-[11px] text-blue-900 mt-0.5 leading-snug">
-                      {t.browserMockup.pitfallDesc}
-                    </p>
+                    <span className="flex items-center gap-1 text-emerald-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      {t.browserMockup.voiceReady || "PTT & Live Talk Ready"}
+                    </span>
                   </div>
-                  <div className="pt-1 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-200">
-                    <span>{t.browserMockup.sourceCitation}</span>
-                    <span className="text-blue-600 font-semibold">{t.browserMockup.vectorStoreLabel}</span>
+
+                  {/* Feature action pills */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="py-1 px-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center gap-1.5 text-[10px] font-bold text-slate-700 cursor-default">
+                      <Volume2 className="w-3 h-3 text-blue-600" />
+                      <span className="truncate">Voice Companion</span>
+                    </div>
+                    <div className="py-1 px-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center gap-1.5 text-[10px] font-bold text-slate-700 cursor-default">
+                      <Crop className="w-3 h-3 text-purple-600" />
+                      <span className="truncate">{t.browserMockup.snipExplainTitle || "Explain This"}</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Single-Field Autofill Button */}
-                <button
-                  type="button"
-                  className="w-full py-2.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-xs transition-all"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>{t.browserMockup.btnAutofillSingle}</span>
-                </button>
-              </div>
-
-              {/* Bottom Assistant Status */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 text-blue-600 font-semibold">
-                  <Volume2 className="w-4 h-4 animate-pulse" />
-                  <span className="text-[11px]">{t.browserMockup.voicebotReady}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>{t.browserMockup.auditStatusValid}</span>
+                  {/* Read-only Chat Input Preview */}
+                  <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200 text-slate-400 text-xs cursor-default">
+                    <MessageSquare className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                    <span className="text-[11px] text-slate-600 truncate flex-1">
+                      {t.browserMockup.chatPlaceholder || "Ask Owly anything about this form..."}
+                    </span>
+                    <span className="w-5 h-5 rounded-md bg-slate-200 flex items-center justify-center text-slate-500">
+                      <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -540,10 +636,10 @@ export default function Home() {
               </div>
               <div className="space-y-1.5 text-[10px]">
                 <p className="text-slate-500">[17:34:01] <span className="text-blue-400">MODEL</span> Baseten Muse Spark Open ready</p>
-                <p className="text-slate-500">[17:34:02] <span className="text-cyan-400">PERCEPTION</span> Form detected: LPDP-2026 (Vision)</p>
+                <p className="text-slate-500">[17:34:02] <span className="text-cyan-400">PERCEPTION</span> Form detected: Global-Scholarship-2026 (Vision)</p>
                 <p className="text-slate-500">[17:34:03] <span className="text-purple-400">TOOL_CALL</span> capture_current_screen()</p>
-                <p className="text-slate-500">[17:34:04] <span className="text-amber-400">REASONING</span> Juknis LPDP Chapter IV cross-checked</p>
-                <p className="text-slate-500">[17:34:04] <span className="text-emerald-400">AUDITOR</span> Validated NIK 3271... (Valid Kemendagri)</p>
+                <p className="text-slate-500">[17:34:04] <span className="text-amber-400">REASONING</span> Regulatory Guidelines Ch. IV cross-checked</p>
+                <p className="text-slate-500">[17:34:04] <span className="text-emerald-400">AUDITOR</span> Validated Passport P849... (Valid ICAO 9303)</p>
                 <p className="text-slate-400 animate-pulse">[17:34:05] <span className="text-emerald-400">DECISION</span> Ready: Green light cleared</p>
               </div>
             </div>
