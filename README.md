@@ -1,6 +1,12 @@
 # Owly.AI — Your AI Browser Companion for Forms & Web
 
 <p align="center">
+  <a href="https://youtu.be/OIoH8C0ULLY">
+    <img src="assets/owly-cover.png" width="100%" alt="Owly.AI - Your AI Browser Companion Cover Banner" />
+  </a>
+</p>
+
+<p align="center">
   <img src="assets/owly.png" width="96" height="96" alt="Owly.AI Logo" />
 </p>
 
@@ -14,7 +20,7 @@
   <a href="https://owly-ai.vercel.app"><img src="https://img.shields.io/badge/Live%20Demo-Vercel%20Production-blue?style=for-the-badge&logo=vercel" alt="Live Demo" /></a>
   <a href="https://owly-ai.vercel.app/simulator"><img src="https://img.shields.io/badge/Form%20Simulator-Interactive%20Testing-purple?style=for-the-badge" alt="Simulator" /></a>
   <a href="https://owly-ai.vercel.app/download"><img src="https://img.shields.io/badge/Download-Extension%20(.ZIP)-success?style=for-the-badge" alt="Download" /></a>
-  <a href="https://www.youtube.com/watch?v=vfNBFFgfblg"><img src="https://img.shields.io/badge/YouTube-Video%20Tutorial-red?style=for-the-badge&logo=youtube" alt="YouTube Tutorial" /></a>
+  <a href="https://youtu.be/OIoH8C0ULLY"><img src="https://img.shields.io/badge/YouTube-Video%20Tutorial-red?style=for-the-badge&logo=youtube" alt="YouTube Tutorial" /></a>
   <a href="https://github.com/arfabi/owly"><img src="https://img.shields.io/badge/GitHub-Repository-black?style=for-the-badge&logo=github" alt="GitHub" /></a>
   <img src="https://img.shields.io/badge/Model-Meta%20Muse%20Spark%20Open-blueviolet?style=for-the-badge" alt="Meta Muse Spark Open" />
   <img src="https://img.shields.io/badge/Tests-20%2F20%20Pass%20(100%25)-brightgreen?style=for-the-badge" alt="Tests 100%" />
@@ -41,7 +47,7 @@
 | **Type** | Chrome MV3 extension |
 | **Track** | Build for Your World · Indie Developers |
 | **Meta Models & Hosting** | • Reasoning & Vision: `meta-models/muse-spark-open-1026` (hosted on Baseten GPU Inference)<br>• Voice Transcription: `muse-voice-transcribe-1.0` (Meta official ASR gateway via Vercel proxy) |
-| **🎬 3 Minute Demo Video** | https://www.youtube.com/watch?v=vfNBFFgfblg |
+| **🎬 3 Minute Demo Video** | https://youtu.be/OIoH8C0ULLY |
 | **🌐 Live Web Links** | https://owly-ai.vercel.app |
 
 
@@ -54,7 +60,7 @@
 | **Impact** | 30% | Solves real clerical rejections; copilot-not-autopilot philosophy; never auto-submits; 14 built-in accessibility tools ($0 tokens) | [Problem & Impact](#-the-problem--human-impact) · [Form Simulator](https://owly-ai.vercel.app/simulator) |
 | **Use of Meta AI** | 25% | **9 specialized agents + Deep Essay Synthesizer**; native multimodal vision (`<\|patch\|>`), direct audio streaming (`<\|audio\|>`), autonomous tool calling, full 4-tier reasoning effort (`low` / `medium` / `high` / `xhigh`), structured schema outputs | [5 Core Capabilities & 9 Agents](#-in-depth-utilization-of-meta-muse-spark-open) · [Architecture](#️-system-architecture-compound-multi-agent-system-cmas) |
 | **Technical Depth** | 20% | 20/20 E2E tests pass (100%) · Zero-Knowledge WebCrypto AES-256-GCM · Client-side PII scrubbing · Local validators (0 ms) · Two-tier guidance cache (<5 ms) · Live model response (~816 ms) | [System Architecture](#️-system-architecture-compound-multi-agent-system-cmas) · [Verification Spec (`feature/verification.md`)](feature/verification.md) |
-| **Demo & UX** | 25% | Video walkthrough & tutorial · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [YouTube Tutorial](https://www.youtube.com/watch?v=vfNBFFgfblg) · [Live App](https://owly-ai.vercel.app) · [Demo Test Guide](#extension-demo-test-without-self-deployment) |
+| **Demo & UX** | 25% | Video walkthrough & tutorial · Production live app · Pre-built extension (.ZIP) ready to test in 60 seconds with no API key needed | [3-Min Demo Video](https://youtu.be/OIoH8C0ULLY) · [Live App](https://owly-ai.vercel.app) · [Demo Test Guide](#extension-demo-test-without-self-deployment) |
 
 ### How to Test Extension without API Key
 
@@ -63,11 +69,15 @@
 > We have pre-compiled the extension and connected it directly to our live production gateway powered by **Meta Muse Spark Open**. You can evaluate the full end-to-end user experience in under 1 minute.  
 > *(If you wish to inspect the codebase and run self-hosted locally with your own API credentials, see the [Self-Hosted & Local Development Guide](#-self-hosted--local-development-installation-guide) at the bottom).*
 
-### 📺 Video Walkthrough & Installation Tutorial
+### 📺 3-Minute Demo Video & Walkthrough
 
-[![Owly.AI Extension Tutorial](https://img.youtube.com/vi/vfNBFFgfblg/maxresdefault.jpg)](https://www.youtube.com/watch?v=vfNBFFgfblg)
+<p align="center">
+  <a href="https://youtu.be/OIoH8C0ULLY">
+    <img src="assets/owly-cover.png" width="100%" alt="Owly.AI 3-Minute Demo Video Walkthrough" />
+  </a>
+</p>
 
-> 💡 **Watch on YouTube:** [https://www.youtube.com/watch?v=vfNBFFgfblg](https://www.youtube.com/watch?v=vfNBFFgfblg) — Step-by-step installation, developer mode setup, and live form simulation walkthrough.
+> 🎬 **Watch on YouTube:** [https://youtu.be/OIoH8C0ULLY](https://youtu.be/OIoH8C0ULLY) — End-to-end live demonstration of Forms Guide, AI Field Coach, Visual Snip Explainer, Voice Companion, 1-Click Autofill, and Pre-Submit Form Audit.
 
 1. **Download Pre-Built Extension (.ZIP):**  
    Download the ready-to-use extension package: [**Download owly-extension.zip**](https://owly-ai.vercel.app/owly-extension.zip) *(or visit our [Download Guide](https://owly-ai.vercel.app/download))*.
